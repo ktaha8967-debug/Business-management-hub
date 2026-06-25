@@ -1,4 +1,4 @@
-const API_URL = window.location.protocol === 'file:' || window.location.port !== '5000'
+const API_URL = window.location.protocol === 'file:'
   ? 'http://localhost:5000'
   : window.location.origin;
 let currentUser = null;
