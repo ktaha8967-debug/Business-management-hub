@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascentra Command - Unified Partner Operating System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js for beautiful business analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Background Glowing Orbs for futuristic glassmorphic UI -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <!-- Notification Banner -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Authentication Panel (Rendered if not logged in) -->
+  <div id="auth-panel" class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span class="logo-accent">A</span>scentra Command
+        <div class="auth-subtitle">Unified Operations, Mentorship & Content Platform</div>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="auth-tabs">
+        <button id="tab-login-btn" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+        <button id="tab-register-owner-btn" class="auth-tab" onclick="switchAuthTab('register-owner')">Partner Registration</button>
+        <button id="tab-register-general-btn" class="auth-tab" onclick="switchAuthTab('register-general')">Team Signup</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="login-form" class="auth-form active-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" required placeholder="boss@ascentra.com">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary auth-submit-btn">Enter Command Center</button>
+      </form>
+
+      <!-- Business Owner Signup Form (Invitation only) -->
+      <form id="register-owner-form" class="auth-form" onsubmit="handleRegisterOwner(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="owner-invite-code">Invitation Code <span class="required">*</span></label>
+            <input type="text" id="owner-invite-code" required placeholder="INV-XXXX-XXXX">
+          </div>
+          <div class="form-group">
+            <label for="owner-fullname">Full Name</label>
+            <input type="text" id="owner-fullname" required placeholder="John Doe">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="owner-email">Email Address</label>
+            <input type="email" id="owner-email" required placeholder="john@example.com">
+          </div>
+          <div class="form-group">
+            <label for="owner-password">Password</label>
+            <input type="password" id="owner-password" required placeholder="Minimum 8 characters">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="owner-business-name">Business Name</label>
+            <input type="text" id="owner-business-name" required placeholder="Acme Corporation">
+          </div>
+          <div class="form-group">
+            <label for="owner-industry">Industry</label>
+            <input type="text" id="owner-industry" placeholder="e.g. CleanTech, SaaS">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="owner-location">Location</label>
+            <input type="text" id="owner-location" placeholder="e.g. San Francisco, CA">
+          </div>
+          <div class="form-group">
+            <label for="owner-employee-count">Employee Count</label>
+            <input type="number" id="owner-employee-count" min="1" value="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="owner-description">Business Description</label>
+          <textarea id="owner-description" placeholder="Briefly describe your business model..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="owner-document">Upload Incorporation Document / Agreement <span class="required">*</span></label>
+          <input type="file" id="owner-document" required>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="owner-agree-partnership" required>
+          <label for="owner-agree-partnership">I hereby electronically sign and agree to the Ascentra Partnership Framework Agreement.</label>
+        </div>
+        <button type="submit" class="btn-primary auth-submit-btn">Submit Partnership Application</button>
+      </form>
+
+      <!-- Team & Mentorship Signup Form -->
+      <form id="register-general-form" class="auth-form" onsubmit="handleRegisterGeneral(event)">
+        <div class="form-group">
+          <label for="gen-fullname">Full Name</label>
+          <input type="text" id="gen-fullname" required placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label for="gen-email">Email Address</label>
+          <input type="email" id="gen-email" required placeholder="jane@example.com">
+        </div>
+        <div class="form-group">
+          <label for="gen-password">Password</label>
+          <input type="password" id="gen-password" required placeholder="Minimum 8 characters">
+        </div>
+        <div class="form-group">
+          <label for="gen-role">Platform Role</label>
+          <select id="gen-role" required>
+            <option value="Video Editors">Video Editor</option>
+            <option value="Social Media Managers">Social Media Manager</option>
+            <option value="Mentorship Members">Mentorship Program Member</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary auth-submit-btn">Register Team Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Command Shell (Rendered when authenticated) -->
+  <div id="command-shell" class="command-shell hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="logo-accent">A</span>scentra
+        </div>
+        <div class="role-badge" id="shell-role-display">Role Display</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Dashboard Home (Shared) -->
+        <a href="#" class="nav-item active" onclick="switchMainTab('dashboard')">
+          <span class="nav-icon">📊</span> Command Dashboard
+        </a>
+
+        <!-- Super Admin / Admin Team links -->
+        <div class="admin-links hidden">
+          <div class="nav-section-title">Admin Controls</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-businesses')">
+            <span class="nav-icon">🏢</span> Business Portfolios
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-content')">
+            <span class="nav-icon">🎬</span> Content Workflow
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-meetings')">
+            <span class="nav-icon">📅</span> Weekly Meetings
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-mentorship')">
+            <span class="nav-icon">🎓</span> Mentorship Track
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-invites')">
+            <span class="nav-icon">✉️</span> Invite Generator
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-audit')">
+            <span class="nav-icon">🔍</span> Strategy & Audit
+          </a>
+        </div>
+
+        <!-- Business Owners links -->
+        <div class="owner-links hidden">
+          <div class="nav-section-title">Business Console</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-profile')">
+            <span class="nav-icon">🏢</span> My Business Profile
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-reports')">
+            <span class="nav-icon">📝</span> Daily Progress Logs
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-content')">
+            <span class="nav-icon">🎥</span> Submit Product Media
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-invoices')">
+            <span class="nav-icon">🧾</span> Invoicing System
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-meetings')">
+            <span class="nav-icon">🤝</span> Scheduled Meetings
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-orders')">
+            <span class="nav-icon">📦</span> Client Orders
+          </a>
+        </div>
+
+        <!-- Video Editors links -->
+        <div class="editor-links hidden">
+          <div class="nav-section-title">Editing Desk</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('editor-dashboard')">
+            <span class="nav-icon">✂️</span> Video Workboard
+          </a>
+        </div>
+
+        <!-- Social Media Managers links -->
+        <div class="smm-links hidden">
+          <div class="nav-section-title">Publishing Desk</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('smm-dashboard')">
+            <span class="nav-icon">📱</span> Social Channels
+          </a>
+        </div>
+
+        <!-- Mentorship Members links -->
+        <div class="mentee-links hidden">
+          <div class="nav-section-title">Mentorship Desk</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('mentee-workspace')">
+            <span class="nav-icon">🌱</span> Academy Requests & Sessions
+          </a>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer User Profile -->
+      <div class="sidebar-footer">
+        <div class="user-profile-summary">
+          <div class="user-avatar" id="avatar-letters">US</div>
+          <div class="user-text">
+            <div class="user-name" id="shell-username-display">User Name</div>
+            <div class="user-email" id="shell-email-display">user@example.com</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="handleLogout()">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main class="main-content">
+      <!-- Top header bar -->
+      <header class="main-header">
+        <h2 id="header-view-title">Command Dashboard</h2>
+        <div class="header-actions">
+          <button class="header-notification-bell" onclick="toggleNotificationsModal()">
+            🔔 <span class="notification-count" id="notification-count">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TABS CONTAINER -->
+      <div class="dashboard-views-container">
+
+        <!-- ==================== T1. COMMAND DASHBOARD HOME ==================== -->
+        <section id="view-dashboard" class="dashboard-view active">
+          <!-- Role specific summaries are loaded dynamically here -->
+          <div class="welcome-box">
+            <h3>Welcome back, <span id="welcome-name">User</span></h3>
+            <p>Here is your current operational summary for today.</p>
+          </div>
+
+          <!-- AI Voice Assistant Card (Only visible to Boss/Admin) -->
+          <div id="ai-voice-panel" class="panel-card hidden" style="background: linear-gradient(135deg, rgba(112, 77, 244, 0.1), rgba(0, 210, 255, 0.05)); border: 1px solid var(--border-color-glow); margin-bottom: 25px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+              <div>
+                <h4 style="border-bottom:none; margin-bottom:4px; padding-bottom:0; font-size:15px;">🎙️ AI Executive Voice Agent</h4>
+                <p style="color:var(--text-secondary); font-size:12px; margin-bottom:0;">Exclusive to Super Admin & Admin Team. Ask "who is doing what" or get a full operational briefing.</p>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <button class="btn-primary" onclick="triggerVoiceBriefing()" id="voice-briefing-btn" style="padding: 8px 16px; font-size: 13px; min-width: 140px;">📣 Readout Briefing</button>
+                <button class="btn-secondary" onclick="toggleSpeechRecognition()" id="voice-record-btn" style="padding: 8px 16px; font-size: 13px; min-width: 120px;">🎤 Tap to Talk</button>
+              </div>
+            </div>
+            <div id="voice-agent-status" style="margin-top:10px; font-size:12px; color:var(--text-secondary); font-style:italic;">Status: Ready</div>
+            <div id="voice-agent-transcript" class="hidden" style="margin-top:12px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px; border:1px solid var(--border-color); font-size:13px;">
+              <strong>Your Command:</strong> <span id="voice-transcript-text" style="color:var(--text-primary);">...</span>
+            </div>
+            <div id="voice-agent-response" class="hidden" style="margin-top:12px; padding:12px; background:rgba(112,77,244,0.08); border-radius:8px; border:1px solid var(--border-color-glow); font-size:13px; line-height:1.5;">
+              <strong>Agent Briefing:</strong> <span id="voice-response-text" style="color:var(--text-primary); font-weight: 500;">...</span>
+            </div>
+          </div>
+
+          <!-- Quick Stats Grid -->
+          <div class="stats-grid" id="dashboard-stats-grid">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Dynamic Activity / Tasks Summary Section -->
+          <div class="summary-blocks-row">
+            <div class="panel-card flex-2">
+              <h4>Recent Content Operations</h4>
+              <div class="table-responsive">
+                <table class="data-table" id="dashboard-recent-content-table">
+                  <thead>
+                    <tr>
+                      <th>Business</th>
+                      <th>Idea / Instructions</th>
+                      <th>Workflow Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="3" class="text-center">No active content workflows.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel-card flex-1">
+              <h4>Upcoming Meetings</h4>
+              <div class="meeting-list" id="dashboard-meetings-list">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T2. ADMIN BUSINESS PORTFOLIOS ==================== -->
+        <section id="view-admin-businesses" class="dashboard-view">
+          <div class="section-actions-header">
+            <h3>Approved Partner Businesses</h3>
+          </div>
+          <div class="panel-card">
+            <div class="table-responsive">
+              <table class="data-table" id="admin-businesses-table">
+                <thead>
+                  <tr>
+                    <th>Business Name</th>
+                    <th>Industry</th>
+                    <th>Location</th>
+                    <th>Employees</th>
+                    <th>Owner</th>
+                    <th>Contract</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T3. ADMIN CONTENT WORKFLOW ==================== -->
+        <section id="view-admin-content" class="dashboard-view">
+          <h3>Centralized Content Pipeline</h3>
+          <p class="subtitle">Review raw business submissions, assign tasks to editors, review deliverables, and direct social postings.</p>
+          
+          <div class="kanban-board">
+            <!-- Column 1: Awaiting Admin Assignment -->
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <span>📥 Raw Submissions</span>
+                <span class="count-badge" id="count-raw">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-raw-list"></div>
+            </div>
+
+            <!-- Column 2: Assigned to Video Editor -->
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <span>✂️ In Production</span>
+                <span class="count-badge" id="count-editing">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-editing-list"></div>
+            </div>
+
+            <!-- Column 3: Edited Deliverables Submitted -->
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <span>👀 Deliverables Review</span>
+                <span class="count-badge" id="count-review">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-review-list"></div>
+            </div>
+
+            <!-- Column 4: Approved & Assigned to Social Manager -->
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <span>📱 Assigned to Publish</span>
+                <span class="count-badge" id="count-publish">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-publish-list"></div>
+            </div>
+
+            <!-- Column 5: Live / Published Proofs -->
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <span>✅ Published Live</span>
+                <span class="count-badge" id="count-live">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanban-live-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T4. ADMIN MEETING MANAGEMENT ==================== -->
+        <section id="view-admin-meetings" class="dashboard-view">
+          <div class="section-actions-header">
+            <h3>Platform Schedule Management</h3>
+            <button class="btn-primary" onclick="openScheduleMeetingModal()">+ Schedule New Meeting</button>
+          </div>
+
+          <div class="panel-card" id="admin-meetings-requests-panel" style="margin-bottom: 25px;">
+            <h4>📥 Partner Meeting Requests</h4>
+            <div class="table-responsive">
+              <table class="data-table" id="admin-meetings-requests-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Proposed Topic</th>
+                    <th>Requested Date/Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="5" class="text-center">No pending meeting requests.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Upcoming Partner Meetings</h4>
+              <div class="meetings-timeline" id="admin-meetings-timeline">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+            <div class="panel-card">
+              <h4>Track Attendance & Notes</h4>
+              <form id="admin-meeting-update-form" onsubmit="handleSaveMeetingDetails(event)">
+                <input type="hidden" id="update-meeting-id">
+                <div class="form-group">
+                  <label for="update-meeting-title-readonly">Meeting</label>
+                  <input type="text" id="update-meeting-title-readonly" readonly class="input-readonly">
+                </div>
+                <div class="form-group">
+                  <label>Attendance Status</label>
+                  <div class="attendance-check-list" id="update-meeting-attendance-list">
+                    <!-- Checkboxes for users in meeting -->
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="update-meeting-notes">Meeting Notes</label>
+                  <textarea id="update-meeting-notes" placeholder="Write minutes of the meeting..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="update-meeting-followups">Follow-Up Actions</label>
+                  <textarea id="update-meeting-followups" placeholder="List actions and assignees..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Meeting Minutes</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T5. ADMIN MENTORSHIP WORKSPACE ==================== -->
+        <section id="view-admin-mentorship" class="dashboard-view">
+          <h3>Incubator Mentorship Board</h3>
+          <div class="panel-card">
+            <h4>External Mentorship Requests</h4>
+            <div class="table-responsive">
+              <table class="data-table" id="admin-mentorship-requests-table">
+                <thead>
+                  <tr>
+                    <th>Member Name</th>
+                    <th>Business Challenges</th>
+                    <th>Discussion Topics</th>
+                    <th>Proposed Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel-card mt-25">
+            <h4>Active Sessions Documentation</h4>
+            <div class="grid-2col">
+              <div class="list-selection-panel" id="admin-active-mentorship-sessions">
+                <!-- List of approved sessions -->
+              </div>
+              <div class="mentorship-notes-editor-panel">
+                <form id="admin-mentorship-session-form" onsubmit="handleSaveMentorshipSession(event)">
+                  <input type="hidden" id="mentorship-session-id">
+                  <div class="form-group">
+                    <label>Mentee</label>
+                    <input type="text" id="mentorship-mentee-name" readonly class="input-readonly">
+                  </div>
+                  <div class="form-group">
+                    <label for="mentorship-notes">Mentorship Meeting Notes</label>
+                    <textarea id="mentorship-notes" required placeholder="Document the session notes and discussions..."></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="mentorship-recommendations">Recommendations</label>
+                    <textarea id="mentorship-recommendations" required placeholder="Strategic advice for target achievements..."></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="mentorship-actionplan">Action Plan & Follow-ups (Separate steps by newlines)</label>
+                    <textarea id="mentorship-actionplan" required placeholder="e.g. 1. Revise customer persona&#10;2. Set up Facebook Ads Campaign"></textarea>
+                  </div>
+                  <button type="submit" class="btn-primary">Document Session Plan</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T6. ADMIN INVITATIONS GENERATOR ==================== -->
+        <section id="view-admin-invites" class="dashboard-view">
+          <h3>Partner Invitation Dispatcher</h3>
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Generate New Invitation</h4>
+              <form id="generate-invite-form" onsubmit="handleGenerateInvite(event)">
+                <div class="form-group">
+                  <label for="invite-biz-name">Target Business Name</label>
+                  <input type="text" id="invite-biz-name" required placeholder="e.g. Vertex Technologies">
+                </div>
+                <button type="submit" class="btn-primary">Generate Invitation Link</button>
+              </form>
+            </div>
+            <div class="panel-card">
+              <h4>Active Invite Links</h4>
+              <div class="table-responsive">
+                <table class="data-table" id="admin-invitations-list-table">
+                  <thead>
+                    <tr>
+                      <th>Business</th>
+                      <th>Invitation Code</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Filled dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T7. OWNER BUSINESS PROFILE ==================== -->
+        <section id="view-owner-profile" class="dashboard-view">
+          <h3>Business Profile Management</h3>
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Company Information</h4>
+              <form id="owner-profile-form" onsubmit="handleUpdateBusinessProfile(event)">
+                <div class="form-group">
+                  <label for="prof-biz-name">Business Name</label>
+                  <input type="text" id="prof-biz-name" required>
+                </div>
+                <div class="form-group">
+                  <label for="prof-biz-industry">Industry</label>
+                  <input type="text" id="prof-biz-industry">
+                </div>
+                <div class="form-group">
+                  <label for="prof-biz-location">Location</label>
+                  <input type="text" id="prof-biz-location">
+                </div>
+                <div class="form-group">
+                  <label for="prof-biz-employees">Employee Count</label>
+                  <input type="number" id="prof-biz-employees" min="1">
+                </div>
+                <div class="form-group">
+                  <label for="prof-biz-description">Description</label>
+                  <textarea id="prof-biz-description"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Update Profile</button>
+              </form>
+            </div>
+
+            <div class="panel-card">
+              <h4>Partnership Agreements & Legal Contracts</h4>
+              <div class="agreement-box">
+                <h5>Ascentra Enterprise Partner Framework Contract</h5>
+                <p>Status: <span class="badge badge-success">Signed & Sealed</span></p>
+                <p class="agreement-sign-meta">Signed on signup via invitation authority.</p>
+                <div class="document-link-box" id="owner-documents-list">
+                  <!-- Documents list -->
+                </div>
+              </div>
+
+              <h4 class="mt-25">Business Performance Analytics</h4>
+              <div class="chart-container">
+                <canvas id="businessAnalyticsChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T8. OWNER DAILY PROGRESS REPORTS ==================== -->
+        <section id="view-owner-reports" class="dashboard-view">
+          <h3>Daily Operations Logging Desk</h3>
+          <p class="subtitle">Partners must submit reports detailing progress, active projects, challenges, and milestones.</p>
+          
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Submit Daily Report</h4>
+              <form id="daily-report-form" onsubmit="handleSubmitDailyReport(event)">
+                <div class="form-group">
+                  <label for="rep-activities">Current Business Activities</label>
+                  <textarea id="rep-activities" required placeholder="What operational activities happened today?"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="rep-active-projects">Active Projects & Status</label>
+                  <textarea id="rep-active-projects" required placeholder="Status of active projects..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="rep-progress">Team Progress</label>
+                  <textarea id="rep-progress" required placeholder="What milestones did the team achieve?"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="rep-challenges">Challenges & Bottlenecks</label>
+                  <textarea id="rep-challenges" required placeholder="Any blockers or issues faced today?"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="rep-goals">Tomorrow's Objectives & Goals</label>
+                  <textarea id="rep-goals" required placeholder="What are the main tasks for tomorrow?"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="rep-updates">General Updates / Notes</label>
+                  <textarea id="rep-updates" placeholder="Any additional company updates..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Submit Report</button>
+              </form>
+            </div>
+
+            <div class="panel-card">
+              <h4>Log History</h4>
+              <div class="timeline" id="owner-reports-timeline">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T9. OWNER CONTENT MANAGEMENT ==================== -->
+        <section id="view-owner-content" class="dashboard-view">
+          <h3>Product Media Operations</h3>
+          <p class="subtitle">Upload product promotional raw footage, video concepts, and marketing instructions to route them to the media desk.</p>
+          
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Upload Creative Concept</h4>
+              <form id="owner-content-form" onsubmit="handleSubmitRawContent(event)">
+                <div class="form-group">
+                  <label for="content-idea">Content Idea / Topic Title</label>
+                  <input type="text" id="content-idea" required placeholder="e.g. Unboxing video of new widget product">
+                </div>
+                <div class="form-group">
+                  <label for="content-instructions">Editing & Marketing Instructions</label>
+                  <textarea id="content-instructions" required placeholder="e.g. Keep it energetic, add high-impact captions, format for TikTok, highlight key USP..."></textarea>
+                </div>
+                 <div class="form-group">
+                  <label for="content-raw-videos">Raw Product Video Files (Select one or more for bulk upload)</label>
+                  <input type="file" id="content-raw-videos" name="raw_videos" multiple required>
+                </div>
+                <button type="submit" class="btn-primary">Send to Editorial Desk</button>
+              </form>
+            </div>
+
+            <div class="panel-card">
+              <h4>Media Production Status</h4>
+              <div class="table-responsive">
+                <table class="data-table" id="owner-content-status-table">
+                  <thead>
+                    <tr>
+                      <th>Idea / Concept</th>
+                      <th>Status</th>
+                      <th>Social Links</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Filled dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T10. OWNER INVOICING SYSTEM ==================== -->
+        <section id="view-owner-invoices" class="dashboard-view">
+          <div class="section-actions-header">
+            <h3>Invoice Generation Engine</h3>
+            <button class="btn-primary" onclick="openCreateInvoiceModal()">+ Create New Invoice</button>
+          </div>
+
+          <div class="panel-card">
+            <h4>Billed Clients Invoice Registry</h4>
+            <div class="table-responsive">
+              <table class="data-table" id="owner-invoices-table">
+                <thead>
+                  <tr>
+                    <th>Invoice No</th>
+                    <th>Client Name</th>
+                    <th>Due Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T11. OWNER MEETINGS VIEW ==================== -->
+        <section id="view-owner-meetings" class="dashboard-view">
+          <h3>Weekly Scheduled Briefings</h3>
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Scheduled Meetings</h4>
+              <div class="timeline" id="owner-meetings-timeline">
+                <!-- Timeline list -->
+              </div>
+            </div>
+            <div class="panel-card">
+              <h4>Create Scheduled Meeting Request</h4>
+              <form id="owner-schedule-meeting-form" onsubmit="handleOwnerScheduleMeeting(event)">
+                <div class="form-group">
+                  <label for="owner-meet-title">Briefing Topic / Purpose</label>
+                  <input type="text" id="owner-meet-title" required placeholder="Weekly review discussion">
+                </div>
+                <div class="form-group">
+                  <label for="owner-meet-datetime">Preferred Date & Time</label>
+                  <input type="datetime-local" id="owner-meet-datetime" required>
+                </div>
+                <button type="submit" class="btn-primary">Submit Schedule Proposal</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T12. VIDEO EDITOR DASHBOARD ==================== -->
+        <section id="view-editor-dashboard" class="dashboard-view">
+          <h3>Video Production Desk</h3>
+          <p class="subtitle">Access raw marketing footage, follow the editor notes, and submit finished videos.</p>
+          
+          <div class="panel-card">
+            <h4>Your Editing Tasks</h4>
+            <div class="table-responsive">
+              <table class="data-table" id="editor-tasks-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Idea & Instructions</th>
+                    <th>Deadline</th>
+                    <th>Task Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T13. SOCIAL MEDIA MANAGER DASHBOARD ==================== -->
+        <section id="view-smm-dashboard" class="dashboard-view">
+          <h3>Social Media Channels Publishing Panel</h3>
+          <p class="subtitle">Receive approved video assets, publish across channels (TikTok, Instagram Reels, Facebook, YouTube Shorts), and register post URLs.</p>
+          
+          <div class="panel-card">
+            <h4>Assigned Assets for Dispatch</h4>
+            <div class="table-responsive">
+              <table class="data-table" id="smm-assets-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Approved Video URL</th>
+                    <th>Instructions</th>
+                    <th>Workflow Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T14. MENTEE WORKSPACE ==================== -->
+        <section id="view-mentee-workspace" class="dashboard-view">
+          <h3>Mentorship Growth Center</h3>
+          <p class="subtitle">Submit academy advisement requests, explain business bottlenecks, and view expert session logs.</p>
+          
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Request Advisement Session</h4>
+              <form id="mentee-request-form" onsubmit="handleMenteeRequest(event)">
+                <div class="form-group">
+                  <label for="mentee-challenges">Core Business Challenges</label>
+                  <textarea id="mentee-challenges" required placeholder="What bottlenecks or strategic problems are you experiencing?"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="mentee-topics">Discussion Topics</label>
+                  <textarea id="mentee-topics" required placeholder="What specific items do you want to cover? (e.g. Sales pipeline, brand strategy)"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="mentee-date">Proposed Meeting Date</label>
+                  <input type="date" id="mentee-date" required>
+                </div>
+                <button type="submit" class="btn-primary">Send Session Request</button>
+              </form>
+            </div>
+
+            <div class="panel-card">
+              <h4>Academy Advisement Sessions Timeline</h4>
+              <div class="timeline" id="mentee-sessions-timeline">
+                <!-- Timeline elements -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T15. ADMIN AUDIT & STRATEGY VIEW ==================== -->
+        <section id="view-admin-audit" class="dashboard-view">
+          <h3>Strategic Portfolio Audit Desk</h3>
+          <p class="subtitle">Review every page, report, strategy, project, invoice, and progress logs of all registered businesses.</p>
+          
+          <div class="panel-card" style="margin-bottom: 25px;">
+            <div class="form-group" style="max-width: 400px;">
+              <label for="audit-select-business">Select Business Portfolio to Audit</label>
+              <select id="audit-select-business" onchange="handleSelectBusinessAudit(this.value)" style="padding: 10px; font-size: 14px;">
+                <option value="">-- Choose a Business --</option>
+                <!-- Filled dynamically -->
+              </select>
+            </div>
+          </div>
+
+          <div id="audit-details-container" class="hidden">
+            <div class="grid-2col">
+              <!-- Business Identity Card -->
+              <div class="panel-card">
+                <h4>🏢 Business Profile Summary</h4>
+                <div class="info-table-box" id="audit-profile-info" style="line-height: 1.8;">
+                  <!-- Filled dynamically -->
+                </div>
+                <div class="document-link-box" id="audit-contracts-container" style="margin-top: 15px;">
+                  <!-- Contract files download -->
+                </div>
+              </div>
+
+              <!-- Growth Analytics Chart -->
+              <div class="panel-card">
+                <h4>📈 Strategic Revenue & Profit Analytics</h4>
+                <div class="chart-container" style="height: 250px; position: relative;">
+                  <canvas id="auditAnalyticsChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Employee List & tracking -->
+            <div class="panel-card mt-25">
+              <h4>👥 Employee Roster & Operations Roles</h4>
+              <div class="table-responsive">
+                <table class="data-table" id="audit-employees-table">
+                  <thead>
+                    <tr>
+                      <th>Employee Name</th>
+                      <th>Operational Role</th>
+                      <th>Email Address</th>
+                      <th>Status</th>
+                      <th>Joined Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="5" class="text-center">No employee records registered.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="grid-2col mt-25">
+              <!-- Content Projects Pipeline (Ongoing Tasks) -->
+              <div class="panel-card">
+                <h4>🎬 Ongoing Projects & Video Tasks</h4>
+                <div class="table-responsive">
+                  <table class="data-table" id="audit-content-table">
+                    <thead>
+                      <tr>
+                        <th>Topic / Idea</th>
+                        <th>Workflow Status</th>
+                        <th>Links</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td colspan="3" class="text-center">No projects in pipeline.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Client Orders Tracker -->
+              <div class="panel-card">
+                <h4>📦 Client Service Orders</h4>
+                <div class="table-responsive">
+                  <table class="data-table" id="audit-orders-table">
+                    <thead>
+                      <tr>
+                        <th>Client Name</th>
+                        <th>Service / Product</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td colspan="4" class="text-center">No client orders recorded.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Daily Operational Progress Reports -->
+            <div class="panel-card mt-25">
+              <h4>📝 Daily Progress Reports & Updates</h4>
+              <div class="timeline" id="audit-reports-timeline">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+
+            <!-- Financial Summary Invoices -->
+            <div class="panel-card mt-25">
+              <h4>🧾 Invoiced Clients Registry</h4>
+              <div class="table-responsive">
+                <table class="data-table" id="audit-invoices-table">
+                  <thead>
+                    <tr>
+                      <th>Invoice No</th>
+                      <th>Client Name</th>
+                      <th>Due Date</th>
+                      <th>Total</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="5" class="text-center">No invoice history.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Management & Approval Panel -->
+          <div class="panel-card mt-25">
+            <h4>🔒 User Roster & Account Approvals</h4>
+            <p class="subtitle" style="font-size:12px; margin-bottom:15px; color:var(--text-secondary);">Manage account access level and approve pending Video Editors, SMMs, Mentorship Members, or Business Owners.</p>
+            <div class="table-responsive">
+              <table class="data-table" id="admin-user-management-table">
+                <thead>
+                  <tr>
+                    <th>Full Name</th>
+                    <th>Email Address</th>
+                    <th>System Role</th>
+                    <th>Status</th>
+                    <th>Registered On</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T16. OWNER CLIENT ORDERS ==================== -->
+        <section id="view-owner-orders" class="dashboard-view">
+          <div class="section-actions-header">
+            <h3>Client Orders & Employees Desk</h3>
+            <button class="btn-primary" onclick="openCreateOrderModal()">+ Record New Order</button>
+          </div>
+          
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Active Client Orders Registry</h4>
+              <div class="table-responsive">
+                <table class="data-table" id="owner-orders-table">
+                  <thead>
+                    <tr>
+                      <th>Client</th>
+                      <th>Service / Product</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Filled dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="panel-card">
+              <h4>Portfolio Employee Roster</h4>
+              <p class="subtitle" style="font-size:12px; margin-bottom:15px; color:var(--text-secondary);">Track and manage employees of your business portfolio.</p>
+              
+              <form id="owner-add-employee-form" onsubmit="handleAddEmployee(event)" style="margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:15px;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="emp-name">Employee Name</label>
+                    <input type="text" id="emp-name" required placeholder="Alice Johnson">
+                  </div>
+                  <div class="form-group">
+                    <label for="emp-role">Operational Role</label>
+                    <input type="text" id="emp-role" required placeholder="Operations Lead">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="emp-email">Email</label>
+                    <input type="email" id="emp-email" placeholder="alice@company.com">
+                  </div>
+                  <div class="form-group" style="display:flex; align-items:flex-end;">
+                    <button type="submit" class="btn-primary w-100">Add Employee</button>
+                  </div>
+                </div>
+              </form>
+
+              <div class="table-responsive">
+                <table class="data-table" id="owner-employees-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Role</th>
+                      <th>Email</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Filled dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+        </section>
+
+        <!-- ==================== T17. VIRTUAL MEETING ROOM ==================== -->
+        <section id="view-meeting-room" class="dashboard-view">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 id="meet-room-title" style="margin: 0; font-size: 24px;">🎥 Secure Encrypted Meeting Room</h3>
+              <p class="subtitle" id="meet-room-subtitle" style="margin: 5px 0 0 0; color: var(--text-secondary);">Real-time operations video call, synced notepad, and action items desk.</p>
+            </div>
+            <button class="btn-secondary" onclick="exitMeetingRoom()" style="padding: 8px 16px; border-color: red; color: red;">🚪 Exit Meeting Room</button>
+          </div>
+
+          <!-- AI Copilot Transcription Control Panel -->
+          <div class="panel-card" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, rgba(112, 77, 244, 0.15), rgba(0, 210, 255, 0.05)); border: 1px solid var(--border-color-glow); padding: 15px;">
+            <div>
+              <h5 style="margin: 0; font-size: 14px;" id="meet-copilot-status">🎙️ AI Copilot: Ready</h5>
+              <p style="margin: 4px 0 0 0; font-size: 11px; color: var(--text-secondary);">Listening to what is said and preparing automated minutes transcript buffer.</p>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn-primary" style="padding: 8px 16px; font-size: 12px; background: #2ed573; border: none; cursor: pointer;" id="btn-trigger-ai-notes" onclick="triggerAIMeetingSummarization()">🎙️ End Meeting & AI Auto-Notes</button>
+            </div>
+          </div>
+
+          <div class="grid-2col" style="grid-template-columns: 2fr 1fr; gap: 20px;">
+            <!-- Video Iframe Card & Live Transcript -->
+            <div style="display:flex; flex-direction:column; gap:15px;">
+              <div class="panel-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column; height: 450px; border: 1px solid var(--border-color-glow);">
+                <div id="jitsi-meet-container" style="flex:1; width:100%; height:100%; background:#101424;">
+                  <!-- Embedded Jitsi Iframe will be injected dynamically -->
+                </div>
+              </div>
+              
+              <!-- Live Transcript Buffer Display -->
+              <div class="panel-card" style="padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px;">
+                <h5 style="margin-top:0; margin-bottom:8px; font-size:13px;">📝 Live AI Copilot Transcript</h5>
+                <div id="meet-room-live-transcript" style="max-height: 80px; overflow-y: auto; font-size: 12px; color: var(--text-secondary); font-style: italic; line-height: 1.5;">
+                  Silence... Transcripts will appear here automatically when participants speak.
+                </div>
+              </div>
+            </div>
+
+            <!-- Collaboration Side desk -->
+            <div class="panel-card" style="display:flex; flex-direction:column; height: 570px; box-sizing: border-box;">
+              <h4 style="margin-top:0;">📝 Shared Room Minutes</h4>
+              <p class="subtitle" style="font-size:11px; margin-bottom:12px; color:var(--text-secondary);">Notes and actions captured here will sync to the partner dashboard database.</p>
+              
+              <div class="form-group" style="flex:1.5; display:flex; flex-direction:column; margin-bottom:10px;">
+                <label for="meet-room-notes" style="font-size:12px; margin-bottom:5px; font-weight:600;">Meeting Notes</label>
+                <textarea id="meet-room-notes" style="flex:1; font-size:13px; padding:10px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid var(--border-color); border-radius: 6px; resize:none;" placeholder="Document discussions, agendas, and minutes..."></textarea>
+              </div>
+
+              <div class="form-group" style="flex:1; display:flex; flex-direction:column; margin-bottom:10px;">
+                <label for="meet-room-followups" style="font-size:12px; margin-bottom:5px; font-weight:600;">Follow-up Actions</label>
+                <textarea id="meet-room-followups" style="flex:1; font-size:13px; padding:10px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid var(--border-color); border-radius: 6px; resize:none;" placeholder="List action items (e.g. 1. Submit design, 2. Approve budget)..."></textarea>
+              </div>
+
+              <button class="btn-primary w-100" style="padding: 12px; border: none; cursor: pointer;" onclick="handleSaveMeetingRoomMinutes()">💾 Save & Sync Room Minutes</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODALS & DIALOGS ==================== -->
+
+  <!-- Invoice Creator Dialog -->
+  <div id="invoice-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Create Professional Invoice</h4>
+        <button class="close-modal" onclick="closeCreateInvoiceModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="invoice-creation-form" onsubmit="handleCreateInvoice(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="inv-client-name">Client Name</label>
+              <input type="text" id="inv-client-name" required placeholder="Acme Services">
+            </div>
+            <div class="form-group">
+              <label for="inv-client-email">Client Email</label>
+              <input type="email" id="inv-client-email" required placeholder="client@acme.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="inv-branding">Company Branding Title</label>
+              <input type="text" id="inv-branding" placeholder="e.g. Vertex Technologies Ltd">
+            </div>
+            <div class="form-group">
+              <label for="inv-due-date">Due Date</label>
+              <input type="date" id="inv-due-date" required>
+            </div>
+          </div>
+
+          <h5>Invoice Items</h5>
+          <div class="invoice-items-builder" id="invoice-items-builder">
+            <div class="form-row invoice-item-row">
+              <input type="text" placeholder="Item/Service Name" class="inv-item-name" required style="flex:3;">
+              <input type="number" min="0" step="0.01" placeholder="Price" class="inv-item-price" required style="flex:1.5;">
+              <input type="number" min="1" placeholder="Qty" class="inv-item-qty" required style="flex:1;">
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" onclick="addInvoiceItemRow()">+ Add Service Row</button>
+
+          <button type="submit" class="btn-primary mt-25 w-100">Generate PDF and Invoice Record</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Meeting Schedule Dialog -->
+  <div id="schedule-meeting-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Schedule Weekly Meeting</h4>
+        <button class="close-modal" onclick="closeScheduleMeetingModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="admin-schedule-meeting-form" onsubmit="handleAdminScheduleMeeting(event)">
+          <div class="form-group">
+            <label for="meet-biz-id">Select Partner Business</label>
+            <select id="meet-biz-id" required>
+              <option value="">Global / Platform Briefing</option>
+              <!-- Filled dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="meet-title">Meeting Topic / Title</label>
+            <input type="text" id="meet-title" required placeholder="Weekly Marketing Sync">
+          </div>
+          <div class="form-group">
+            <label for="meet-datetime">Date & Time</label>
+            <input type="datetime-local" id="meet-datetime" required>
+          </div>
+          <button type="submit" class="btn-primary w-100">Schedule & Notify Partner</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor Submission Dialog -->
+  <div id="editor-submit-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Submit Deliverable Video</h4>
+        <button class="close-modal" onclick="closeEditorSubmitModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editor-submit-form" onsubmit="handleEditorSubmitDeliverable(event)">
+          <input type="hidden" id="editor-submit-item-id">
+          <div class="form-group">
+            <label for="editor-video-url">Google Drive Link of Edited Video <span class="required">*</span></label>
+            <input type="url" id="editor-video-url" required placeholder="https://drive.google.com/file/d/...">
+            <small style="color: var(--text-secondary); display:block; margin-top:5px;">You must upload the edited video to Google Drive and provide the shareable link here.</small>
+          </div>
+          <div class="form-group">
+            <label for="editor-delivery-notes">Editor Notes</label>
+            <textarea id="editor-delivery-notes" placeholder="Explain the edits, music used, or revisions..."></textarea>
+          </div>
+          <button type="submit" class="btn-primary w-100">Submit Work for Admin Approval</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social SMM Publish Dialog -->
+  <div id="smm-publish-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Submit Social Live Proof URLs</h4>
+        <button class="close-modal" onclick="closeSmmPublishModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="smm-publish-form" onsubmit="handleSmmPublishProof(event)">
+          <input type="hidden" id="smm-publish-item-id">
+          <p>Provide live links of the published content as proof of execution:</p>
+          <div class="form-group">
+            <label for="smm-tiktok-url">TikTok Post URL</label>
+            <input type="url" id="smm-tiktok-url" placeholder="https://tiktok.com/@...">
+          </div>
+          <div class="form-group">
+            <label for="smm-ig-url">Instagram Post URL</label>
+            <input type="url" id="smm-ig-url" placeholder="https://instagram.com/reel/...">
+          </div>
+          <div class="form-group">
+            <label for="smm-fb-url">Facebook Post URL</label>
+            <input type="url" id="smm-fb-url" placeholder="https://facebook.com/watch/...">
+          </div>
+          <div class="form-group">
+            <label for="smm-yt-url">YouTube Shorts URL</label>
+            <input type="url" id="smm-yt-url" placeholder="https://youtube.com/shorts/...">
+          </div>
+          <button type="submit" class="btn-primary w-100">Submit Publishing Proof</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Creator Dialog -->
+  <div id="order-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Record Client Service Order</h4>
+        <button class="close-modal" onclick="closeCreateOrderModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="order-creation-form" onsubmit="handleCreateOrder(event)">
+          <div class="form-group">
+            <label for="ord-client-name">Client Name</label>
+            <input type="text" id="ord-client-name" required placeholder="Acme Services">
+          </div>
+          <div class="form-group">
+            <label for="ord-product">Product / Service Description</label>
+            <input type="text" id="ord-product" required placeholder="SaaS Platform Development / Marketing Package">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ord-amount">Order Value ($)</label>
+              <input type="number" id="ord-amount" min="0" step="0.01" required placeholder="1500.00">
+            </div>
+            <div class="form-group">
+              <label for="ord-status">Initial Status</label>
+              <select id="ord-status">
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="ord-notes">Internal Notes</label>
+            <textarea id="ord-notes" placeholder="Deliverables details or project deadlines..."></textarea>
+          </div>
+          <button type="submit" class="btn-primary w-100 mt-15">Record Order</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Sidebar Modal -->
+  <div id="notifications-modal" class="modal-sidebar hidden">
+    <div class="modal-sidebar-content">
+      <div class="modal-sidebar-header">
+        <h4>Notifications Center</h4>
+        <button onclick="toggleNotificationsModal()" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-sidebar-body" id="notifications-list">
+        <!-- List of user notifications -->
+      </div>
+      <div class="modal-sidebar-footer">
+        <button class="btn-secondary w-100" onclick="markAllNotificationsRead()">Mark All as Read</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://meet.jit.si/external_api.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Dependency directories
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+frontend/dist/
+
+# Uploads directory (only upload the folder structure, not user uploads)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDEs and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

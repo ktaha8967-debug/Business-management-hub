@@ -1,0 +1,1455 @@
+{
+  "users": [
+    {
+      "id": "admin-1",
+      "full_name": "Owner Boss",
+      "email": "boss@ascentra.com",
+      "password_hash": "$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu",
+      "role": "Super Admin",
+      "status": "approved",
+      "created_at": "2026-06-25T15:25:02.823Z"
+    },
+    {
+      "id": "admin-2",
+      "full_name": "Admin Assistant",
+      "email": "admin@ascentra.com",
+      "password_hash": "$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu",
+      "role": "Admin Team",
+      "status": "approved",
+      "created_at": "2026-06-25T15:25:02.824Z"
+    },
+    {
+      "id": "editor-1",
+      "full_name": "David Editor",
+      "email": "editor@ascentra.com",
+      "password_hash": "$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu",
+      "role": "Video Editors",
+      "status": "approved",
+      "created_at": "2026-06-25T15:25:02.824Z"
+    },
+    {
+      "id": "sm-1",
+      "full_name": "Sarah Manager",
+      "email": "sm@ascentra.com",
+      "password_hash": "$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu",
+      "role": "Social Media Managers",
+      "status": "approved",
+      "created_at": "2026-06-25T15:25:02.824Z"
+    },
+    {
+      "id": "use-1782404624056-5svlf",
+      "created_at": "2026-06-25T16:23:44.056Z",
+      "full_name": "Taha Khan",
+      "email": "ktaha8967@gmail.com",
+      "password_hash": "$2a$10$k5ZP6ldHZ7fZqffq5y5S2uWIbRAK1VmkWAPsF69AY5rfsnsE7I4wy",
+      "role": "Business Owners",
+      "status": "approved",
+      "updated_at": "2026-06-25T16:26:08.696Z"
+    },
+    {
+      "id": "use-1782405929747-tcugv",
+      "created_at": "2026-06-25T16:45:29.747Z",
+      "full_name": "Taha",
+      "email": "mrtaha.eu@gmail.com",
+      "password_hash": "$2a$10$7doIeCPBcIjSlmihKLMeOeoBkM.EKhYbBg5d8/OvuWM6PbFn.zMg2",
+      "role": "Video Editors",
+      "status": "approved"
+    },
+    {
+      "id": "use-1782406142739-z5lk2",
+      "created_at": "2026-06-25T16:49:02.739Z",
+      "full_name": "Test Owner",
+      "email": "testowner-1782406142504@ascentra.com",
+      "password_hash": "$2a$10$sqIDgpttHVhJAa2JqsN6LOMsYTqwgEtAVLMQbwnzR.Sw2E.psQPXC",
+      "role": "Business Owners",
+      "status": "approved",
+      "updated_at": "2026-06-25T16:49:02.837Z"
+    },
+    {
+      "id": "use-apex-owner",
+      "created_at": "2026-06-25T16:54:17.987Z",
+      "full_name": "Alex Apex",
+      "email": "apex_owner@ascentra.com",
+      "password_hash": "$2a$10$bFaaVcaccoHGbobreHf1y.MmTEw9bOOG304o25cWH6.a1JftbVgCq",
+      "role": "Business Owners",
+      "status": "approved"
+    },
+    {
+      "id": "use-green-owner",
+      "created_at": "2026-06-25T16:54:17.988Z",
+      "full_name": "Grace Green",
+      "email": "green_owner@ascentra.com",
+      "password_hash": "$2a$10$bFaaVcaccoHGbobreHf1y.MmTEw9bOOG304o25cWH6.a1JftbVgCq",
+      "role": "Business Owners",
+      "status": "approved"
+    },
+    {
+      "id": "use-pending-editor",
+      "created_at": "2026-06-25T16:54:17.988Z",
+      "full_name": "Peter Pending Editor",
+      "email": "pending_editor@ascentra.com",
+      "password_hash": "$2a$10$bFaaVcaccoHGbobreHf1y.MmTEw9bOOG304o25cWH6.a1JftbVgCq",
+      "role": "Video Editors",
+      "status": "pending"
+    },
+    {
+      "id": "use-pending-mentee",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "full_name": "Melody Mentee",
+      "email": "pending_member@ascentra.com",
+      "password_hash": "$2a$10$bFaaVcaccoHGbobreHf1y.MmTEw9bOOG304o25cWH6.a1JftbVgCq",
+      "role": "Mentorship Members",
+      "status": "pending"
+    },
+    {
+      "id": "use-approved-mentee",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "full_name": "Mark Approved Mentee",
+      "email": "member@ascentra.com",
+      "password_hash": "$2a$10$bFaaVcaccoHGbobreHf1y.MmTEw9bOOG304o25cWH6.a1JftbVgCq",
+      "role": "Mentorship Members",
+      "status": "approved"
+    }
+  ],
+  "invitations": [
+    {
+      "id": "inv-1",
+      "code": "INV-APEX-2026",
+      "business_name": "Apex Solutions",
+      "is_used": true,
+      "created_at": "2026-06-25T15:25:02.824Z",
+      "updated_at": "2026-06-25T16:49:02.549Z"
+    },
+    {
+      "id": "inv-2",
+      "code": "INV-GREEN-2026",
+      "business_name": "GreenPulse Co",
+      "is_used": false,
+      "created_at": "2026-06-25T15:25:02.824Z"
+    },
+    {
+      "id": "inv-1782404573200-f4jxl",
+      "created_at": "2026-06-25T16:22:53.200Z",
+      "code": "INV-VERTEX-8585",
+      "business_name": "Vertex",
+      "is_used": true,
+      "updated_at": "2026-06-25T16:23:43.754Z"
+    }
+  ],
+  "businesses": [
+    {
+      "id": "bus-1782404624088-l4o0z",
+      "created_at": "2026-06-25T16:23:44.088Z",
+      "owner_id": "use-1782404624056-5svlf",
+      "business_name": "Download Any Video",
+      "industry": "Saas",
+      "location": "Cakifornia",
+      "description": "sfsresrserwr",
+      "employee_count": 12,
+      "contracts": [
+        "/uploads/1782404623737-Partnership Agreement_kids_party dress_products .pdf"
+      ],
+      "status": "approved",
+      "revenue_insights": [
+        {
+          "month": "Jan",
+          "revenue": 15000,
+          "profit": 5000
+        },
+        {
+          "month": "Feb",
+          "revenue": 18000,
+          "profit": 6000
+        },
+        {
+          "month": "Mar",
+          "revenue": 22000,
+          "profit": 8000
+        }
+      ],
+      "active_projects": [],
+      "current_orders": [],
+      "updated_at": "2026-06-25T16:26:08.692Z",
+      "employees": [
+        {
+          "id": "emp-dav-1",
+          "name": "Tariq Tech",
+          "role": "Support Lead",
+          "email": "tariq@dav.com",
+          "status": "Active",
+          "joined_date": "2026-05-01"
+        },
+        {
+          "id": "emp-dav-2",
+          "name": "Zara Designer",
+          "role": "UI Creator",
+          "email": "zara@dav.com",
+          "status": "Active",
+          "joined_date": "2026-05-15"
+        }
+      ]
+    },
+    {
+      "id": "bus-1782406142746-ueq4z",
+      "created_at": "2026-06-25T16:49:02.746Z",
+      "owner_id": "use-1782406142739-z5lk2",
+      "business_name": "Test Apex Solutions",
+      "industry": "Software",
+      "location": "Chicago, IL",
+      "description": "Test business profile",
+      "employee_count": 5,
+      "contracts": [],
+      "status": "approved",
+      "revenue_insights": [
+        {
+          "month": "Jan",
+          "revenue": 15000,
+          "profit": 5000
+        },
+        {
+          "month": "Feb",
+          "revenue": 18000,
+          "profit": 6000
+        },
+        {
+          "month": "Mar",
+          "revenue": 22000,
+          "profit": 8000
+        }
+      ],
+      "active_projects": [],
+      "current_orders": [],
+      "updated_at": "2026-06-25T16:49:03.078Z",
+      "employees": [
+        {
+          "id": "emp-1782406143075",
+          "name": "Jane Dev",
+          "role": "Developer",
+          "email": "jane@vertex.com",
+          "status": "Active",
+          "joined_date": "2026-06-25"
+        }
+      ]
+    },
+    {
+      "id": "bus-apex-solutions",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "owner_id": "use-apex-owner",
+      "business_name": "Apex Solutions",
+      "industry": "Cloud Architecture",
+      "location": "Austin, TX",
+      "description": "Enterprise Cloud Migrations and serverless integrations",
+      "employee_count": 8,
+      "contracts": [
+        "/uploads/mock_apex_agreement.pdf"
+      ],
+      "status": "approved",
+      "revenue_insights": [
+        {
+          "month": "Jan",
+          "revenue": 45000,
+          "profit": 12000
+        },
+        {
+          "month": "Feb",
+          "revenue": 52000,
+          "profit": 16000
+        },
+        {
+          "month": "Mar",
+          "revenue": 61000,
+          "profit": 21000
+        }
+      ],
+      "employees": [
+        {
+          "id": "emp-apex-1",
+          "name": "Frank Cloud",
+          "role": "Architect",
+          "email": "frank@apex.com",
+          "status": "Active",
+          "joined_date": "2026-01-10"
+        },
+        {
+          "id": "emp-apex-2",
+          "name": "Alice Sysops",
+          "role": "Engineer",
+          "email": "alice@apex.com",
+          "status": "Active",
+          "joined_date": "2026-02-15"
+        }
+      ],
+      "active_projects": [],
+      "current_orders": []
+    },
+    {
+      "id": "bus-greenpulse-co",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "owner_id": "use-green-owner",
+      "business_name": "GreenPulse Co",
+      "industry": "CleanTech",
+      "location": "Boulder, CO",
+      "description": "Smart carbon offsets tracking and ecological accounting systems",
+      "employee_count": 4,
+      "contracts": [
+        "/uploads/mock_green_agreement.pdf"
+      ],
+      "status": "approved",
+      "revenue_insights": [
+        {
+          "month": "Jan",
+          "revenue": 20000,
+          "profit": 4000
+        },
+        {
+          "month": "Feb",
+          "revenue": 25000,
+          "profit": 7000
+        },
+        {
+          "month": "Mar",
+          "revenue": 29000,
+          "profit": 11000
+        }
+      ],
+      "employees": [
+        {
+          "id": "emp-green-1",
+          "name": "Sam Green",
+          "role": "Analyst",
+          "email": "sam@greenpulse.co",
+          "status": "Active",
+          "joined_date": "2026-03-01"
+        }
+      ],
+      "active_projects": [],
+      "current_orders": []
+    }
+  ],
+  "daily_reports": [
+    {
+      "id": "dai-1782405125976-p7dau",
+      "created_at": "2026-06-25T16:32:05.976Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "reporter_id": "use-1782404624056-5svlf",
+      "business_name": "Download Any Video",
+      "activities": "vzdfsdf",
+      "active_projects": "fsdfsdf",
+      "progress": "fsdfsdfds",
+      "challenges": "fsdfsdf",
+      "goals": "fsedfsas",
+      "updates": "sdfsdfsd",
+      "date": "2026-06-25"
+    },
+    {
+      "id": "rep-apex-daily-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-apex-solutions",
+      "reporter_id": "use-apex-owner",
+      "business_name": "Apex Solutions",
+      "activities": "Migrated 14 staging databases to AWS Aurora. Verified latency metrics.",
+      "active_projects": "LexCorp DB Migration Project, Wayne Cloud Audit Planning",
+      "progress": "Aurora performance is 4x faster. Schema conversion completed.",
+      "challenges": "Network gateway routing bottleneck detected on staging subnet.",
+      "goals": "Resolve subnet routing rules. Conduct Wayne Enterprises discovery call.",
+      "updates": "Alex Apex available all day for sync.",
+      "date": "2026-06-25"
+    },
+    {
+      "id": "rep-green-daily-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-greenpulse-co",
+      "reporter_id": "use-green-owner",
+      "business_name": "GreenPulse Co",
+      "activities": "Refactored smart contract interfaces for carbon credit logging.",
+      "active_projects": "Carbon Credit Ledger Ledger API v2",
+      "progress": "Carbon Ledger transaction validation now operational.",
+      "challenges": "Etherscan API limit throttles testing on testnets.",
+      "goals": "Deploy smart contracts to testnet.",
+      "updates": "Grace Green Out of Office tomorrow afternoon.",
+      "date": "2026-06-25"
+    }
+  ],
+  "content_items": [
+    {
+      "id": "con-1782404832010-wobhm",
+      "created_at": "2026-06-25T16:27:12.010Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "owner_id": "use-1782404624056-5svlf",
+      "raw_video_url": "/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4",
+      "content_idea": "unboxing",
+      "instructions": "eewwerwe",
+      "status": "published",
+      "assigned_editor_id": "editor-1",
+      "assigned_sm_manager_id": "sm-1",
+      "history": [
+        {
+          "status": "pending_admin_review",
+          "user": "Taha Khan",
+          "timestamp": "2026-06-25T16:27:12.009Z",
+          "notes": "Raw content uploaded"
+        },
+        {
+          "status": "assigned_editor",
+          "user": "Admin Assistant",
+          "timestamp": "2026-06-25T16:27:48.021Z",
+          "notes": "Assigned to editor David Editor"
+        },
+        {
+          "status": "editor_submitted",
+          "user": "David Editor",
+          "timestamp": "2026-06-25T16:28:38.238Z",
+          "notes": "fser"
+        },
+        {
+          "status": "approved",
+          "user": "Owner Boss",
+          "timestamp": "2026-06-25T16:29:09.726Z",
+          "notes": "54646"
+        },
+        {
+          "status": "assigned_sm_manager",
+          "user": "Owner Boss",
+          "timestamp": "2026-06-25T16:29:21.037Z",
+          "notes": "Assigned to SMM Sarah Manager"
+        },
+        {
+          "status": "published",
+          "user": "Sarah Manager",
+          "timestamp": "2026-06-25T16:30:55.508Z",
+          "notes": "Live URLs submitted: {\"tiktok\":\"http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4\",\"instagram\":\"http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4\",\"facebook\":\"http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4\",\"shorts\":\"http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4\"}"
+        }
+      ],
+      "deadline": "2026-06-25",
+      "updated_at": "2026-06-25T16:30:55.512Z",
+      "edited_video_url": "http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4",
+      "editor_notes": "fser",
+      "live_post_urls": {
+        "tiktok": "http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4",
+        "instagram": "http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4",
+        "facebook": "http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4",
+        "shorts": "http://localhost:5000/uploads/1782404831793-Finger_scooping_pink_jelly_cream_202606211331.mp4"
+      }
+    },
+    {
+      "id": "con-apex-bulk-upload",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-apex-solutions",
+      "business_name": "Apex Solutions",
+      "owner_id": "use-apex-owner",
+      "raw_video_url": "/uploads/apex_raw_1.mp4",
+      "raw_video_urls": [
+        "/uploads/apex_raw_1.mp4",
+        "/uploads/apex_raw_2.mp4",
+        "/uploads/apex_raw_3.mp4"
+      ],
+      "content_idea": "Cloud Architecture Promo Reel (Bulk Videos)",
+      "instructions": "Please cut these three raw clips together. Add tech music, captions, and export in 9:16 portrait.",
+      "status": "assigned_editor",
+      "assigned_editor_id": "editor-1",
+      "assigned_sm_manager_id": null,
+      "history": [
+        {
+          "status": "pending_admin_review",
+          "user": "Alex Apex",
+          "timestamp": "2026-06-25T16:54:17.989Z",
+          "notes": "Raw content uploaded (3 files)"
+        },
+        {
+          "status": "assigned_editor",
+          "user": "Owner Boss",
+          "timestamp": "2026-06-25T16:54:17.989Z",
+          "notes": "Assigned to editor David Editor"
+        }
+      ],
+      "deadline": "2026-07-02"
+    },
+    {
+      "id": "con-green-google-drive",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-greenpulse-co",
+      "business_name": "GreenPulse Co",
+      "owner_id": "use-green-owner",
+      "raw_video_url": "/uploads/green_raw.mp4",
+      "raw_video_urls": [
+        "/uploads/green_raw.mp4"
+      ],
+      "content_idea": "Eco Accounting Software Pitch",
+      "instructions": "Keep it clean, use corporate style overlays, and add a green call to action at the end.",
+      "status": "assigned_sm_manager",
+      "assigned_editor_id": "editor-1",
+      "assigned_sm_manager_id": "sm-1",
+      "edited_video_url": "https://drive.google.com/file/d/1A2B3C4D5E6F7G8H9I0J/view?usp=sharing",
+      "editor_notes": "Uploaded final rendering to Google Drive as requested. Clean color grade and corporate overlays applied.",
+      "history": [
+        {
+          "status": "pending_admin_review",
+          "user": "Grace Green",
+          "timestamp": "2026-06-25T16:54:17.989Z",
+          "notes": "Raw content uploaded (1 file)"
+        },
+        {
+          "status": "assigned_editor",
+          "user": "Owner Boss",
+          "timestamp": "2026-06-25T16:54:17.989Z",
+          "notes": "Assigned to editor David Editor"
+        },
+        {
+          "status": "editor_submitted",
+          "user": "David Editor",
+          "timestamp": "2026-06-25T16:54:17.989Z",
+          "notes": "Google Drive deliverable link uploaded"
+        },
+        {
+          "status": "approved",
+          "user": "Admin Assistant",
+          "timestamp": "2026-06-25T17:21:04.266Z",
+          "notes": "wsrs"
+        },
+        {
+          "status": "assigned_sm_manager",
+          "user": "Admin Assistant",
+          "timestamp": "2026-06-25T17:21:07.629Z",
+          "notes": "Assigned to SMM Sarah Manager"
+        }
+      ],
+      "deadline": "2026-06-30",
+      "updated_at": "2026-06-25T17:21:07.631Z"
+    },
+    {
+      "id": "con-1782407983185-nn2ob",
+      "created_at": "2026-06-25T17:19:43.185Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "owner_id": "use-1782404624056-5svlf",
+      "raw_video_url": "/uploads/1782407982096-Woman_applying_cream_to_cheek_202606211331.mp4",
+      "raw_video_urls": [
+        "/uploads/1782407982096-Woman_applying_cream_to_cheek_202606211331.mp4",
+        "/uploads/1782407982346-Woman_holding_cream_jar_202606211331.mp4",
+        "/uploads/1782407982592-Woman_holding_pink_jelly_cream_202606211323.mp4",
+        "/uploads/1782407982922-Woman_touching_cheek_satisfied_202606211331.mp4"
+      ],
+      "content_idea": "sdfsdfsd bulk",
+      "instructions": "srfsdf",
+      "status": "assigned_editor",
+      "assigned_editor_id": "editor-1",
+      "assigned_sm_manager_id": null,
+      "history": [
+        {
+          "status": "pending_admin_review",
+          "user": "Taha Khan",
+          "timestamp": "2026-06-25T17:19:43.181Z",
+          "notes": "Raw content uploaded (4 files)"
+        },
+        {
+          "status": "assigned_editor",
+          "user": "Admin Assistant",
+          "timestamp": "2026-06-25T17:20:57.078Z",
+          "notes": "Assigned to editor David Editor"
+        }
+      ],
+      "deadline": "2026-06-26",
+      "updated_at": "2026-06-25T17:20:57.081Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv-1782405193585-e5v1k",
+      "created_at": "2026-06-25T16:33:13.585Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "invoice_number": "INV-193584",
+      "client_name": "Taha",
+      "client_email": "ktaha8967@gmail.com",
+      "branding_title": "Britsync UK",
+      "items": [
+        {
+          "name": "Order summary",
+          "price": 700,
+          "quantity": 100
+        },
+        {
+          "name": "das",
+          "price": 2432,
+          "quantity": 33
+        }
+      ],
+      "total": 150256,
+      "due_date": "2026-06-26",
+      "status": "paid",
+      "updated_at": "2026-06-25T16:33:40.651Z"
+    },
+    {
+      "id": "inv-apex-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-apex-solutions",
+      "business_name": "Apex Solutions",
+      "invoice_number": "INV-38827",
+      "client_name": "Wayne Enterprises",
+      "client_email": "finance@waynecorp.com",
+      "branding_title": "Apex Cloud Solutions LLC",
+      "items": [
+        {
+          "name": "Enterprise Cloud Audit Sync",
+          "price": 100000,
+          "quantity": 1
+        },
+        {
+          "name": "Aurora database schema refactoring",
+          "price": 50000,
+          "quantity": 1
+        }
+      ],
+      "total": 150000,
+      "due_date": "2026-07-15",
+      "status": "paid"
+    },
+    {
+      "id": "inv-green-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-greenpulse-co",
+      "business_name": "GreenPulse Co",
+      "invoice_number": "INV-40112",
+      "client_name": "Tesla Motors",
+      "client_email": "billing@tesla.com",
+      "branding_title": "GreenPulse Technologies Inc",
+      "items": [
+        {
+          "name": "Carbon credit ledger interface development",
+          "price": 60000,
+          "quantity": 1
+        }
+      ],
+      "total": 60000,
+      "due_date": "2026-07-20",
+      "status": "unpaid"
+    }
+  ],
+  "meetings": [
+    {
+      "id": "mee-1782405266272-3rxug",
+      "created_at": "2026-06-25T16:34:26.272Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "title": "Weekly meeting",
+      "date_time": "2026-06-25T21:38",
+      "status": "completed",
+      "attendance": [
+        "admin-1",
+        "use-1782405929747-tcugv"
+      ],
+      "notes": "sdfsff",
+      "follow_ups": "sdfsdfsd",
+      "updated_at": "2026-06-25T17:03:45.052Z"
+    },
+    {
+      "id": "mee-1782407256944-4y2mp",
+      "created_at": "2026-06-25T17:07:36.944Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "title": "Ad Strategy Review Request",
+      "date_time": "2026-06-29T10:00",
+      "status": "completed",
+      "notes": "",
+      "follow_ups": "",
+      "updated_at": "2026-06-25T17:16:45.301Z"
+    },
+    {
+      "id": "mee-1782407257298-t9o6x",
+      "created_at": "2026-06-25T17:07:37.298Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "title": "Ad Strategy Reject Request",
+      "date_time": "2026-06-29T11:00",
+      "status": "rejected",
+      "attendance": [],
+      "notes": "",
+      "follow_ups": "",
+      "updated_at": "2026-06-25T17:07:37.331Z"
+    },
+    {
+      "id": "mee-1782407257358-bp73f",
+      "created_at": "2026-06-25T17:07:37.358Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "title": "Ad Strategy Reschedule Request",
+      "date_time": "2026-06-30T15:30",
+      "status": "completed",
+      "notes": "",
+      "follow_ups": "",
+      "updated_at": "2026-06-25T17:13:39.328Z"
+    },
+    {
+      "id": "mee-1782408481308-e7a8u",
+      "created_at": "2026-06-25T17:28:01.308Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "title": "weekly ",
+      "date_time": "2026-06-25T22:27",
+      "status": "completed",
+      "notes": "Let's review the active client orders.",
+      "follow_ups": "- We need to assign the new bulk videos of Apex Solutions to our video editors\n- The editor will submit Google Drive folder links for review\n- Also, the team must draft the new branding strategy for GreenPulse Co by next week",
+      "updated_at": "2026-06-25T17:32:13.524Z"
+    }
+  ],
+  "mentorship_requests": [
+    {
+      "id": "men-req-test-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "member_id": "use-approved-mentee",
+      "member_name": "Mark Approved Mentee",
+      "challenges": "Struggling to find early corporate pilot partners for our product validation.",
+      "topics": "Sales outreach B2B, validation metrics, corporate sales pipelines",
+      "requested_date": "2026-06-28",
+      "status": "pending",
+      "meeting_date": null,
+      "notes": "",
+      "recommendations": "",
+      "action_plans": [],
+      "history": [
+        {
+          "status": "pending",
+          "timestamp": "2026-06-25T16:54:17.989Z",
+          "notes": "Mentorship request submitted"
+        }
+      ]
+    }
+  ],
+  "notifications": [
+    {
+      "id": "not-1782404768700-to19g",
+      "created_at": "2026-06-25T16:26:08.701Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "Account Approved",
+      "message": "Your business profile has been approved! Welcome to the platform.",
+      "is_read": false
+    },
+    {
+      "id": "not-1782404868026-rqsvl",
+      "created_at": "2026-06-25T16:27:48.026Z",
+      "user_id": "editor-1",
+      "title": "New Editing Assignment",
+      "message": "You have been assigned to edit video for Download Any Video. Deadline: 2026-06-25",
+      "is_read": false
+    },
+    {
+      "id": "not-1782404918255-xskfr",
+      "created_at": "2026-06-25T16:28:38.255Z",
+      "user_id": "admin-1",
+      "title": "Editor Submission",
+      "message": "Video editor David Editor submitted task for Download Any Video",
+      "is_read": true,
+      "updated_at": "2026-06-25T17:04:01.597Z"
+    },
+    {
+      "id": "not-1782404918265-00kt4",
+      "created_at": "2026-06-25T16:28:38.265Z",
+      "user_id": "admin-2",
+      "title": "Editor Submission",
+      "message": "Video editor David Editor submitted task for Download Any Video",
+      "is_read": false
+    },
+    {
+      "id": "not-1782404949742-3a9gg",
+      "created_at": "2026-06-25T16:29:09.742Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "Content Approved",
+      "message": "Your content video has been approved by admin and is queued for publishing.",
+      "is_read": false
+    },
+    {
+      "id": "not-1782404961045-rssly",
+      "created_at": "2026-06-25T16:29:21.046Z",
+      "user_id": "sm-1",
+      "title": "Publishing Task Assigned",
+      "message": "New approved content assigned to you for publishing. Business: Download Any Video",
+      "is_read": false
+    },
+    {
+      "id": "not-1782405055523-02cs4",
+      "created_at": "2026-06-25T16:30:55.523Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "Content Published!",
+      "message": "Your video has been published on social channels by Sarah Manager",
+      "is_read": false
+    },
+    {
+      "id": "not-1782406142846-lio15",
+      "created_at": "2026-06-25T16:49:02.846Z",
+      "user_id": "use-1782406142739-z5lk2",
+      "title": "Account Approved",
+      "message": "Your business profile has been approved! Welcome to the platform.",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407256951-z33ls",
+      "created_at": "2026-06-25T17:07:36.951Z",
+      "user_id": "admin-1",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Review Request",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407256959-66f03",
+      "created_at": "2026-06-25T17:07:36.959Z",
+      "user_id": "admin-2",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Review Request",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407257276-x2g7j",
+      "created_at": "2026-06-25T17:07:37.276Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "Meeting Request Approved",
+      "message": "Your meeting request \"Ad Strategy Review Request\" has been approved for 2026-06-29T10:00",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407257304-gyoda",
+      "created_at": "2026-06-25T17:07:37.304Z",
+      "user_id": "admin-1",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reject Request",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407257309-jqlbp",
+      "created_at": "2026-06-25T17:07:37.309Z",
+      "user_id": "admin-2",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reject Request",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407257338-nbom2",
+      "created_at": "2026-06-25T17:07:37.338Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "Meeting Request Rejected",
+      "message": "Your meeting request \"Ad Strategy Reject Request\" has been rejected",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407257369-ps5i9",
+      "created_at": "2026-06-25T17:07:37.369Z",
+      "user_id": "admin-1",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reschedule Request",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407257378-a4g3u",
+      "created_at": "2026-06-25T17:07:37.378Z",
+      "user_id": "admin-2",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reschedule Request",
+      "is_read": false
+    },
+    {
+      "id": "not-1782407257404-lgvmi",
+      "created_at": "2026-06-25T17:07:37.404Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "Meeting Rescheduled",
+      "message": "Your meeting request \"Ad Strategy Reschedule Request\" has been rescheduled for 2026-06-30T15:30",
+      "is_read": false
+    },
+    {
+      "id": "not-1782408057089-va0je",
+      "created_at": "2026-06-25T17:20:57.089Z",
+      "user_id": "editor-1",
+      "title": "New Editing Assignment",
+      "message": "You have been assigned to edit video for Download Any Video. Deadline: 2026-06-26",
+      "is_read": false
+    },
+    {
+      "id": "not-1782408064291-iy3xp",
+      "created_at": "2026-06-25T17:21:04.291Z",
+      "user_id": "use-green-owner",
+      "title": "Content Approved",
+      "message": "Your content video has been approved by admin and is queued for publishing.",
+      "is_read": false
+    },
+    {
+      "id": "not-1782408067637-63zcw",
+      "created_at": "2026-06-25T17:21:07.637Z",
+      "user_id": "sm-1",
+      "title": "Publishing Task Assigned",
+      "message": "New approved content assigned to you for publishing. Business: GreenPulse Co",
+      "is_read": false
+    },
+    {
+      "id": "not-1782408481353-ikpsb",
+      "created_at": "2026-06-25T17:28:01.353Z",
+      "user_id": "admin-1",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: weekly ",
+      "is_read": false
+    },
+    {
+      "id": "not-1782408481369-twgbx",
+      "created_at": "2026-06-25T17:28:01.369Z",
+      "user_id": "admin-2",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: weekly ",
+      "is_read": false
+    },
+    {
+      "id": "not-1782408518595-xdik6",
+      "created_at": "2026-06-25T17:28:38.595Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "Meeting Request Approved",
+      "message": "Your meeting request \"weekly \" has been approved for 2026-06-25T22:27",
+      "is_read": false
+    }
+  ],
+  "activity_logs": [
+    {
+      "id": "act-1782401167286-s7ecw",
+      "created_at": "2026-06-25T15:26:07.286Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404560474-qqxfz",
+      "created_at": "2026-06-25T16:22:40.474Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404573314-rf0af",
+      "created_at": "2026-06-25T16:22:53.315Z",
+      "user_id": "admin-1",
+      "action": "create_invitation",
+      "details": "Generated invitation INV-VERTEX-8585 for Vertex"
+    },
+    {
+      "id": "act-1782404624124-391ym",
+      "created_at": "2026-06-25T16:23:44.124Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "business_signup",
+      "details": "Signed up business: Download Any Video with invite code: INV-VERTEX-8585"
+    },
+    {
+      "id": "act-1782404636550-yxqys",
+      "created_at": "2026-06-25T16:23:56.550Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404687612-akehk",
+      "created_at": "2026-06-25T16:24:47.612Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404768710-djjng",
+      "created_at": "2026-06-25T16:26:08.710Z",
+      "user_id": "admin-2",
+      "action": "approve_business",
+      "details": "Approved business Download Any Video"
+    },
+    {
+      "id": "act-1782404794819-f5vs3",
+      "created_at": "2026-06-25T16:26:34.819Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404832017-90gi8",
+      "created_at": "2026-06-25T16:27:12.017Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "content_upload",
+      "details": "Uploaded new content idea/video"
+    },
+    {
+      "id": "act-1782404839554-lrtrz",
+      "created_at": "2026-06-25T16:27:19.554Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404868035-2xb06",
+      "created_at": "2026-06-25T16:27:48.035Z",
+      "user_id": "admin-2",
+      "action": "assign_video_editor",
+      "details": "Assigned content task con-1782404832010-wobhm to editor David Editor"
+    },
+    {
+      "id": "act-1782404885440-nsvpf",
+      "created_at": "2026-06-25T16:28:05.440Z",
+      "user_id": "editor-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404918269-gnqkc",
+      "created_at": "2026-06-25T16:28:38.269Z",
+      "user_id": "editor-1",
+      "action": "editor_submit_video",
+      "details": "Editor submitted work for content task con-1782404832010-wobhm"
+    },
+    {
+      "id": "act-1782404925437-ij170",
+      "created_at": "2026-06-25T16:28:45.437Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782404961053-80f0k",
+      "created_at": "2026-06-25T16:29:21.053Z",
+      "user_id": "admin-1",
+      "action": "assign_social_media",
+      "details": "Assigned content task con-1782404832010-wobhm to SMM Sarah Manager"
+    },
+    {
+      "id": "act-1782405007370-bn47r",
+      "created_at": "2026-06-25T16:30:07.370Z",
+      "user_id": "sm-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782405055527-4qiai",
+      "created_at": "2026-06-25T16:30:55.527Z",
+      "user_id": "sm-1",
+      "action": "publish_social_media",
+      "details": "SMM published content task con-1782404832010-wobhm"
+    },
+    {
+      "id": "act-1782405068788-zwl1z",
+      "created_at": "2026-06-25T16:31:08.788Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782405114925-wrtee",
+      "created_at": "2026-06-25T16:31:54.925Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782405125979-pbxfs",
+      "created_at": "2026-06-25T16:32:05.979Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "submit_daily_report",
+      "details": "Submitted daily report for Download Any Video"
+    },
+    {
+      "id": "act-1782405193592-rtcbp",
+      "created_at": "2026-06-25T16:33:13.592Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "create_invoice",
+      "details": "Generated invoice INV-193584 for client Taha"
+    },
+    {
+      "id": "act-1782405266284-o5far",
+      "created_at": "2026-06-25T16:34:26.284Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "schedule_meeting",
+      "details": "Scheduled meeting: Weekly meeting"
+    },
+    {
+      "id": "act-1782405294916-qo9xv",
+      "created_at": "2026-06-25T16:34:54.916Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782405322886-s2qw7",
+      "created_at": "2026-06-25T16:35:22.886Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Weekly meeting"
+    },
+    {
+      "id": "act-1782405335012-tv2ad",
+      "created_at": "2026-06-25T16:35:35.012Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Weekly meeting"
+    },
+    {
+      "id": "act-1782405335172-lp2x1",
+      "created_at": "2026-06-25T16:35:35.172Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Weekly meeting"
+    },
+    {
+      "id": "act-1782405337131-47rpi",
+      "created_at": "2026-06-25T16:35:37.131Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Weekly meeting"
+    },
+    {
+      "id": "act-1782405337296-rn4ng",
+      "created_at": "2026-06-25T16:35:37.296Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Weekly meeting"
+    },
+    {
+      "id": "act-1782405337487-7kdkx",
+      "created_at": "2026-06-25T16:35:37.487Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Weekly meeting"
+    },
+    {
+      "id": "act-1782405887942-iorf7",
+      "created_at": "2026-06-25T16:44:47.942Z",
+      "user_id": "sm-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782405942359-qzqgs",
+      "created_at": "2026-06-25T16:45:42.359Z",
+      "user_id": "use-1782405929747-tcugv",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782406142424-smqkl",
+      "created_at": "2026-06-25T16:49:02.424Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782406142764-ouz8x",
+      "created_at": "2026-06-25T16:49:02.764Z",
+      "user_id": "use-1782406142739-z5lk2",
+      "action": "business_signup",
+      "details": "Signed up business: Test Apex Solutions with invite code: INV-APEX-2026"
+    },
+    {
+      "id": "act-1782406142857-6dybj",
+      "created_at": "2026-06-25T16:49:02.857Z",
+      "user_id": "admin-1",
+      "action": "approve_business",
+      "details": "Approved business Test Apex Solutions"
+    },
+    {
+      "id": "act-1782406143059-g00sc",
+      "created_at": "2026-06-25T16:49:03.059Z",
+      "user_id": "use-1782406142739-z5lk2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782406143085-dx1of",
+      "created_at": "2026-06-25T16:49:03.085Z",
+      "user_id": "use-1782406142739-z5lk2",
+      "action": "add_employee",
+      "details": "Added employee Jane Dev as Developer"
+    },
+    {
+      "id": "act-1782406143124-e1o27",
+      "created_at": "2026-06-25T16:49:03.124Z",
+      "user_id": "use-1782406142739-z5lk2",
+      "action": "create_order",
+      "details": "Created client order for Stark Industries - Arc Reactor Tech"
+    },
+    {
+      "id": "act-1782406143160-r8r5x",
+      "created_at": "2026-06-25T16:49:03.160Z",
+      "user_id": "use-1782406142739-z5lk2",
+      "action": "update_order",
+      "details": "Updated order ord-1782406143118-8m48y status to completed"
+    },
+    {
+      "id": "act-1782406249953-1iwx0",
+      "created_at": "2026-06-25T16:50:49.953Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782407025062-mcrvb",
+      "created_at": "2026-06-25T17:03:45.062Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Weekly meeting"
+    },
+    {
+      "id": "act-1782407256883-qdxu1",
+      "created_at": "2026-06-25T17:07:36.883Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782407256964-623qs",
+      "created_at": "2026-06-25T17:07:36.964Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "schedule_meeting",
+      "details": "Scheduled/requested meeting: Ad Strategy Review Request"
+    },
+    {
+      "id": "act-1782407257245-xfs7s",
+      "created_at": "2026-06-25T17:07:37.245Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782407257282-j2rbk",
+      "created_at": "2026-06-25T17:07:37.282Z",
+      "user_id": "admin-1",
+      "action": "approve_meeting",
+      "details": "Approved meeting request: Ad Strategy Review Request"
+    },
+    {
+      "id": "act-1782407257314-9zgws",
+      "created_at": "2026-06-25T17:07:37.314Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "schedule_meeting",
+      "details": "Scheduled/requested meeting: Ad Strategy Reject Request"
+    },
+    {
+      "id": "act-1782407257342-8mo5a",
+      "created_at": "2026-06-25T17:07:37.342Z",
+      "user_id": "admin-1",
+      "action": "reject_meeting",
+      "details": "Rejected meeting request: Ad Strategy Reject Request"
+    },
+    {
+      "id": "act-1782407257383-2dp1n",
+      "created_at": "2026-06-25T17:07:37.383Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "schedule_meeting",
+      "details": "Scheduled/requested meeting: Ad Strategy Reschedule Request"
+    },
+    {
+      "id": "act-1782407257411-ez2b5",
+      "created_at": "2026-06-25T17:07:37.411Z",
+      "user_id": "admin-1",
+      "action": "reschedule_meeting",
+      "details": "Rescheduled meeting \"Ad Strategy Reschedule Request\" to 2026-06-30T15:30"
+    },
+    {
+      "id": "act-1782407484396-p4eng",
+      "created_at": "2026-06-25T17:11:24.396Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782407619333-rggio",
+      "created_at": "2026-06-25T17:13:39.333Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Ad Strategy Reschedule Request"
+    },
+    {
+      "id": "act-1782407805310-3znl9",
+      "created_at": "2026-06-25T17:16:45.310Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for Ad Strategy Review Request"
+    },
+    {
+      "id": "act-1782407961874-74iz6",
+      "created_at": "2026-06-25T17:19:21.874Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782407983194-i7dal",
+      "created_at": "2026-06-25T17:19:43.194Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "content_upload",
+      "details": "Uploaded content: sdfsdfsd bulk with 4 raw videos"
+    },
+    {
+      "id": "act-1782408040550-0lffc",
+      "created_at": "2026-06-25T17:20:40.551Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782408057094-extg2",
+      "created_at": "2026-06-25T17:20:57.094Z",
+      "user_id": "admin-2",
+      "action": "assign_video_editor",
+      "details": "Assigned content task con-1782407983185-nn2ob to editor David Editor"
+    },
+    {
+      "id": "act-1782408067651-l94du",
+      "created_at": "2026-06-25T17:21:07.651Z",
+      "user_id": "admin-2",
+      "action": "assign_social_media",
+      "details": "Assigned content task con-green-google-drive to SMM Sarah Manager"
+    },
+    {
+      "id": "act-1782408079359-qqau0",
+      "created_at": "2026-06-25T17:21:19.359Z",
+      "user_id": "editor-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782408095861-099r6",
+      "created_at": "2026-06-25T17:21:35.861Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782408115844-e5cia",
+      "created_at": "2026-06-25T17:21:55.844Z",
+      "user_id": "editor-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782408284514-ubk0h",
+      "created_at": "2026-06-25T17:24:44.514Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782408460969-rcdsl",
+      "created_at": "2026-06-25T17:27:40.969Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782408481385-znf1j",
+      "created_at": "2026-06-25T17:28:01.385Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "schedule_meeting",
+      "details": "Scheduled/requested meeting: weekly "
+    },
+    {
+      "id": "act-1782408507815-h9y9e",
+      "created_at": "2026-06-25T17:28:27.815Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782408518617-p87oz",
+      "created_at": "2026-06-25T17:28:38.617Z",
+      "user_id": "admin-1",
+      "action": "approve_meeting",
+      "details": "Approved meeting request: weekly "
+    },
+    {
+      "id": "act-1782408662383-edvcf",
+      "created_at": "2026-06-25T17:31:02.383Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for weekly "
+    },
+    {
+      "id": "act-1782408668477-f4jx4",
+      "created_at": "2026-06-25T17:31:08.477Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for weekly "
+    },
+    {
+      "id": "act-1782408678961-3copm",
+      "created_at": "2026-06-25T17:31:18.962Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for weekly "
+    },
+    {
+      "id": "act-1782408718372-ywq6h",
+      "created_at": "2026-06-25T17:31:58.372Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for weekly "
+    },
+    {
+      "id": "act-1782408727305-edk91",
+      "created_at": "2026-06-25T17:32:07.305Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for weekly "
+    },
+    {
+      "id": "act-1782408733715-g0l0s",
+      "created_at": "2026-06-25T17:32:13.715Z",
+      "user_id": "admin-1",
+      "action": "update_meeting",
+      "details": "Updated meeting details for weekly "
+    },
+    {
+      "id": "act-1782408998834-mpe25",
+      "created_at": "2026-06-25T17:36:38.834Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-apex-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-apex-solutions",
+      "business_name": "Apex Solutions",
+      "client_name": "Wayne Enterprises",
+      "product_service": "Enterprise AWS Security Shield Audit",
+      "amount": 150000,
+      "status": "completed",
+      "notes": "Completed ahead of schedule. AWS security verified.",
+      "date": "2026-06-25"
+    },
+    {
+      "id": "ord-apex-2",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-apex-solutions",
+      "business_name": "Apex Solutions",
+      "client_name": "LexCorp",
+      "product_service": "Database Migration to Aurora Serverless",
+      "amount": 45000,
+      "status": "pending",
+      "notes": "Awaiting client schema review.",
+      "date": "2026-06-25"
+    },
+    {
+      "id": "ord-green-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-greenpulse-co",
+      "business_name": "GreenPulse Co",
+      "client_name": "Tesla Motors",
+      "product_service": "Carbon Credit Ledger Integration API",
+      "amount": 60000,
+      "status": "in_progress",
+      "notes": "API integration phase active.",
+      "date": "2026-06-25"
+    },
+    {
+      "id": "ord-dav-1",
+      "created_at": "2026-06-25T16:54:17.989Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "client_name": "Stark Industries",
+      "product_service": "Bulk Video Conversion API",
+      "amount": 85000,
+      "status": "completed",
+      "notes": "Integration complete.",
+      "date": "2026-06-25"
+    }
+  ]
+}
