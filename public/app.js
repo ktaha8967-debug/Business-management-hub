@@ -2351,13 +2351,31 @@ async function joinMeetingRoom(meetingId) {
       }
     };
 
+    let localParticipantJoined = false;
+
     if (typeof JitsiMeetExternalAPI !== 'undefined') {
       jitsiAPIInstance = new JitsiMeetExternalAPI(domain, options);
       
+      // Mark as joined once connection is established
+      jitsiAPIInstance.addEventListener('videoConferenceJoined', () => {
+        localParticipantJoined = true;
+        showToast('info', 'Secure connection established. Call active.');
+      });
+
       // Auto-exit and generate AI minutes if user hangs up call from within the meeting frame UI
       jitsiAPIInstance.addEventListener('videoConferenceLeft', () => {
-        showToast('info', 'Call hung up. Syncing final AI minutes...');
-        triggerAIMeetingSummarization();
+        if (localParticipantJoined) {
+          showToast('info', 'Call hung up. Syncing final AI minutes...');
+          triggerAIMeetingSummarization();
+          exitMeetingRoom(true);
+        } else {
+          showToast('warning', 'Jitsi connection failed or cancelled. Exiting...');
+          exitMeetingRoom(true);
+        }
+      });
+
+      // Handle direct tab close or lifecycle cleanup
+      jitsiAPIInstance.addEventListener('readyToClose', () => {
         exitMeetingRoom(true);
       });
     } else {
