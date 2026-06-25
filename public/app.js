@@ -2369,8 +2369,8 @@ async function joinMeetingRoom(meetingId) {
           triggerAIMeetingSummarization();
           exitMeetingRoom(true);
         } else {
-          showToast('warning', 'Jitsi connection failed or cancelled. Exiting...');
-          exitMeetingRoom(true);
+          showToast('warning', 'Jitsi connection failed or microphone blocked. Notes mode active.');
+          // Do not exitMeetingRoom so they can still type notes or exit manually
         }
       });
 
