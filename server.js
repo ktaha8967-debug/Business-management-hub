@@ -977,6 +977,98 @@ app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('Super Admin',
   }
 });
 
+// Unified helper to call LLM (Gemini first, fallback to Groq) using native fetch
+async function callLLM(systemInstruction, userContent, jsonMode = false) {
+  // --- 1. TRY GEMINI ---
+  const geminiApiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/[\r\n\t]/g, '');
+  if (geminiApiKey && !geminiApiKey.includes('placeholder')) {
+    try {
+      console.log('Attempting call with Gemini...');
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+      const body = {
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: userContent }]
+          }
+        ],
+        systemInstruction: {
+          parts: [{ text: systemInstruction }]
+        },
+        generationConfig: {
+          temperature: jsonMode ? 0.2 : 0.7,
+          maxOutputTokens: 1000
+        }
+      };
+
+      if (jsonMode) {
+        body.generationConfig.responseMimeType = "application/json";
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Gemini API call failed');
+      }
+
+      const candidate = data.candidates?.[0];
+      const text = candidate?.content?.parts?.[0]?.text;
+      if (text) {
+        console.log('Gemini query completed successfully.');
+        return text.trim();
+      }
+    } catch (geminiError) {
+      console.warn('Gemini API failed, trying Groq fallback:', geminiError.message);
+    }
+  }
+
+  // --- 2. TRY GROQ ---
+  const groqApiKey = (process.env.GROQ_API_KEY || '').trim().replace(/[\r\n\t]/g, '');
+  if (groqApiKey && !groqApiKey.includes('placeholder')) {
+    try {
+      console.log('Attempting call with Groq...');
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqApiKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          response_format: jsonMode ? { type: "json_object" } : undefined,
+          messages: [
+            { role: 'system', content: systemInstruction },
+            { role: 'user', content: userContent }
+          ],
+          temperature: jsonMode ? 0.2 : 0.7,
+          max_tokens: 1000
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Groq API call failed');
+      }
+
+      const text = data.choices?.[0]?.message?.content;
+      if (text) {
+        console.log('Groq query completed successfully.');
+        return text.trim();
+      }
+    } catch (groqError) {
+      console.warn('Groq API failed:', groqError.message);
+      throw groqError;
+    }
+  }
+
+  throw new Error('No valid LLM provider keys available or all providers failed');
+}
+
 // --- AI VOICE AGENT ROUTE (Super Admin & Admin Team Only) ---
 app.post('/api/admin/voice-agent', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), async (req, res) => {
   try {
@@ -986,138 +1078,264 @@ app.post('/api/admin/voice-agent', authenticateToken, authorizeRoles('Super Admi
     const meetings = db.getCollection('meetings');
     const mentorship = db.getCollection('mentorship_requests');
     const dailyReports = db.getCollection('daily_reports');
+    const orders = db.getCollection('orders');
+    const invoices = db.getCollection('invoices');
 
-    // Compile active status of users and activities
+    // Compile comprehensive system context for the AI
     const systemContext = {
       total_businesses: businesses.length,
       pending_approvals: businesses.filter(b => b.status === 'pending').length,
-      video_editors: users.filter(u => u.role === 'Video Editors').map(u => ({ id: u.id, name: u.full_name })),
-      smm_managers: users.filter(u => u.role === 'Social Media Managers').map(u => ({ id: u.id, name: u.full_name })),
-      content_status: contents.map(c => ({
+      users: users.map(u => ({ id: u.id, name: u.full_name, role: u.role, status: u.status })),
+      businesses: businesses.map(b => ({
+        id: b.id,
+        business_name: b.business_name,
+        industry: b.industry,
+        employee_count: b.employee_count,
+        status: b.status,
+        employees: b.employees || []
+      })),
+      content_items: contents.map(c => ({
+        id: c.id,
+        business_id: c.business_id,
         business_name: c.business_name,
         idea: c.content_idea,
         status: c.status,
-        editor: users.find(u => u.id === c.assigned_editor_id)?.full_name || 'Unassigned',
-        smm: users.find(u => u.id === c.assigned_sm_manager_id)?.full_name || 'Unassigned'
+        assigned_editor_id: c.assigned_editor_id,
+        assigned_sm_manager_id: c.assigned_sm_manager_id,
+        deadline: c.deadline,
+        editor_name: users.find(u => u.id === c.assigned_editor_id)?.full_name || 'Unassigned',
+        smm_name: users.find(u => u.id === c.assigned_sm_manager_id)?.full_name || 'Unassigned'
       })),
-      scheduled_briefings: meetings.filter(m => m.status === 'scheduled').map(m => ({ title: m.title, time: m.date_time, biz: m.business_name })),
-      mentorship_track: mentorship.map(m => ({ member: m.member_name, challenge: m.challenges, status: m.status, date: m.meeting_date })),
-      daily_reports_today: dailyReports.slice(-5).map(r => ({ biz: r.business_name, activities: r.activities }))
+      meetings: meetings.map(m => ({
+        id: m.id,
+        business_id: m.business_id,
+        business_name: m.business_name,
+        title: m.title,
+        date_time: m.date_time,
+        status: m.status,
+        notes: m.notes,
+        follow_ups: m.follow_ups
+      })),
+      daily_reports: dailyReports.map(r => ({
+        id: r.id,
+        business_id: r.business_id,
+        business_name: r.business_name,
+        activities: r.activities,
+        active_projects: r.active_projects,
+        progress: r.progress,
+        challenges: r.challenges,
+        goals: r.goals,
+        updates: r.updates,
+        date: r.date
+      })),
+      orders: orders.map(o => ({
+        id: o.id,
+        business_id: o.business_id,
+        business_name: o.business_name,
+        client_name: o.client_name,
+        product_service: o.product_service,
+        amount: o.amount,
+        status: o.status,
+        notes: o.notes,
+        date: o.date
+      })),
+      invoices: invoices.map(i => ({
+        id: i.id,
+        business_id: i.business_id,
+        business_name: i.business_name,
+        total: i.total,
+        status: i.status,
+        due_date: i.due_date
+      }))
     };
 
-    // Local fallback speech generator in case OpenAI key fails or is invalid
+    // Local fallback speech generator in case Gemini key fails or is invalid
     const generateFallbackSpeech = (context, query) => {
       if (query) {
         const q = query.toLowerCase();
-        // Check if query is about video editors
-        if (q.includes('editor') || q.includes('edit') || q.includes('video')) {
-          const activeEdits = context.content_status.filter(c => c.status === 'assigned_editor');
-          if (activeEdits.length === 0) {
-            return `No video editors are currently editing content. All tasks are completed or pending assignment.`;
-          }
-          const details = activeEdits.map(c => `${c.editor} is editing content for ${c.business_name}`).join(', ');
-          return `Currently, the active video editors are doing the following: ${details}.`;
+        
+        // Friendly Greetings
+        if (q.startsWith('hello') || q.startsWith('hi') || q.includes('hey there') || q.includes('greetings')) {
+          return `Hello there, Boss! I hope you are having a wonderful day. How can I help you manage your business portfolios and tasks today?`;
         }
-        // Check if query is about social media or publishing
-        if (q.includes('social') || q.includes('publish') || q.includes('smm') || q.includes('post')) {
-          const pendingPublish = context.content_status.filter(c => c.status === 'assigned_sm_manager');
-          if (pendingPublish.length === 0) {
-            return `No active publishing tasks are currently assigned to social media managers.`;
-          }
-          const details = pendingPublish.map(c => `${c.smm} is dispatching content for ${c.business_name}`).join(', ');
-          return `Regarding social publishing: ${details}.`;
+        if (q.includes('how are you') || q.includes('how\'s it going') || q.includes('how do you do')) {
+          return `I am doing fantastic, Boss! Thank you so much for asking. I am fully loaded with our business stats and ready to assist you. What can I check for you?`;
         }
-        // Check if query is about meetings
-        if (q.includes('meeting') || q.includes('brief') || q.includes('schedule')) {
-          if (context.scheduled_briefings.length === 0) {
-            return `There are no scheduled weekly meetings on the tracker at this moment.`;
-          }
-          const details = context.scheduled_briefings.map(m => `${m.title} for ${m.biz}`).join(', ');
-          return `We have the following meetings scheduled: ${details}.`;
+        if (q.includes('who are you') || q.includes('your name') || q.includes('what do you do')) {
+          return `I am your friendly Ascentra Voice Assistant! I help you track employee workloads, review daily business reports, manage client orders, and give smart suggestions to optimize operations.`;
         }
-        // General search for names or businesses in database
-        for (const user of users) {
-          if (q.includes(user.full_name.toLowerCase())) {
-            const tasks = context.content_status.filter(c => c.editor === user.full_name || c.smm === user.full_name);
-            if (tasks.length === 0) return `${user.full_name} is currently idle with no active content tasks assigned.`;
-            return `${user.full_name} is working on tasks: ${tasks.map(t => `${t.status} for ${t.business_name}`).join(', ')}.`;
+        if (q.includes('thank you') || q.includes('thanks')) {
+          return `You are very welcome, Boss! It is always a pleasure helping you. Let me know if there's anything else you need.`;
+        }
+        
+        // 1. Workload suggestions / reassignments
+        if (q.includes('suggest') || q.includes('free') || q.includes('assign') || q.includes('workload')) {
+          const editors = context.users.filter(u => u.role === 'Video Editors' && u.status === 'approved');
+          const editorWorkloads = editors.map(e => {
+            const active = context.content_items.filter(c => c.assigned_editor_id === e.id && ['assigned_editor', 'editor_submitted'].includes(c.status));
+            return { user: e, count: active.length, tasks: active };
+          });
+          
+          const overloaded = editorWorkloads.find(w => w.count >= 2);
+          const freeEditor = editorWorkloads.find(w => w.count === 0);
+          
+          if (overloaded && freeEditor) {
+            const taskToMove = overloaded.tasks[0];
+            return `I noticed a small workload mismatch. Our editor ${overloaded.user.name} is handling ${overloaded.count} active tasks, while ${freeEditor.user.name} is completely free right now. I highly suggest reassigning the task "${taskToMove.idea}" for ${taskToMove.business_name} to ${freeEditor.user.name} to balance the load and speed up production!`;
+          }
+          
+          const smms = context.users.filter(u => u.role === 'Social Media Managers' && u.status === 'approved');
+          const smmWorkloads = smms.map(s => {
+            const active = context.content_items.filter(c => c.assigned_sm_manager_id === s.id && c.status === 'assigned_sm_manager');
+            return { user: s, count: active.length, tasks: active };
+          });
+          
+          const overloadedSmm = smmWorkloads.find(w => w.count >= 2);
+          const freeSmm = smmWorkloads.find(w => w.count === 0);
+          
+          if (overloadedSmm && freeSmm) {
+            const taskToMove = overloadedSmm.tasks[0];
+            return `I suggest shifting the social publishing task "${taskToMove.idea}" for ${taskToMove.business_name} from ${overloadedSmm.user.name} to ${freeSmm.user.name}. ${overloadedSmm.user.name} has ${overloadedSmm.count} tasks, while ${freeSmm.user.name} is currently free.`;
+          }
+          
+          return `Everything looks great and balanced right now, Boss! All approved video editors and social managers are carrying reasonable workloads.`;
+        }
+
+        // 2. Specific person lookup (e.g. David, Sarah, Taha)
+        for (const user of context.users) {
+          const names = user.name.toLowerCase().split(' ');
+          const matches = names.some(n => q.includes(n) && n.length > 2);
+          if (matches) {
+            const editorTasks = context.content_items.filter(c => c.assigned_editor_id === user.id && ['assigned_editor', 'editor_submitted'].includes(c.status));
+            const smmTasks = context.content_items.filter(c => c.assigned_sm_manager_id === user.id && c.status === 'assigned_sm_manager');
+            const totalActive = editorTasks.length + smmTasks.length;
+            
+            if (totalActive === 0) {
+              return `Ah, ${user.name} is currently free with no active content tasks assigned. They are ready for any new work you have!`;
+            }
+            
+            let details = `Well, ${user.name} is currently working on ${totalActive} active task(s). `;
+            if (editorTasks.length > 0) {
+              details += `For editing: they are working on ${editorTasks.map(t => `"${t.idea}" for ${t.business_name} (status: ${t.status}, deadline: ${t.deadline || 'none'})`).join(', ')}. `;
+            }
+            if (smmTasks.length > 0) {
+              details += `For social publishing: they are working on ${smmTasks.map(t => `"${t.idea}" for ${t.business_name}`).join(', ')}. `;
+            }
+            return details;
           }
         }
-        for (const biz of businesses) {
-          if (q.includes(biz.business_name.toLowerCase())) {
-            const tasks = context.content_status.filter(c => c.business_name === biz.business_name);
-            if (tasks.length === 0) return `${biz.business_name} has no active content items in the pipeline.`;
-            return `${biz.business_name} has content status: ${tasks.map(t => `${t.status} (Editor: ${t.editor})`).join(', ')}.`;
+
+        // 3. Specific business report lookup
+        for (const biz of context.businesses) {
+          if (q.includes(biz.business_name.toLowerCase()) || q.includes(biz.business_name.split(' ')[0].toLowerCase())) {
+            const bizId = biz.id;
+            const bizOrders = context.orders.filter(o => o.business_id === bizId);
+            const pendingOrders = bizOrders.filter(o => o.status === 'pending' || o.status === 'in_progress');
+            const completedOrders = bizOrders.filter(o => o.status === 'completed');
+            
+            const bizReports = context.daily_reports.filter(r => r.business_id === bizId);
+            const latestReport = bizReports.length > 0 ? bizReports[bizReports.length - 1] : null;
+            
+            const bizContents = context.content_items.filter(c => c.business_id === bizId);
+            const activeContents = bizContents.filter(c => c.status !== 'published');
+            
+            let report = `Here is the friendly business report for ${biz.business_name} (${biz.industry})! `;
+            report += `They have a team of ${biz.employee_count || 0} employees. `;
+            
+            if (latestReport) {
+              report += `According to their latest daily update, the activities were: "${latestReport.activities}". `;
+              if (latestReport.challenges && latestReport.challenges.toLowerCase() !== 'none') {
+                report += `They ran into a challenge: "${latestReport.challenges}". `;
+              }
+              if (latestReport.goals) {
+                report += `Their main goals right now are: "${latestReport.goals}". `;
+              }
+            } else {
+              report += `No daily reports have been filed recently. `;
+            }
+            
+            if (bizOrders.length > 0) {
+              report += `On the order board, they have ${completedOrders.length} completed orders and ${pendingOrders.length} active orders. `;
+              if (pendingOrders.length > 0) {
+                report += `Currently processing: ${pendingOrders.map(o => `${o.product_service} for ${o.client_name} (status: ${o.status})`).join(', ')}. `;
+              }
+            } else {
+              report += `They don't have any active orders right now. `;
+            }
+            
+            if (activeContents.length > 0) {
+              report += `Also, there are ${activeContents.length} items moving through the content creation pipeline. `;
+            }
+            return report;
           }
         }
-        // Fallback search reply
-        return `I parsed the platform logs. We have ${context.total_businesses} partner businesses, ${context.video_editors.length} video editors, and ${context.smm_managers.length} social managers. Ask me specifically about task assignments or scheduled meetings.`;
+
+        // 4. Default query fallback search reply
+        return `Hello Boss! I would love to answer that for you. Currently, my connection to the Gemini cloud brain is offline (please check if your API key is configured correctly), but I am right here and ready to help you with any platform operations! You can ask me what David or other team members are doing, ask for task assignment suggestions, or request a detailed business report for portfolios like Apex Solutions. What would you like to check?`;
       }
 
-      // Default operations briefing
+      // Default operations briefing (if query is empty)
       const pendingBiz = context.pending_approvals;
-      const activeEdits = context.content_status.filter(c => c.status === 'assigned_editor');
-      const activePublishes = context.content_status.filter(c => c.status === 'assigned_sm_manager');
-      const briefings = context.scheduled_briefings;
+      const activeEdits = context.content_items.filter(c => c.status === 'assigned_editor');
+      const activePublishes = context.content_items.filter(c => c.status === 'assigned_sm_manager');
+      const briefings = context.meetings.filter(m => m.status === 'scheduled');
 
-      let speech = `Hello. Here is your operational briefing. We have ${context.total_businesses} partner portfolios registered, with ${pendingBiz} awaiting approval. `;
+      let speech = `Hello Boss! Welcome back. Here is your friendly operations briefing. We currently have ${context.total_businesses} partner portfolios registered on Ascentra, with ${pendingBiz} awaiting your review. `;
       if (activeEdits.length > 0) {
-        speech += `${activeEdits.length} videos are currently in production with editors. `;
+        speech += `Right now, ${activeEdits.length} video projects are actively being edited. `;
       } else {
-        speech += `No editing tasks are currently in progress. `;
+        speech += `There are no video editing tasks in progress at the moment. `;
       }
       if (activePublishes.length > 0) {
-        speech += `${activePublishes.length} approved assets are queued for social media dispatching. `;
+        speech += `${activePublishes.length} approved videos are in queue for social media posting. `;
       }
       if (briefings.length > 0) {
-        speech += `There are ${briefings.length} scheduled briefings upcoming. `;
+        speech += `We also have ${briefings.length} upcoming meetings scheduled. Let me know if you'd like me to look into any specific details!`;
       }
       return speech;
     };
 
-    // Make request to OpenAI Chat Completions API using global fetch
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    if (!openaiApiKey || openaiApiKey.startsWith('sk-proj-**') || openaiApiKey.includes('placeholder')) {
-      // Local fallback if key is not configured or is a placeholder
+    // Make request using callLLM helper
+    const geminiApiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/[\r\n\t]/g, '');
+    const groqApiKey = (process.env.GROQ_API_KEY || '').trim().replace(/[\r\n\t]/g, '');
+    const hasGemini = geminiApiKey && !geminiApiKey.includes('placeholder');
+    const hasGroq = groqApiKey && !groqApiKey.includes('placeholder');
+
+    if (!hasGemini && !hasGroq) {
       const fallbackText = generateFallbackSpeech(systemContext, req.body.query);
       return res.json({ speechText: fallbackText });
     }
 
     try {
-      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `You are the Ascentra Command Voice Assistant. You are briefing the Owner (Boss) or Admin Team. Based on the system data, analyze all workflows and report who is doing what (e.g. which video editors are active, what social media managers have published, who has submitted daily reports, and what meetings are scheduled). Speak directly, briefly, and professionally in 3-4 sentences. Format it to be read aloud by a Text-to-Speech engine.`
-            },
-            {
-              role: 'user',
-              content: req.body.query 
-                ? `Based on this platform data:\n${JSON.stringify(systemContext, null, 2)}\n\nAnswer the user's voice command/question: "${req.body.query}". Speak directly, briefly, and professionally in 3-4 sentences. Format for text-to-speech output.`
-                : `Here is the current platform data to analyze:\n${JSON.stringify(systemContext, null, 2)}`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 250
-        })
-      });
+      const systemInstruction = `You are the Ascentra Command Business Intelligence Voice Assistant. You are a friendly, conversational, and highly helpful AI companion briefing the Owner (Boss) or Super Admin.
+You have access to the complete database of businesses, users, content tasks, daily reports, orders, meetings, invoices, and mentorship requests.
 
-      const openaiData = await openaiResponse.json();
-      if (!openaiResponse.ok) {
-        throw new Error(openaiData.error?.message || 'OpenAI API call failed');
-      }
+Instructions:
+1. TONALITY: Speak in a warm, friendly, conversational, and highly helpful manner. Address the user respectfully (e.g. as Boss, Owner, or Sir). Use positive and encouraging words.
+2. ANSWER ANY QUESTION: Answer ANY question the user asks. If the user greets you or asks general chit-chat questions (e.g. "how is the weather?", "tell me a joke", or general knowledge), answer them in a warm, friendly way. Never refuse to answer or say you are limited.
+3. WHO IS DOING WHAT:
+   - If the user asks about a specific person (e.g. "what is David doing?"), check if they have active assignments in the content_items pipeline. Identify if they are free or overloaded, and report their active tasks, status, and deadlines in a friendly tone.
+4. WORKLOAD SUGGESTIONS & ASSIGNMENTS:
+   - Check if any approved team member (e.g., Video Editors, Social Media Managers) is "free" (has 0 active tasks) while another person is overloaded (has 2 or more active tasks).
+   - If so, suggest that the Boss reassign specific tasks from the overloaded person to the free person to balance the load. Clearly name the tasks, the overloaded person, and the free person.
+5. BUSINESS REPORTS:
+   - If the user asks for a report on a specific business (e.g., "what is the report of Apex Solutions?"), retrieve all details for that business:
+     * Business Details: Industry, employee count, status.
+     * Orders Processing: List all orders for the business, detailing their status ('pending', 'in_progress', 'completed') and notes.
+     * Daily Reports: Read the latest daily report's activities, active projects, progress, challenges, and goals.
+     * Content items and Financials (invoices).
+     * Summarize these clearly to explain what they are currently doing, their progress, and any challenges/blockers they face.
 
-      const speechText = openaiData.choices[0].message.content.trim();
+Format the response to be clean, readable, and well-suited to be read aloud by a Text-to-Speech engine. Keep it direct and professional but friendly and warm.`;
+
+      const userContent = req.body.query 
+        ? `Based on this platform data:\n${JSON.stringify(systemContext, null, 2)}\n\nAnswer the user's voice command/question: "${req.body.query}".`
+        : `Here is the current platform data to analyze:\n${JSON.stringify(systemContext, null, 2)}`;
+
+      const speechText = await callLLM(systemInstruction, userContent, false);
       res.json({ speechText });
     } catch (apiError) {
-      console.warn('OpenAI API authentication failed, using local fallback agent:', apiError.message);
+      console.warn('All LLM providers failed, using local fallback agent:', apiError.message);
       const fallbackText = generateFallbackSpeech(systemContext, req.body.query);
       res.json({ speechText: fallbackText });
     }
@@ -1331,52 +1549,32 @@ app.post('/api/meetings/summarize-transcript', authenticateToken, async (req, re
       });
     }
 
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    if (!openaiApiKey || openaiApiKey.startsWith('sk-proj-**') || openaiApiKey.includes('placeholder')) {
+    const geminiApiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/[\r\n\t]/g, '');
+    const groqApiKey = (process.env.GROQ_API_KEY || '').trim().replace(/[\r\n\t]/g, '');
+    const hasGemini = geminiApiKey && !geminiApiKey.includes('placeholder');
+    const hasGroq = groqApiKey && !groqApiKey.includes('placeholder');
+
+    if (!hasGemini && !hasGroq) {
       const fallback = generateFallbackSummary(transcript);
       return res.json(fallback);
     }
 
     try {
-      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: 'system',
-              content: `You are an AI meeting transcription assistant. Analyze the provided meeting transcript and generate structured meeting minutes. 
+      const systemInstruction = `You are an AI meeting transcription assistant. Analyze the provided meeting transcript and generate structured meeting minutes. 
 You must respond with a JSON object containing two keys: "notes" and "follow_ups".
 - "notes": a paragraph summarizing the main discussion points, key decisions made, and overall meeting agenda.
-- "follow_ups": a list of specific action items, tasks, and follow-ups with owners if mentioned (formatted as bullet points).`
-            },
-            {
-              role: 'user',
-              content: `Here is the meeting transcript:\n\n${transcript}`
-            }
-          ],
-          temperature: 0.5,
-          max_tokens: 600
-        })
-      });
+- "follow_ups": a list of specific action items, tasks, and follow-ups with owners if mentioned (formatted as bullet points).`;
 
-      const openaiData = await openaiResponse.json();
-      if (!openaiResponse.ok) {
-        throw new Error(openaiData.error?.message || 'OpenAI API call failed');
-      }
+      const userContent = `Here is the meeting transcript:\n\n${transcript}`;
 
-      const result = JSON.parse(openaiData.choices[0].message.content.trim());
+      const responseText = await callLLM(systemInstruction, userContent, true);
+      const result = JSON.parse(responseText);
       res.json({
         notes: result.notes || "No discussion points summarized.",
         follow_ups: result.follow_ups || "No follow-up action items identified."
       });
     } catch (apiError) {
-      console.warn('OpenAI API call failed or timed out, using local fallback summary:', apiError.message);
+      console.warn('All LLM providers failed or timed out, using local fallback summary:', apiError.message);
       const fallback = generateFallbackSummary(transcript);
       res.json(fallback);
     }

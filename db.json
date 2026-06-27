@@ -691,6 +691,18 @@
       "notes": "Let's review the active client orders.",
       "follow_ups": "- We need to assign the new bulk videos of Apex Solutions to our video editors\n- The editor will submit Google Drive folder links for review\n- Also, the team must draft the new branding strategy for GreenPulse Co by next week",
       "updated_at": "2026-06-25T17:32:13.524Z"
+    },
+    {
+      "id": "mee-1782572704288-hl0bk",
+      "created_at": "2026-06-27T15:05:04.289Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "title": "sdfsdf",
+      "date_time": "2026-06-27T20:05",
+      "status": "scheduled",
+      "attendance": [],
+      "notes": "",
+      "follow_ups": ""
     }
   ],
   "mentorship_requests": [
@@ -740,7 +752,7 @@
       "title": "Editor Submission",
       "message": "Video editor David Editor submitted task for Download Any Video",
       "is_read": true,
-      "updated_at": "2026-06-25T17:04:01.597Z"
+      "updated_at": "2026-06-27T15:04:11.241Z"
     },
     {
       "id": "not-1782404918265-00kt4",
@@ -788,7 +800,8 @@
       "user_id": "admin-1",
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Review Request",
-      "is_read": false
+      "is_read": true,
+      "updated_at": "2026-06-27T15:04:11.248Z"
     },
     {
       "id": "not-1782407256959-66f03",
@@ -812,7 +825,8 @@
       "user_id": "admin-1",
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reject Request",
-      "is_read": false
+      "is_read": true,
+      "updated_at": "2026-06-27T15:04:11.266Z"
     },
     {
       "id": "not-1782407257309-jqlbp",
@@ -836,7 +850,8 @@
       "user_id": "admin-1",
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reschedule Request",
-      "is_read": false
+      "is_read": true,
+      "updated_at": "2026-06-27T15:04:11.292Z"
     },
     {
       "id": "not-1782407257378-a4g3u",
@@ -884,7 +899,8 @@
       "user_id": "admin-1",
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: weekly ",
-      "is_read": false
+      "is_read": true,
+      "updated_at": "2026-06-27T15:04:11.299Z"
     },
     {
       "id": "not-1782408481369-twgbx",
@@ -900,6 +916,14 @@
       "user_id": "use-1782404624056-5svlf",
       "title": "Meeting Request Approved",
       "message": "Your meeting request \"weekly \" has been approved for 2026-06-25T22:27",
+      "is_read": false
+    },
+    {
+      "id": "not-1782572704370-pp0n5",
+      "created_at": "2026-06-27T15:05:04.370Z",
+      "user_id": "use-1782404624056-5svlf",
+      "title": "New Meeting Scheduled",
+      "message": "A new weekly meeting has been scheduled: sdfsdf on 2026-06-27T20:05",
       "is_read": false
     }
   ],
@@ -1400,6 +1424,27 @@
       "user_id": "use-approved-mentee",
       "action": "login",
       "details": "User logged in"
+    },
+    {
+      "id": "act-1782559254002-dpnjm",
+      "created_at": "2026-06-27T11:20:54.003Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782559765011-qw7n7",
+      "created_at": "2026-06-27T11:29:25.011Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782572704392-4hh97",
+      "created_at": "2026-06-27T15:05:04.392Z",
+      "user_id": "admin-1",
+      "action": "schedule_meeting",
+      "details": "Scheduled/requested meeting: sdfsdf"
     }
   ],
   "orders": [

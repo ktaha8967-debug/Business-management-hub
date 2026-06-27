@@ -1,0 +1,6 @@
+{
+  "appId": "com.ascentra.command",
+  "appName": "Ascentra Command",
+  "webDir": "public",
+  "bundledWebRuntime": false
+}

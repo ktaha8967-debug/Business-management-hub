@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ascentra Command</string>
+    <string name="title_activity_main">Ascentra Command</string>
+    <string name="package_name">com.ascentra.command</string>
+    <string name="custom_url_scheme">com.ascentra.command</string>
+</resources>

@@ -106,6 +106,16 @@ function switchAuthTab(tab) {
 function switchMainTab(tabId) {
   activeTab = tabId;
   
+  // Close mobile sidebar if open
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar && sidebar.classList.contains('sidebar-open')) {
+    sidebar.classList.remove('sidebar-open');
+  }
+  if (overlay && overlay.classList.contains('active')) {
+    overlay.classList.remove('active');
+  }
+  
   // Highlight active sidebar menu item
   document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.remove('active');
@@ -1649,6 +1659,21 @@ async function triggerVoiceBriefing(query = null) {
   }
 }
 
+async function submitTextQuery() {
+  const inputEl = document.getElementById('voice-text-query');
+  const query = inputEl.value.trim();
+  if (!query) return;
+
+  const transcriptPanel = document.getElementById('voice-agent-transcript');
+  const transcriptText = document.getElementById('voice-transcript-text');
+
+  transcriptPanel.classList.remove('hidden');
+  transcriptText.innerText = query;
+
+  inputEl.value = '';
+  await triggerVoiceBriefing(query);
+}
+
 function toggleSpeechRecognition() {
   const statusEl = document.getElementById('voice-agent-status');
   const recordBtn = document.getElementById('voice-record-btn');
@@ -2334,6 +2359,7 @@ async function joinMeetingRoom(meetingId) {
         displayName: currentUser.full_name
       },
       configOverwrite: {
+        disableDeepLinking: true,
         enableClosePage: false, // Disables the post-call "thank you / powered by jitsi" redirect screen!
         enableWelcomePage: false,
         prejoinPageEnabled: false,
@@ -2381,7 +2407,7 @@ async function joinMeetingRoom(meetingId) {
     } else {
       // Direct iframe fallback
       container.innerHTML = `
-        <iframe src="https://meet.jit.si/${roomName}#userInfo.displayName=&quot;${encodeURIComponent(currentUser.full_name)}&quot;&config.enableClosePage=false&interfaceConfig.SHOW_POWERED_BY=false" 
+        <iframe src="https://meet.jit.si/${roomName}#userInfo.displayName=&quot;${encodeURIComponent(currentUser.full_name)}&quot;&config.enableClosePage=false&config.disableDeepLinking=true&interfaceConfig.SHOW_POWERED_BY=false" 
                 allow="camera; microphone; fullscreen; display-capture; autoplay" 
                 style="border:0; width:100%; height:100%;">
         </iframe>
@@ -2431,5 +2457,17 @@ async function handleSaveMeetingRoomMinutes() {
     showToast('success', 'Meeting notes and action items saved to database');
   } catch (err) {
     showToast('error', err.message);
+  }
+}
+
+// Mobile sidebar toggle handler
+function toggleMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar) {
+    sidebar.classList.toggle('sidebar-open');
+  }
+  if (overlay) {
+    overlay.classList.toggle('active');
   }
 }

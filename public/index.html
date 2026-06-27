@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ascentra Command - Unified Partner Operating System</title>
+  
+  <!-- PWA & Mobile Optimization -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0b10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="ascentra_logo.jpg">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -132,13 +140,19 @@
     </div>
   </div>
 
+  <!-- Sidebar Backdrop overlay for mobile -->
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
   <!-- Dashboard Command Shell (Rendered when authenticated) -->
   <div id="command-shell" class="command-shell hidden">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="brand">
-          <span class="logo-accent">A</span>scentra
+        <div class="brand-container">
+          <div class="brand">
+            <span class="logo-accent">A</span>scentra
+          </div>
+          <button class="btn-sidebar-close" onclick="toggleMobileSidebar()" aria-label="Close Sidebar">&times;</button>
         </div>
         <div class="role-badge" id="shell-role-display">Role Display</div>
       </div>
@@ -237,7 +251,10 @@
     <main class="main-content">
       <!-- Top header bar -->
       <header class="main-header">
-        <h2 id="header-view-title">Command Dashboard</h2>
+        <div class="header-left">
+          <button class="btn-sidebar-toggle" onclick="toggleMobileSidebar()" aria-label="Toggle Sidebar">☰</button>
+          <h2 id="header-view-title">Command Dashboard</h2>
+        </div>
         <div class="header-actions">
           <button class="header-notification-bell" onclick="toggleNotificationsModal()">
             🔔 <span class="notification-count" id="notification-count">0</span>
@@ -268,6 +285,12 @@
                 <button class="btn-secondary" onclick="toggleSpeechRecognition()" id="voice-record-btn" style="padding: 8px 16px; font-size: 13px; min-width: 120px;">🎤 Tap to Talk</button>
               </div>
             </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+              <input type="text" id="voice-text-query" placeholder="Type a command (e.g., 'What is David doing?' or 'give report on Apex Solutions')..." style="flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-primary); font-size: 13px;" onkeydown="if(event.key === 'Enter') submitTextQuery()">
+              <button class="btn-primary" onclick="submitTextQuery()" id="voice-text-submit-btn" style="padding: 10px 20px; font-size: 13px;">Send</button>
+            </div>
+
             <div id="voice-agent-status" style="margin-top:10px; font-size:12px; color:var(--text-secondary); font-style:italic;">Status: Ready</div>
             <div id="voice-agent-transcript" class="hidden" style="margin-top:12px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px; border:1px solid var(--border-color); font-size:13px;">
               <strong>Your Command:</strong> <span id="voice-transcript-text" style="color:var(--text-primary);">...</span>
@@ -1063,7 +1086,7 @@
           </div>
 
           <!-- AI Copilot Transcription Control Panel -->
-          <div class="panel-card" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, rgba(112, 77, 244, 0.15), rgba(0, 210, 255, 0.05)); border: 1px solid var(--border-color-glow); padding: 15px;">
+          <div class="panel-card" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; background: linear-gradient(135deg, rgba(112, 77, 244, 0.15), rgba(0, 210, 255, 0.05)); border: 1px solid var(--border-color-glow); padding: 15px;">
             <div>
               <h5 style="margin: 0; font-size: 14px;" id="meet-copilot-status">🎙️ AI Copilot: Ready</h5>
               <p style="margin: 4px 0 0 0; font-size: 11px; color: var(--text-secondary);">Listening to what is said and preparing automated minutes transcript buffer.</p>
@@ -1073,10 +1096,10 @@
             </div>
           </div>
 
-          <div class="grid-2col" style="grid-template-columns: 2fr 1fr; gap: 20px;">
+          <div class="grid-2col meeting-grid">
             <!-- Video Iframe Card & Live Transcript -->
             <div style="display:flex; flex-direction:column; gap:15px;">
-              <div class="panel-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column; height: 450px; border: 1px solid var(--border-color-glow);">
+              <div class="panel-card meeting-video-card">
                 <div id="jitsi-meet-container" style="flex:1; width:100%; height:100%; background:#101424;">
                   <!-- Embedded Jitsi Iframe will be injected dynamically -->
                 </div>
@@ -1092,7 +1115,7 @@
             </div>
 
             <!-- Collaboration Side desk -->
-            <div class="panel-card" style="display:flex; flex-direction:column; height: 570px; box-sizing: border-box;">
+            <div class="panel-card meeting-notes-card">
               <h4 style="margin-top:0;">📝 Shared Room Minutes</h4>
               <p class="subtitle" style="font-size:11px; margin-bottom:12px; color:var(--text-secondary);">Notes and actions captured here will sync to the partner dashboard database.</p>
               
