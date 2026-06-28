@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (savedBusiness) currentBusiness = JSON.parse(savedBusiness);
     initCommandShell();
   } else {
-    showAuthPanel();
+    document.getElementById('landing-page-container').classList.remove('hidden');
   }
 });
 
@@ -35,12 +35,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function showAuthPanel() {
   document.getElementById('auth-panel').classList.remove('hidden');
-  document.getElementById('command-shell').classList.add('hidden');
   switchAuthTab('login');
+}
+
+function hideAuthPanel() {
+  document.getElementById('auth-panel').classList.add('hidden');
 }
 
 function initCommandShell() {
   document.getElementById('auth-panel').classList.add('hidden');
+  document.getElementById('landing-page-container').classList.add('hidden');
   document.getElementById('command-shell').classList.remove('hidden');
 
   // Setup user details display
@@ -274,7 +278,10 @@ function handleLogout() {
   currentBusiness = null;
   localStorage.clear();
   showToast('success', 'Logged out successfully');
-  showAuthPanel();
+  
+  document.getElementById('command-shell').classList.add('hidden');
+  document.getElementById('landing-page-container').classList.remove('hidden');
+  hideAuthPanel();
 }
 
 // Fetch headers helper

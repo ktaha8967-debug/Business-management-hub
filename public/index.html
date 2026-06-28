@@ -28,9 +28,358 @@
   <!-- Notification Banner -->
   <div id="toast-container" class="toast-container"></div>
 
+  <!-- LANDING PAGE CONTAINER -->
+  <div id="landing-page-container" class="hidden">
+    <!-- Navbar (1) -->
+    <header class="landing-header">
+      <div class="landing-logo">
+        <span class="logo-accent">A</span>scentra Hub
+      </div>
+      <nav class="landing-nav">
+        <a href="#features">Features</a>
+        <a href="#video-desk">Media Center</a>
+        <a href="#audit-desk">Strategy Deck</a>
+        <a href="#academy">Academy</a>
+        <a href="#testimonials">Testimonials</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+      <div class="landing-actions">
+        <button class="btn-primary" onclick="showAuthPanel()">Command Center Login</button>
+      </div>
+    </header>
+
+    <!-- Section 1: Hero Banner (with Loop Video Background) -->
+    <section class="hero-section">
+      <div class="hero-video-container">
+        <video autoplay loop muted playsinline class="hero-bg-video">
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-glowing-digital-neurons-in-dark-blue-space-32863-large.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+      </div>
+      <div class="hero-content">
+        <span class="hero-tag">OPERATING SYSTEM V2.0</span>
+        <h1>Scale Your Startup & Creative Business in One Unified Platform</h1>
+        <p>A high-tech control hub for tracking financial metrics, publishing media campaigns, booking strategic meetings, and receiving expert mentorship.</p>
+        <div class="hero-buttons">
+          <button class="btn-primary btn-large" onclick="showAuthPanel()">Access Command Center</button>
+          <a href="#features" class="btn-secondary btn-large">Explore Ecosystem</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Core Operations Specs -->
+    <section id="features" class="features-section">
+      <div class="container text-center">
+        <h2 class="section-title">Centralized Operations Ecosystem</h2>
+        <p class="section-subtitle">Ditch fragmented platforms. Manage your entire scaling path under one screen.</p>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>Executive Command</h3>
+            <p>Supervise administrator action logs, manage business profiles, and generate reports on team actions in real time.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎬</div>
+            <h3>Content Operations</h3>
+            <p>Submit raw footage, coordinate with video editors, and access style safe-zone compliance instructions.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📢</div>
+            <h3>SMM Dispatcher</h3>
+            <p>Publish campaigns across multiple networks (TikTok, IG, YouTube, FB) and monitor posting hours.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎓</div>
+            <h3>Mentorship Track</h3>
+            <p>Submit advising queries, address business roadblocks, and schedule 1-on-1 advisor consultations.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Live Video Pipeline Demonstration (with background loop video) -->
+    <section id="video-desk" class="video-demo-section">
+      <div class="video-bg-container">
+        <video autoplay loop muted playsinline class="section-bg-video">
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-numbers-31948-large.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+      </div>
+      <div class="container">
+        <div class="split-layout">
+          <div class="split-text">
+            <h2>Seamless Media & Social Media Management (SMM) Pipelines</h2>
+            <p>Keep your editing and publishing staff synchronized. Editors access our Shared Stock Library to retrieve background tracks, transitions SFX, and overlay templates directly inside their dashboard, while SMMs utilize the Engagement Optimizer calendar to post at peak virality hours.</p>
+            <ul class="spec-list">
+              <li>✔️ High impact 9:16 layout specs check</li>
+              <li>✔️ Dedicated Media Asset stock center</li>
+              <li>✔️ Cross-network dispatcher console</li>
+            </ul>
+          </div>
+          <div class="split-visual">
+            <div class="glass-mockup">
+              <div class="mockup-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="mockup-title">Media Production Pipeline</span>
+              </div>
+              <div class="mockup-body">
+                <div class="pipeline-flow">
+                  <div class="flow-step">
+                    <strong>1. Submit Raw Video</strong>
+                    <span class="step-status">Upload Completed</span>
+                  </div>
+                  <div class="flow-arrow">⬇️</div>
+                  <div class="flow-step">
+                    <strong>2. Editing & Safe Zones</strong>
+                    <span class="step-status">Applying Styles</span>
+                  </div>
+                  <div class="flow-arrow">⬇️</div>
+                  <div class="flow-step">
+                    <strong>3. SMM Channel Publish</strong>
+                    <span class="step-status">Scheduled at 07:00 PM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Strategic Audit Overview (with background loop video) -->
+    <section id="audit-desk" class="audit-demo-section">
+      <div class="video-bg-container">
+        <video autoplay loop muted playsinline class="section-bg-video">
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-futuristic-neon-wireframe-grid-tunnel-background-42171-large.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+      </div>
+      <div class="container">
+        <div class="split-layout reverse">
+          <div class="split-text">
+            <h2>Strict Audit Logs & Business Visibility</h2>
+            <p>Control who sees what. Our secure visibility rules ensure business owners only see meetings and invoices linked to their specific portfolio. Meanwhile, Super Admins can access the Executive Console to generate on-demand performance summaries, audit log lists, and team productivity charts.</p>
+            <div class="metrics-row">
+              <div class="metric-item">
+                <span class="num">100%</span>
+                <span class="lbl">Visibility Security</span>
+              </div>
+              <div class="metric-item">
+                <span class="num">&lt; 1s</span>
+                <span class="lbl">Audit Generation</span>
+              </div>
+            </div>
+          </div>
+          <div class="split-visual">
+            <div class="glass-mockup">
+              <div class="mockup-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="mockup-title">Boss Audit logs Console</span>
+              </div>
+              <div class="mockup-body" style="padding:15px; font-size:12px; font-family:monospace; color:var(--accent-cyan);">
+                <div class="terminal-line">&gt; Loading admin_activity_logs...</div>
+                <div class="terminal-line" style="color:var(--text-secondary); margin-top:5px;">[06:12:05 AM] User admin-1: Logged in successfully</div>
+                <div class="terminal-line" style="color:var(--text-secondary);">[06:14:12 AM] User sm-1: Published TikTok Video asset_22</div>
+                <div class="terminal-line" style="color:var(--text-secondary);">[06:18:30 AM] User admin-1: Approved Business owner ktaha8967</div>
+                <div class="terminal-line" style="color:#2ed573; margin-top:8px;">&gt; Executive summary report compiled. READY.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Academy Advisement Hub -->
+    <section id="academy" class="academy-section">
+      <div class="container">
+        <div class="text-center">
+          <h2 class="section-title">Growth Academy & Strategic Advisement</h2>
+          <p class="section-subtitle">Direct, uninhibited pathways to scale operational bottlenecks with expert mentorship.</p>
+        </div>
+        <div class="grid-3col mt-40">
+          <div class="academy-card">
+            <div class="acad-num">01</div>
+            <h4>Identify Bottlenecks</h4>
+            <p>Describe your specific strategic bottlenecks, marketing problems, or team scaling issues via the Mentee Desk.</p>
+          </div>
+          <div class="academy-card">
+            <div class="acad-num">02</div>
+            <h4>Consult Advisors</h4>
+            <p>Request 1-on-1 advisor consultations. Meetings are filtered securely so only authorized parties can join the rooms.</p>
+          </div>
+          <div class="academy-card">
+            <div class="acad-num">03</div>
+            <h4>Track Progress</h4>
+            <p>Access notes, action items, and performance dashboards to track how fast your operations are growing.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Pricing Tier Matrix -->
+    <section id="pricing" class="pricing-section">
+      <div class="container">
+        <div class="text-center">
+          <h2 class="section-title">Tailored Partnership Programs</h2>
+          <p class="section-subtitle">Choose the access level that aligns with your business scaling requirements.</p>
+        </div>
+        <div class="pricing-grid mt-40">
+          <div class="price-card">
+            <h4>Incubator Member</h4>
+            <div class="price">$199<span>/mo</span></div>
+            <p class="price-desc">Perfect for emerging startup owners and growing digital content creators.</p>
+            <ul class="price-features">
+              <li>✔️ Custom Business Profile</li>
+              <li>✔️ Academy Advising requests</li>
+              <li>✔️ 1 Scheduled meeting/week</li>
+              <li>✔️ Raw Video submission (up to 3)</li>
+            </ul>
+            <button class="btn-secondary w-100" onclick="showAuthPanel()">Join Incubator</button>
+          </div>
+          <div class="price-card featured">
+            <div class="badge-featured">RECOMMENDED</div>
+            <h4>Scaling Partner</h4>
+            <div class="price">$499<span>/mo</span></div>
+            <p class="price-desc">For active brands scaling marketing content and business operations.</p>
+            <ul class="price-features">
+              <li>✔️ Full Content Workflow access</li>
+              <li>✔️ Priority Video Editing (up to 10)</li>
+              <li>✔️ SMM Dispatcher panel</li>
+              <li>✔️ Weekly strategic session</li>
+              <li>✔️ Private Meeting visibility</li>
+            </ul>
+            <button class="btn-primary w-100" onclick="showAuthPanel()">Scale Now</button>
+          </div>
+          <div class="price-card">
+            <h4>Enterprise Hub</h4>
+            <div class="price">$999<span>/mo</span></div>
+            <p class="price-desc">Complete operations wrapper for multi-brand portfolios and agencies.</p>
+            <ul class="price-features">
+              <li>✔️ Unlimited Business Profiles</li>
+              <li>✔️ Dedicated video editors & SMMs</li>
+              <li>✔️ Boss Executive Audit dashboard</li>
+              <li>✔️ Real-time activity logs & PDF prints</li>
+              <li>✔️ 24/7 Priority advisory</li>
+            </ul>
+            <button class="btn-secondary w-100" onclick="showAuthPanel()">Get Enterprise</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Case Studies & Partners (Realistic Images) -->
+    <section id="testimonials" class="testimonials-section">
+      <div class="container">
+        <div class="text-center">
+          <h2 class="section-title">Trusted By Leading Growth Partners</h2>
+          <p class="section-subtitle">Real feedback from business owners and founders scaling with Ascentra Hub.</p>
+        </div>
+        <div class="testimonials-grid mt-40">
+          <div class="testimonial-card">
+            <div class="testimonial-user">
+              <img src="testimonial_user_1.jpg" alt="Middle Eastern Business Owner headshot">
+              <div>
+                <h5>Tariq Al-Mansoor</h5>
+                <span>Founder, Apex Logistics</span>
+              </div>
+            </div>
+            <p class="quote">"Ascentra Hub changed our workflow. The secure meeting visibility feature ensures our logistics proposals remain strictly confidential while allowing us to request advisor advice on bottlenecks. Outstanding UX!"</p>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-user">
+              <img src="testimonial_user_2.jpg" alt="Asian Female Founder headshot">
+              <div>
+                <h5>Chloe Lin</h5>
+                <span>CEO, Vertex SaaS</span>
+              </div>
+            </div>
+            <p class="quote">"Managing video editors and SMM channels became seamless. Editors access stock tracks directly, and SMMs dispatch approved assets in optimal slots. Our TikTok viewership grew by 300%!"</p>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-user">
+              <img src="testimonial_user_3.jpg" alt="European Creative Director headshot">
+              <div>
+                <h5>Alexander Vance</h5>
+                <span>Director, GreenPulse</span>
+              </div>
+            </div>
+            <p class="quote">"The Super Admin Executive console gives me complete visibility over operations. I can review what audit logs were registered and print a complete team performance report in a single click."</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Consultation & Booking Request Form -->
+    <section class="contact-section">
+      <div class="container">
+        <div class="split-layout">
+          <div class="split-text">
+            <h2>Ready to Streamline Your Scaling Infrastructure?</h2>
+            <p>Send a message to our business development desk to set up a private consultation and walk through how the Ascentra Hub OS can be customized to support your operations team.</p>
+            <div style="margin-top:20px; font-size:14px; color:var(--text-secondary);">
+              <span>📧 admin@ascentra.com</span><br>
+              <span>📞 +1 (800) 555-0199</span>
+            </div>
+          </div>
+          <div class="split-visual">
+            <div class="panel-card">
+              <h4>Request Custom Consultation</h4>
+              <form onsubmit="event.preventDefault(); showToast('success', 'Thank you! Our operations director will reach out shortly.'); this.reset();">
+                <div class="form-group">
+                  <label for="contact-name">Full Name</label>
+                  <input type="text" id="contact-name" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                  <label for="contact-email">Email Address</label>
+                  <input type="email" id="contact-email" required placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                  <label for="contact-company">Company / Business Name</label>
+                  <input type="text" id="contact-company" placeholder="e.g. Apex Corp">
+                </div>
+                <div class="form-group">
+                  <label for="contact-message">Consultation Requirements</label>
+                  <textarea id="contact-message" required placeholder="Explain your operational team scale..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary w-100 mt-15">Submit Consultation Request</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+      <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+          <div>
+            <strong>Ascentra Hub Platform</strong><br>
+            <span style="font-size:12px; color:var(--text-secondary);">Unified Business Scale Ecosystem.</span>
+          </div>
+          <div style="display:flex; gap:15px; font-size:13px;">
+            <a href="#features" style="color:var(--text-secondary);">Features</a>
+            <a href="#pricing" style="color:var(--text-secondary);">Pricing</a>
+            <a href="#" onclick="showAuthPanel()" style="color:var(--accent-cyan);">Sign In Portal</a>
+          </div>
+        </div>
+        <hr style="border:0; border-top:1px solid rgba(255,255,255,0.05); margin:20px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); flex-wrap:wrap; gap:10px;">
+          <span>© 2026 Ascentra Unified Systems Inc. All rights reserved.</span>
+          <span>Security Audit Grade: A+</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
   <!-- Authentication Panel (Rendered if not logged in) -->
-  <div id="auth-panel" class="auth-panel">
-    <div class="auth-card">
+  <div id="auth-panel" class="auth-panel hidden">
+    <div class="auth-card" style="position: relative;">
+      <button class="close-modal" onclick="hideAuthPanel()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; z-index: 100;">&times;</button>
       <div class="auth-brand">
         <span class="logo-accent">A</span>scentra Command
         <div class="auth-subtitle">Unified Operations, Mentorship & Content Platform</div>
