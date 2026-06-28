@@ -808,6 +808,132 @@ app.get('/api/meetings', authenticateToken, (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// --- WEBRTC SIGNALING API ---
+let meetingSignals = {}; // meetingId -> { userId -> { offer, answer, candidates: [] } }
+
+app.post('/api/meetings/signal', authenticateToken, (req, res) => {
+  const { meetingId, signalData, type } = req.body;
+  if (!meetingId || !signalData || !type) {
+    return res.status(400).json({ error: 'Missing required parameters for signaling' });
+  }
+
+  if (!meetingSignals[meetingId]) {
+    meetingSignals[meetingId] = {};
+  }
+
+  if (!meetingSignals[meetingId][req.user.id]) {
+    meetingSignals[meetingId][req.user.id] = { candidates: [] };
+  }
+
+  if (type === 'offer') {
+    meetingSignals[meetingId][req.user.id].offer = signalData;
+  } else if (type === 'answer') {
+    meetingSignals[meetingId][req.user.id].answer = signalData;
+  } else if (type === 'candidate') {
+    meetingSignals[meetingId][req.user.id].candidates.push(signalData);
+  }
+
+  res.json({ success: true });
+});
+
+app.get('/api/meetings/signal/:meetingId/:partnerId', authenticateToken, (req, res) => {
+  const { meetingId, partnerId } = req.params;
+  
+  if (!meetingSignals[meetingId] || !meetingSignals[meetingId][partnerId]) {
+    return res.json({ signal: null });
+  }
+  
+  res.json({ signal: meetingSignals[meetingId][partnerId] });
+});
+
+app.get('/api/meetings/signals/:meetingId', authenticateToken, (req, res) => {
+  const { meetingId } = req.params;
+  res.json(meetingSignals[meetingId] || {});
+});
+
+app.post('/api/meetings/signal/clear', authenticateToken, (req, res) => {
+  const { meetingId } = req.body;
+  if (meetingId && meetingSignals[meetingId]) {
+    delete meetingSignals[meetingId][req.user.id];
+  }
+  res.json({ success: true });
+});
+
+// --- ROLE-BASED CHAT API ---
+app.get('/api/chat/users', authenticateToken, (req, res) => {
+  try {
+    const allUsers = db.getCollection('users') || [];
+    const isPowerUser = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
+    
+    const filtered = allUsers.filter(u => {
+      if (u.id === req.user.id) return false; // Don't list self
+      if (isPowerUser) {
+        return true; // Boss/Admin sees everyone
+      } else {
+        // Staff only see Boss/Admin
+        return ['Super Admin', 'Admin Team', 'Business Owners'].includes(u.role);
+      }
+    }).map(u => ({
+      id: u.id,
+      full_name: u.full_name,
+      email: u.email,
+      role: u.role
+    }));
+    
+    res.json(filtered);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/chat/send', authenticateToken, (req, res) => {
+  try {
+    const { recipient_id, message } = req.body;
+    if (!recipient_id || !message) {
+      return res.status(400).json({ error: 'recipient_id and message are required' });
+    }
+    
+    const recipient = db.findOne('users', u => u.id === recipient_id);
+    if (!recipient) {
+      return res.status(404).json({ error: 'Recipient not found' });
+    }
+    
+    const senderIsPower = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
+    const recipientIsPower = ['Super Admin', 'Admin Team', 'Business Owners'].includes(recipient.role);
+    
+    if (!senderIsPower && !recipientIsPower) {
+      return res.status(403).json({ error: 'Permission denied: Staff can only message Boss or Admins' });
+    }
+    
+    const newMsg = {
+      id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      sender_id: req.user.id,
+      recipient_id: recipient_id,
+      message: message,
+      timestamp: new Date().toISOString()
+    };
+    
+    db.insert('chat_messages', newMsg);
+    res.json(newMsg);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/chat/history/:partnerId', authenticateToken, (req, res) => {
+  try {
+    const partnerId = req.params.partnerId;
+    const messages = db.find('chat_messages', m => {
+      return (m.sender_id === req.user.id && m.recipient_id === partnerId) ||
+             (m.sender_id === partnerId && m.recipient_id === req.user.id);
+    }) || [];
+    
+    messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Update Meeting Notes & Attendance
 app.put('/api/meetings/:id', authenticateToken, (req, res) => {

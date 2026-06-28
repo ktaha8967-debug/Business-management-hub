@@ -1,33 +1,97 @@
+// Safeguard for i18next to prevent duplicate initialization and debug output in production
+if (typeof window !== 'undefined') {
+  const setupI18nInterceptor = (instance) => {
+    if (instance && typeof instance.init === 'function' && !instance.__antigravity_intercepted) {
+      instance.__antigravity_intercepted = true;
+      const originalInit = instance.init;
+      let initialized = false;
+      instance.init = function(options, ...args) {
+        if (initialized) {
+          console.warn('i18next: Prevented duplicate initialization');
+          return instance;
+        }
+        initialized = true;
+        options = options || {};
+        options.debug = false; // Disable verbose console logs in production
+        return originalInit.call(this, options, ...args);
+      };
+    }
+  };
+
+  if (window.i18next) {
+    setupI18nInterceptor(window.i18next);
+  } else {
+    let _i18next = undefined;
+    Object.defineProperty(window, 'i18next', {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return _i18next;
+      },
+      set(val) {
+        _i18next = val;
+        setupI18nInterceptor(val);
+      }
+    });
+  }
+}
+
 // Live hosted website URL
 // Jab aap isko push karein ge, to mobile APK automatic live website ke database se connect ho jaye ga.
 const LIVE_BACKEND_URL = 'https://taha.mayfairmarketing.online';
 
 const isMobileApp = window.Capacitor || 
-                    window.location.protocol.startsWith('capacitor') || 
-                    window.location.protocol === 'file:';
+                    window.location.protocol.startsWith('capacitor');
+const isDesktopApp = navigator.userAgent.toLowerCase().includes('electron');
+const isApp = isMobileApp || isDesktopApp || window.location.protocol === 'file:';
 
-const API_URL = isMobileApp
-  ? LIVE_BACKEND_URL
-  : (window.location.origin.includes('localhost') ? 'http://localhost:5000' : window.location.origin);
+const API_URL = (window.location.origin.includes('localhost') || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:5000'
+  : (isApp ? LIVE_BACKEND_URL : window.location.origin);
 let currentUser = null;
 let currentToken = null;
 let currentBusiness = null; // Stored if user is a Business Owner
 let activeTab = 'dashboard';
 let chartsInstance = null; // Holds the business analytics Chart.js instance
 
-// On page load, check authentication status
+// --- TEAM CHAT & WEBRTC CALLING STATES ---
+let activeChatPartnerId = null;
+let chatPollInterval = null;
+let allChatUsers = [];
+
+let localStream = null;
+let peerConnection = null;
+let webrtcSignalInterval = null;
+let webrtcIsMicMuted = false;
+let webrtcIsCamOff = false;
+
+// On page load, check authentication status and onboarding state
 window.addEventListener('DOMContentLoaded', () => {
   const savedToken = localStorage.getItem('token');
   const savedUser = localStorage.getItem('user');
   const savedBusiness = localStorage.getItem('business');
+  
+  const onboardingCompleted = localStorage.getItem('onboarding-completed');
 
-  if (savedToken && savedUser) {
-    currentToken = savedToken;
-    currentUser = JSON.parse(savedUser);
-    if (savedBusiness) currentBusiness = JSON.parse(savedBusiness);
-    initCommandShell();
+  if (isApp && onboardingCompleted !== 'true') {
+    // Present the premium onboarding flow first
+    document.getElementById('onboarding-container').classList.remove('hidden');
+    initOnboardingCarousel();
   } else {
-    document.getElementById('landing-page-container').classList.remove('hidden');
+    if (savedToken && savedUser) {
+      currentToken = savedToken;
+      currentUser = JSON.parse(savedUser);
+      if (savedBusiness) currentBusiness = JSON.parse(savedBusiness);
+      initCommandShell();
+    } else {
+      if (isApp) {
+        // App containers go directly to login overlay
+        showAuthPanel();
+      } else {
+        // Web loads default landing page
+        document.getElementById('landing-page-container').classList.remove('hidden');
+      }
+    }
   }
 });
 
@@ -139,6 +203,15 @@ function switchMainTab(tabId) {
     item.classList.remove('active');
   });
 
+  // Clear Chat Polling when switching away from chat
+  if (tabId !== 'team-chat') {
+    if (chatPollInterval) {
+      clearInterval(chatPollInterval);
+      chatPollInterval = null;
+    }
+    activeChatPartnerId = null;
+  }
+
   // Find sidebar items that trigger this tabId and add active class
   const activeLink = Array.from(document.querySelectorAll('.nav-item')).find(item => {
     return item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabId);
@@ -148,6 +221,7 @@ function switchMainTab(tabId) {
   // Change title display
   const titleMap = {
     'dashboard': 'Platform Command Dashboard',
+    'team-chat': 'Corporate Operations Chat Room',
     'admin-businesses': 'Partner Portfolio Administration',
     'admin-content': 'Content Workflow Pipeline',
     'admin-meetings': 'Scheduled Weekly Briefings',
@@ -280,8 +354,12 @@ function handleLogout() {
   showToast('success', 'Logged out successfully');
   
   document.getElementById('command-shell').classList.add('hidden');
-  document.getElementById('landing-page-container').classList.remove('hidden');
-  hideAuthPanel();
+  if (isApp) {
+    showAuthPanel();
+  } else {
+    document.getElementById('landing-page-container').classList.remove('hidden');
+    hideAuthPanel();
+  }
 }
 
 // Fetch headers helper
@@ -329,6 +407,8 @@ async function fetchTabData(tabId) {
     loadMenteeWorkspace();
   } else if (tabId === 'boss-logs') {
     loadBossAuditLogs();
+  } else if (tabId === 'team-chat') {
+    loadChatContacts();
   }
 }
 
@@ -2361,83 +2441,34 @@ async function joinMeetingRoom(meetingId) {
     const meeting = list.find(m => m.id === meetingId);
     if (!meeting) return showToast('error', 'Meeting details not found');
 
-    document.getElementById('meet-room-title').innerText = `🎥 Secure Meeting Room: ${meeting.title}`;
+    document.getElementById('meet-room-title').innerText = `🎥 Secure Jitsi Meeting Room: ${meeting.title}`;
     document.getElementById('meet-room-subtitle').innerText = `Business Portfolio: ${meeting.business_name} | Date: ${new Date(meeting.date_time).toLocaleString()}`;
     document.getElementById('meet-room-notes').value = meeting.notes || '';
     document.getElementById('meet-room-followups').value = meeting.follow_ups || '';
 
-    // Generate room name from meeting ID
-    const roomName = `Ascentra-Meeting-${meeting.id}`;
+    // Render Jitsi Meet
     const container = document.getElementById('jitsi-meet-container');
-    container.innerHTML = ''; // Clear prior iframe/contents
+    container.innerHTML = ''; // Clear container
 
-    // Jitsi Meet External API configurations to override Jitsi watermarks and redirect pages
     const domain = 'meet.jit.si';
     const options = {
-      roomName: roomName,
+      roomName: `AscentraMeeting-${meetingId}`,
       width: '100%',
       height: '100%',
       parentNode: container,
       userInfo: {
-        displayName: currentUser.full_name
+        displayName: currentUser.full_name,
+        email: currentUser.email
       },
       configOverwrite: {
-        disableDeepLinking: true,
-        enableClosePage: false, // Disables the post-call "thank you / powered by jitsi" redirect screen!
-        enableWelcomePage: false,
-        prejoinPageEnabled: false,
-        disableThirdPartyRequests: true,
-        branding: {
-          visible: false
-        }
-      },
-      interfaceConfigOverwrite: {
-        SHOW_JITSI_WATERMARK: false,
-        SHOW_BRAND_WATERMARK: false,
-        SHOW_POWERED_BY: false,
-        JITSI_WATERMARK_LINK: '',
-        BRAND_WATERMARK_LINK: ''
+        startWithAudioMuted: false,
+        startWithVideoMuted: false,
+        prejoinPageEnabled: false
       }
     };
 
-    let localParticipantJoined = false;
-
-    if (typeof JitsiMeetExternalAPI !== 'undefined') {
-      jitsiAPIInstance = new JitsiMeetExternalAPI(domain, options);
-      
-      // Mark as joined once connection is established
-      jitsiAPIInstance.addEventListener('videoConferenceJoined', () => {
-        localParticipantJoined = true;
-        showToast('info', 'Secure connection established. Call active.');
-      });
-
-      // Auto-exit and generate AI minutes if user hangs up call from within the meeting frame UI
-      jitsiAPIInstance.addEventListener('videoConferenceLeft', () => {
-        if (localParticipantJoined) {
-          showToast('info', 'Call hung up. Syncing final AI minutes...');
-          triggerAIMeetingSummarization();
-          exitMeetingRoom(true);
-        } else {
-          showToast('warning', 'Jitsi connection failed or microphone blocked. Notes mode active.');
-          // Do not exitMeetingRoom so they can still type notes or exit manually
-        }
-      });
-
-      // Handle direct tab close or lifecycle cleanup
-      jitsiAPIInstance.addEventListener('readyToClose', () => {
-        exitMeetingRoom(true);
-      });
-    } else {
-      // Direct iframe fallback
-      container.innerHTML = `
-        <iframe src="https://meet.jit.si/${roomName}#userInfo.displayName=&quot;${encodeURIComponent(currentUser.full_name)}&quot;&config.enableClosePage=false&config.disableDeepLinking=true&interfaceConfig.SHOW_POWERED_BY=false" 
-                allow="camera; microphone; fullscreen; display-capture; autoplay" 
-                style="border:0; width:100%; height:100%;">
-        </iframe>
-      `;
-    }
-
-    showToast('success', 'Entered secure virtual meeting room');
+    jitsiAPIInstance = new JitsiMeetExternalAPI(domain, options);
+    showToast('success', 'Entered secure Jitsi meeting room');
     startMeetingRoomTranscription();
   } catch (err) {
     showToast('error', 'Failed to load meeting room: ' + err.message);
@@ -2448,13 +2479,34 @@ function exitMeetingRoom(skipConfirm = false) {
   if (skipConfirm || confirm('Are you sure you want to leave the virtual meeting room?')) {
     stopMeetingRoomTranscription();
     
+    // Dispose Jitsi instance
     if (jitsiAPIInstance) {
-      try {
-        jitsiAPIInstance.dispose();
-      } catch (e) {
-        console.error('Error disposing Jitsi instance:', e);
-      }
+      jitsiAPIInstance.dispose();
       jitsiAPIInstance = null;
+    }
+
+    // Clear WebRTC Signaling if active
+    if (currentMeetingRoomId) {
+      fetch(`${API_URL}/api/meetings/signal/clear`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ meetingId: currentMeetingRoomId })
+      }).catch(err => console.warn('Failed to clear signals:', err));
+    }
+
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+
+    if (peerConnection) {
+      peerConnection.close();
+      peerConnection = null;
+    }
+
+    if (webrtcSignalInterval) {
+      clearInterval(webrtcSignalInterval);
+      webrtcSignalInterval = null;
     }
     
     document.getElementById('jitsi-meet-container').innerHTML = '';
@@ -2498,14 +2550,38 @@ function toggleMobileSidebar() {
 // Push notifications initializer
 async function initPushNotifications() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.warn('Push notifications are not supported in this environment.');
+    console.warn('Push notifications or Service Workers are not supported in this environment.');
     return;
   }
 
   try {
-    // Register service worker
-    const registration = await navigator.serviceWorker.register('service-worker.js');
+    // Service Worker requires HTTPS, localhost, 127.0.0.1, or local protocols (e.g. capacitor://, http://localhost)
+    const isSecureContext = window.isSecureContext || 
+                            window.location.protocol === 'https:' || 
+                            window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1' ||
+                            window.location.protocol === 'capacitor:';
+                            
+    if (!isSecureContext) {
+      console.warn('Service Worker registration skipped: Non-secure context.');
+      return;
+    }
+
+    // Register service worker with root scope using absolute path
+    const registration = await navigator.serviceWorker.register('/service-worker.js')
+      .catch(err => {
+        throw new Error('Service Worker registration failed: ' + err.message);
+      });
+      
     console.log('Service Worker registered:', registration.scope);
+
+    // Wait until the service worker is active and ready
+    await navigator.serviceWorker.ready;
+
+    if (!registration.pushManager) {
+      console.warn('PushManager is not available on this Service Worker registration.');
+      return;
+    }
 
     // Request notification permission
     const permission = await Notification.requestPermission();
@@ -2523,6 +2599,8 @@ async function initPushNotifications() {
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+    }).catch(err => {
+      throw new Error('Push subscription failed: ' + err.message);
     });
 
     // Send subscription object to backend
@@ -2536,7 +2614,7 @@ async function initPushNotifications() {
     });
     console.log('Successfully subscribed to push notifications!');
   } catch (err) {
-    console.error('Error establishing push subscription:', err);
+    console.error('Error establishing push subscription:', err.message || err);
   }
 }
 
@@ -2723,4 +2801,415 @@ function printBossReport() {
     </html>
   `);
   printWindow.document.close();
+}
+
+// --- APP ONBOARDING CONTROLLERS ---
+let onboardingSlideIdx = 0;
+
+function initOnboardingCarousel() {
+  const track = document.getElementById('onboarding-track');
+  const slides = document.querySelectorAll('.onboarding-slide');
+  const dots = document.querySelectorAll('.onboarding-pagination .onboarding-dot');
+  const actionBtn = document.getElementById('btn-onboarding-action');
+  
+  if (!track || slides.length === 0) return;
+  
+  const updateSlide = (idx) => {
+    track.style.transform = `translateX(-${idx * 20}%)`;
+    dots.forEach(d => d.classList.remove('active'));
+    if (dots[idx]) dots[idx].classList.add('active');
+    
+    if (idx === slides.length - 1) {
+      actionBtn.innerText = 'Get Started';
+    } else {
+      actionBtn.innerText = 'Next';
+    }
+    onboardingSlideIdx = idx;
+  };
+  
+  actionBtn.onclick = () => {
+    if (onboardingSlideIdx < slides.length - 1) {
+      updateSlide(onboardingSlideIdx + 1);
+    } else {
+      completeOnboarding();
+    }
+  };
+  
+  // Touch Swipe gestures support
+  let touchStartVal = 0;
+  let touchEndVal = 0;
+  
+  track.addEventListener('touchstart', (e) => {
+    touchStartVal = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  track.addEventListener('touchend', (e) => {
+    touchEndVal = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+  
+  const handleSwipe = () => {
+    const threshold = 50; // pixels
+    if (touchStartVal - touchEndVal > threshold) {
+      // Swipe Left (Next)
+      if (onboardingSlideIdx < slides.length - 1) {
+        updateSlide(onboardingSlideIdx + 1);
+      }
+    } else if (touchEndVal - touchStartVal > threshold) {
+      // Swipe Right (Prev)
+      if (onboardingSlideIdx > 0) {
+        updateSlide(onboardingSlideIdx - 1);
+      }
+    }
+  };
+
+  // Keyboard arrow key navigation support for desktop
+  window.addEventListener('keydown', (e) => {
+    const onboardingContainer = document.getElementById('onboarding-container');
+    if (onboardingContainer && !onboardingContainer.classList.contains('hidden')) {
+      if (e.key === 'ArrowRight') {
+        if (onboardingSlideIdx < slides.length - 1) {
+          updateSlide(onboardingSlideIdx + 1);
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (onboardingSlideIdx > 0) {
+          updateSlide(onboardingSlideIdx - 1);
+        }
+      }
+    }
+  });
+}
+
+function completeOnboarding() {
+  localStorage.setItem('onboarding-completed', 'true');
+  document.getElementById('onboarding-container').classList.add('hidden');
+  
+  const savedToken = localStorage.getItem('token');
+  const savedUser = localStorage.getItem('user');
+  if (savedToken && savedUser) {
+    initCommandShell();
+  } else {
+    showAuthPanel();
+  }
+}
+
+async function requestAppPermissions() {
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      // Trigger native permission prompts for Camera and Microphone
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      // Stop media tracks immediately to release devices
+      stream.getTracks().forEach(track => track.stop());
+      showToast('success', 'Camera & Microphone access successfully granted!');
+    } else {
+      showToast('info', 'Secure context permission request APIs registered.');
+    }
+  } catch (err) {
+    console.warn('Permissions rejected or failed:', err);
+    showToast('warn', 'Meetings require Microphone & Camera access. Please enable them in system settings if disabled.');
+  }
+}
+
+// --- TEAM CHAT CONTROLLERS ---
+async function loadChatContacts() {
+  const listContainer = document.getElementById('chat-contacts-list');
+  if (!listContainer) return;
+  
+  listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; margin-top: 20px; font-size: 13px;">Loading contacts...</div>';
+  
+  try {
+    const res = await fetch(`${API_URL}/api/chat/users`, { headers: getHeaders() });
+    
+    if (!res.ok) {
+      throw new Error(`Server returned status ${res.status}`);
+    }
+    
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned non-JSON response (likely an HTML page).');
+    }
+    
+    allChatUsers = await res.json();
+    renderChatContacts(allChatUsers);
+  } catch (err) {
+    listContainer.innerHTML = `<div style="color: #ff4757; text-align: center; margin-top: 20px; font-size: 13px;">Failed to load contacts: ${err.message}</div>`;
+  }
+}
+
+function renderChatContacts(users) {
+  const listContainer = document.getElementById('chat-contacts-list');
+  if (!listContainer) return;
+  
+  if (users.length === 0) {
+    listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; margin-top: 20px; font-size: 13px;">No contacts found</div>';
+    return;
+  }
+  
+  listContainer.innerHTML = users.map(user => {
+    const activeClass = activeChatPartnerId === user.id ? 'active' : '';
+    const initial = user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U';
+    return `
+      <div class="chat-contact-item ${activeClass}" onclick="selectChatContact('${user.id}')" data-id="${user.id}">
+        <div class="chat-contact-avatar">${initial}</div>
+        <div class="chat-contact-info">
+          <div class="chat-contact-name">${user.full_name}</div>
+          <div class="chat-contact-role">${user.role}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterChatContacts() {
+  const query = document.getElementById('chat-contact-search').value.toLowerCase();
+  const filtered = allChatUsers.filter(u => {
+    return u.full_name.toLowerCase().includes(query) || u.role.toLowerCase().includes(query);
+  });
+  renderChatContacts(filtered);
+}
+
+function selectChatContact(partnerId) {
+  activeChatPartnerId = partnerId;
+  
+  document.querySelectorAll('.chat-contact-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  const selectedEl = document.querySelector(`.chat-contact-item[data-id="${partnerId}"]`);
+  if (selectedEl) selectedEl.classList.add('active');
+  
+  const partner = allChatUsers.find(u => u.id === partnerId);
+  if (!partner) return;
+  
+  document.getElementById('chat-active-partner-name').innerText = partner.full_name;
+  document.getElementById('chat-active-partner-role').innerText = partner.role;
+  document.getElementById('chat-status-dot').style.background = '#2ed573';
+  document.getElementById('chat-status-text').innerText = 'online';
+  
+  document.getElementById('chat-message-input').removeAttribute('disabled');
+  document.getElementById('chat-send-btn').removeAttribute('disabled');
+  document.getElementById('chat-message-input').focus();
+  
+  loadChatHistory(partnerId);
+  
+  if (chatPollInterval) clearInterval(chatPollInterval);
+  chatPollInterval = setInterval(() => {
+    if (activeChatPartnerId === partnerId) {
+      loadChatHistory(partnerId);
+    }
+  }, 3000);
+}
+
+async function loadChatHistory(partnerId) {
+  const messagesContainer = document.getElementById('chat-messages-container');
+  if (!messagesContainer) return;
+  
+  try {
+    const res = await fetch(`${API_URL}/api/chat/history/${partnerId}`, { headers: getHeaders() });
+    const messages = await res.json();
+    
+    if (messages.length === 0) {
+      messagesContainer.innerHTML = `
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); flex-direction: column; gap: 10px; text-align: center;">
+          <span style="font-size: 30px;">💬</span>
+          <span style="font-size: 13px;">This is the beginning of your chat history. Say hello!</span>
+        </div>
+      `;
+      return;
+    }
+    
+    const atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
+    
+    messagesContainer.innerHTML = messages.map(msg => {
+      const typeClass = msg.sender_id === currentUser.id ? 'sent' : 'received';
+      const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="chat-bubble ${typeClass}">
+          <div>${msg.message}</div>
+          <div class="chat-bubble-time">${timeStr}</div>
+        </div>
+      `;
+    }).join('');
+    
+    if (atBottom || messagesContainer.innerHTML.includes('beginning of your chat')) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  } catch (err) {
+    console.warn('Error loading chat history:', err);
+  }
+}
+
+async function handleSendChatMessage(e) {
+  e.preventDefault();
+  if (!activeChatPartnerId) return;
+  
+  const inputEl = document.getElementById('chat-message-input');
+  const messageText = inputEl.value.trim();
+  if (!messageText) return;
+  
+  inputEl.value = '';
+  
+  try {
+    const res = await fetch(`${API_URL}/api/chat/send`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        recipient_id: activeChatPartnerId,
+        message: messageText
+      })
+    });
+    
+    if (res.ok) {
+      loadChatHistory(activeChatPartnerId);
+    } else {
+      const err = await res.json();
+      showToast('error', err.error || 'Failed to send message');
+    }
+  } catch (err) {
+    showToast('error', 'Error sending message: ' + err.message);
+  }
+}
+
+// --- WEBRTC STANDALONE CALL ENGINE ---
+async function startWebRTCCall(meetingId) {
+  const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+  peerConnection = new RTCPeerConnection(configuration);
+  
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    const localVideo = document.getElementById('webrtc-local-video');
+    if (localVideo) localVideo.srcObject = localStream;
+    
+    localStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, localStream);
+    });
+  } catch (e) {
+    console.error('Camera/Mic permission failed:', e);
+    showToast('error', 'Camera or microphone block. Access required for WebRTC call.');
+    return;
+  }
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      fetch(`${API_URL}/api/meetings/signal`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          meetingId: meetingId,
+          signalData: event.candidate,
+          type: 'candidate'
+        })
+      }).catch(err => console.warn('ICE Candidate upload failed:', err));
+    }
+  };
+
+  peerConnection.ontrack = (event) => {
+    const remoteVideo = document.getElementById('webrtc-remote-video');
+    if (remoteVideo) {
+      remoteVideo.srcObject = event.streams[0];
+    }
+    const overlay = document.getElementById('webrtc-status-overlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.classList.add('hidden'), 500);
+    }
+    const statusLabel = document.getElementById('webrtc-status-label');
+    if (statusLabel) statusLabel.innerText = 'Connected';
+  };
+
+  let isNegotiator = false;
+  let candidatesAdded = {};
+
+  webrtcSignalInterval = setInterval(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/meetings/signals/${meetingId}`, { headers: getHeaders() });
+      const signals = await res.json();
+      
+      const peerIds = Object.keys(signals).filter(id => id !== currentUser.id);
+      
+      if (peerIds.length > 0) {
+        const peerId = peerIds[0];
+        const peerSignal = signals[peerId];
+        
+        if (peerSignal.offer && !peerConnection.remoteDescription) {
+          isNegotiator = false;
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(peerSignal.offer));
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          
+          await fetch(`${API_URL}/api/meetings/signal`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+              meetingId: meetingId,
+              signalData: answer,
+              type: 'answer'
+            })
+          });
+        }
+        
+        if (isNegotiator && peerSignal.answer && !peerConnection.remoteDescription) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(peerSignal.answer));
+        }
+        
+        if (peerSignal.candidates && peerSignal.candidates.length > 0) {
+          peerSignal.candidates.forEach(async (candidate) => {
+            const candidateKey = JSON.stringify(candidate);
+            if (!candidatesAdded[candidateKey]) {
+              candidatesAdded[candidateKey] = true;
+              try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+              } catch (e) {
+                console.warn('Error adding ICE candidate:', e);
+              }
+            }
+          });
+        }
+      } else {
+        if (!isNegotiator && !peerConnection.localDescription) {
+          isNegotiator = true;
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+          
+          await fetch(`${API_URL}/api/meetings/signal`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+              meetingId: meetingId,
+              signalData: offer,
+              type: 'offer'
+            })
+          });
+          
+          const statusLabel = document.getElementById('webrtc-status-label');
+          if (statusLabel) statusLabel.innerText = 'Waiting for participants...';
+        }
+      }
+    } catch (err) {
+      console.warn('Signaling poll error:', err);
+    }
+  }, 2000);
+}
+
+function toggleWebRTCMic() {
+  if (localStream) {
+    const audioTrack = localStream.getAudioTracks()[0];
+    if (audioTrack) {
+      webrtcIsMicMuted = !webrtcIsMicMuted;
+      audioTrack.enabled = !webrtcIsMicMuted;
+      document.getElementById('webrtc-mic-icon').innerText = webrtcIsMicMuted ? '🔇' : '🎙️';
+      showToast('info', webrtcIsMicMuted ? 'Microphone muted' : 'Microphone unmuted');
+    }
+  }
+}
+
+function toggleWebRTCCam() {
+  if (localStream) {
+    const videoTrack = localStream.getVideoTracks()[0];
+    if (videoTrack) {
+      webrtcIsCamOff = !webrtcIsCamOff;
+      videoTrack.enabled = !webrtcIsCamOff;
+      document.getElementById('webrtc-cam-icon').innerText = webrtcIsCamOff ? '🚫' : '📹';
+      showToast('info', webrtcIsCamOff ? 'Camera turned off' : 'Camera turned on');
+    }
+  }
 }

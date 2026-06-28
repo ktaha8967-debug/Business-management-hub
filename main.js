@@ -21,8 +21,13 @@ function createWindow() {
   // Remove default menu for a premium, clean standalone app experience
   Menu.setApplicationMenu(null);
 
-  // Load the live website URL directly
-  mainWindow.loadURL('https://taha.mayfairmarketing.online');
+  // Load local server in development mode, otherwise load the live website
+  const isDev = !app.isPackaged;
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:5000');
+  } else {
+    mainWindow.loadURL('https://taha.mayfairmarketing.online');
+  }
 
   mainWindow.on('closed', function () {
     mainWindow = null;

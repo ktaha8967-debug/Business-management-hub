@@ -8,13 +8,14 @@
   <!-- PWA & Mobile Optimization -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0a0b10">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="ascentra_logo.jpg">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <!-- Chart.js for beautiful business analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -30,116 +31,340 @@
 
   <!-- LANDING PAGE CONTAINER -->
   <div id="landing-page-container" class="hidden">
-    <!-- Navbar (1) -->
+    <!-- Morphing Background Mesh & Glowing Particles -->
+    <div class="morphing-bg-mesh"></div>
+    <div class="glowing-particles-container" id="glowing-particles"></div>
+
+    <!-- Navbar -->
     <header class="landing-header">
       <div class="landing-logo">
-        <span class="logo-accent">A</span>scentra Hub
+        <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 3L3 25H29L16 3Z" fill="url(#logo-grad)" />
+          <path d="M16 11L8 25H24L16 11Z" fill="#0B0F19" />
+          <defs>
+            <linearGradient id="logo-grad" x1="3" y1="3" x2="29" y2="25" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#704df4" />
+              <stop offset="1" stop-color="#00d2ff" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="logo-text">Ascentra <span class="logo-text-glow">Hub</span></span>
       </div>
       <nav class="landing-nav">
         <a href="#features">Features</a>
-        <a href="#video-desk">Media Center</a>
-        <a href="#audit-desk">Strategy Deck</a>
+        <a href="#media-center">Media Center</a>
+        <a href="#strategy-deck">Strategy Deck</a>
         <a href="#academy">Academy</a>
         <a href="#testimonials">Testimonials</a>
       </nav>
       <div class="landing-actions">
-        <button class="btn-primary" onclick="showAuthPanel()">Command Center Login</button>
+        <button class="btn-portal btn-magnetic" onclick="showAuthPanel()">🔑 Portal Login</button>
       </div>
     </header>
 
-    <!-- Section 1: Hero Banner (with Loop Video Background) -->
+    <!-- Hero Section -->
     <section class="hero-section">
-      <div class="hero-video-container">
-        <video autoplay loop muted playsinline class="hero-bg-video">
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-glowing-digital-neurons-in-dark-blue-space-32863-large.mp4" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
-      </div>
-      <div class="hero-content">
-        <span class="hero-tag">OPERATING SYSTEM V2.0</span>
-        <h1>Scale Your Startup & Creative Business in One Unified Platform</h1>
-        <p>A high-tech control hub for tracking financial metrics, publishing media campaigns, booking strategic meetings, and receiving expert mentorship.</p>
-        <div class="hero-buttons" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
-          <button class="btn-primary btn-large" onclick="showAuthPanel()">🔑 Access Command Center</button>
-          <a href="https://github.com/ktaha8967-debug/Business-management-hub/actions/runs/28307803075/artifacts/7929960878" target="_blank" class="btn-secondary btn-large" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">📱 Download Android APK</a>
-          <a href="https://github.com/ktaha8967-debug/Business-management-hub/actions/runs/28308114518/artifacts/7930079690" target="_blank" class="btn-secondary btn-large" style="border-color: var(--accent-purple); color: var(--accent-purple);">💻 Download Windows App</a>
-          <a href="#features" class="btn-secondary btn-large">Explore Ecosystem</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 2: Core Operations Specs -->
-    <section id="features" class="features-section">
-      <div class="container text-center">
-        <h2 class="section-title">Centralized Operations Ecosystem</h2>
-        <p class="section-subtitle">Ditch fragmented platforms. Manage your entire scaling path under one screen.</p>
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-icon">🛡️</div>
-            <h3>Executive Command</h3>
-            <p>Supervise administrator action logs, manage business profiles, and generate reports on team actions in real time.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🎬</div>
-            <h3>Content Operations</h3>
-            <p>Submit raw footage, coordinate with video editors, and access style safe-zone compliance instructions.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">📢</div>
-            <h3>SMM Dispatcher</h3>
-            <p>Publish campaigns across multiple networks (TikTok, IG, YouTube, FB) and monitor posting hours.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🎓</div>
-            <h3>Mentorship Track</h3>
-            <p>Submit advising queries, address business roadblocks, and schedule 1-on-1 advisor consultations.</p>
+      <div class="grid-bg"></div>
+      <div class="hero-glow-1"></div>
+      <div class="hero-glow-2"></div>
+      
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <span class="hero-badge"><span class="badge-pulse"></span>OPERATING SYSTEM V2.0</span>
+          <h1 class="hero-title">The Unified Operating System for Startups & Creators</h1>
+          <p class="hero-desc">A sleek, centralized platform to track growth metrics, manage video workflows, schedule secure mentorship sessions, and audit operations in real time.</p>
+          <div class="hero-ctas">
+            <button class="btn-gradient-cta btn-magnetic" onclick="showAuthPanel()">🔑 Access Command Center</button>
+            <a href="https://github.com/ktaha8967-debug/Business-management-hub/actions/runs/28307803075/artifacts/7929960878" target="_blank" class="btn-glass-cta btn-magnetic"><span class="icon">📱</span> Download Android APK</a>
+            <a href="https://github.com/ktaha8967-debug/Business-management-hub/actions/runs/28308114518/artifacts/7930079690" target="_blank" class="btn-glass-cta btn-magnetic"><span class="icon">💻</span> Download Windows App</a>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- Section 3: Live Video Pipeline Demonstration (with background loop video) -->
-    <section id="video-desk" class="video-demo-section">
-      <div class="video-bg-container">
-        <video autoplay loop muted playsinline class="section-bg-video">
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-numbers-31948-large.mp4" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
-      </div>
-      <div class="container">
-        <div class="split-layout">
-          <div class="split-text">
-            <h2>Seamless Media & Social Media Management (SMM) Pipelines</h2>
-            <p>Keep your editing and publishing staff synchronized. Editors access our Shared Stock Library to retrieve background tracks, transitions SFX, and overlay templates directly inside their dashboard, while SMMs utilize the Engagement Optimizer calendar to post at peak virality hours.</p>
-            <ul class="spec-list">
-              <li>✔️ High impact 9:16 layout specs check</li>
-              <li>✔️ Dedicated Media Asset stock center</li>
-              <li>✔️ Cross-network dispatcher console</li>
-            </ul>
-          </div>
-          <div class="split-visual">
-            <div class="glass-mockup">
-              <div class="mockup-header">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-                <span class="mockup-title">Media Production Pipeline</span>
+        
+        <!-- Right Column: 3D Mockup -->
+        <div class="hero-mockup-wrapper">
+          <div class="hero-mockup-container">
+            <div class="mockup-header-bar">
+              <div class="mockup-window-controls">
+                <span class="control-dot red"></span>
+                <span class="control-dot yellow"></span>
+                <span class="control-dot green"></span>
               </div>
-              <div class="mockup-body">
-                <div class="pipeline-flow">
-                  <div class="flow-step">
-                    <strong>1. Submit Raw Video</strong>
-                    <span class="step-status">Upload Completed</span>
+              <div class="mockup-window-title">Ascentra Hub Command Center</div>
+              <div class="mockup-window-status">
+                <span class="status-pulse"></span> LIVE
+              </div>
+            </div>
+            
+            <div class="mockup-main-layout">
+              <div class="mockup-sidebar">
+                <div class="mockup-sidebar-logo">A</div>
+                <div class="mockup-sidebar-items">
+                  <span class="sidebar-item active">📊</span>
+                  <span class="sidebar-item">🏢</span>
+                  <span class="sidebar-item">🎥</span>
+                  <span class="sidebar-item">🎓</span>
+                  <span class="sidebar-item">🛡️</span>
+                </div>
+              </div>
+              
+              <div class="mockup-dashboard-content">
+                <div class="mockup-stats-grid">
+                  <div class="mockup-stat-card">
+                    <span class="stat-title">Monthly Revenue</span>
+                    <span class="stat-value" id="hero-mrr-val">$142,390</span>
+                    <span class="stat-change positive">+24.8%</span>
                   </div>
-                  <div class="flow-arrow">⬇️</div>
-                  <div class="flow-step">
-                    <strong>2. Editing & Safe Zones</strong>
-                    <span class="step-status">Applying Styles</span>
+                  <div class="mockup-stat-card">
+                    <span class="stat-title">Advising Status</span>
+                    <span class="stat-value">Scheduled</span>
+                    <span class="stat-change neutral">2 Actions</span>
                   </div>
-                  <div class="flow-arrow">⬇️</div>
-                  <div class="flow-step">
-                    <strong>3. SMM Channel Publish</strong>
-                    <span class="step-status">Scheduled at 07:00 PM</span>
+                </div>
+                
+                <div class="mockup-chart-container">
+                  <canvas id="heroChart" height="150"></canvas>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Floating cards (Orbits) -->
+            <div class="floating-mockup-card card-1" style="transform: translateZ(60px);">
+              <span class="card-icon">🛡️</span>
+              <div>
+                <span class="card-title">Access Approved</span>
+                <span class="card-detail">Taha Khan (Super Admin)</span>
+              </div>
+            </div>
+            <div class="floating-mockup-card card-2" style="transform: translateZ(40px);">
+              <span class="card-icon">🎬</span>
+              <div>
+                <span class="card-title">Video Asset Posted</span>
+                <span class="card-detail">Optimal slot 07:00 PM</span>
+              </div>
+            </div>
+            <div class="floating-mockup-card card-3" style="transform: translateZ(50px);">
+              <span class="card-icon">⚡</span>
+              <div>
+                <span class="card-title">Network Uptime</span>
+                <span class="card-detail">99.99% SLA Uptime</span>
+              </div>
+            </div>
+            <div class="floating-mockup-card card-4" style="transform: translateZ(30px);">
+              <span class="card-icon">📈</span>
+              <div>
+                <span class="card-title">Active Projects</span>
+                <span class="card-detail">14 Completed Today</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Centralized Operations Command</h2>
+          <p class="section-subtitle">Ditch fragmented tool stacks. Build, manage, and scale your brand operations under one unified dashboard.</p>
+        </div>
+        
+        <div class="features-list">
+          <!-- Module 1: Executive Ops -->
+          <div class="feature-row">
+            <div class="feature-text">
+              <div class="feature-badge">🛡️ EXECUTIVE OPS</div>
+              <h3 class="feature-heading">Centralized Command Deck</h3>
+              <p class="feature-description">Supervise operations in real time. Track system activity logs, analyze team performance, and generate strategic PDF audits for partners in one click.</p>
+              <ul class="feature-bullets">
+                <li><span class="bullet-check">✓</span> 100% Visibility Rules enforce strict compartmentalization</li>
+                <li><span class="bullet-check">✓</span> On-demand PDF audits generated instantly</li>
+                <li><span class="bullet-check">✓</span> Full administrative trace logs of all database updates</li>
+              </ul>
+            </div>
+            <div class="feature-visual">
+              <div class="glass-card feature-mock">
+                <div class="mockup-header-bar">
+                  <div class="mockup-window-controls">
+                    <span class="control-dot red"></span>
+                    <span class="control-dot yellow"></span>
+                    <span class="control-dot green"></span>
+                  </div>
+                  <div class="mockup-window-title">System Activity Logs</div>
+                </div>
+                <div class="mockup-terminal">
+                  <div class="term-line info">&gt; init_boss_audit_console()</div>
+                  <div class="term-line success">[OK] Super Admin credentials verified.</div>
+                  <div class="term-line warn">[LOG] admin-1 approved business owner (Taha Khan)</div>
+                  <div class="term-line info">[LOG] sm-1 dispatched TikTok video campaign</div>
+                  <div class="term-line error">[ERR] Unauthorized access blocked (IP: 192.168.1.45)</div>
+                  <div class="term-line success">[OK] Automated daily backup complete (2.4MB database)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 2: Shared Assets Library -->
+          <div class="feature-row reverse">
+            <div class="feature-text">
+              <div class="feature-badge">🎬 PRODUCTION</div>
+              <h3 class="feature-heading">Shared Assets Library</h3>
+              <p class="feature-description">Access background tracks, transition SFX, safe-zone guidelines, and motion templates directly from the production panel.</p>
+              <ul class="feature-bullets">
+                <li><span class="bullet-check">✓</span> Preview waveform streams directly inside the editor dashboard</li>
+                <li><span class="bullet-check">✓</span> Instant filter tags (SFX, Tracks, Overlay Guidelines, Presets)</li>
+                <li><span class="bullet-check">✓</span> Fast local asset cache for instant editing workflows</li>
+              </ul>
+            </div>
+            <div class="feature-visual">
+              <div class="glass-card feature-mock">
+                <div class="assets-library-preview">
+                  <div class="asset-preview-header">
+                    <span>📂 Shared Library</span>
+                    <span class="asset-count">128 Assets</span>
+                  </div>
+                  <div class="asset-items-list">
+                    <div class="asset-item" onclick="simulateAssetDownload(this, 1)">
+                      <span class="asset-type audio float-icon">🎵</span>
+                      <div class="asset-info">
+                        <span class="asset-name">Epic_Transition_Rise.wav</span>
+                        <span class="asset-meta">Audio • 14MB • SFX Pack</span>
+                      </div>
+                      <span class="asset-action">Download</span>
+                      <div class="download-progress-bar"><div class="download-progress-fill" id="asset-progress-1"></div></div>
+                    </div>
+                    <div class="asset-item" onclick="simulateAssetDownload(this, 2)">
+                      <span class="asset-type video float-icon">🎬</span>
+                      <div class="asset-info">
+                        <span class="asset-name">Safe_Zone_Overlay_9_16.mov</span>
+                        <span class="asset-meta">Video Overlay • 4.2MB</span>
+                      </div>
+                      <span class="asset-action">Download</span>
+                      <div class="download-progress-bar"><div class="download-progress-fill" id="asset-progress-2"></div></div>
+                    </div>
+                    <div class="asset-item" onclick="simulateAssetDownload(this, 3)">
+                      <span class="asset-type audio float-icon">🎵</span>
+                      <div class="asset-info">
+                        <span class="asset-name">Chill_Ambient_Vibe_120bpm.mp3</span>
+                        <span class="asset-meta">Audio • 8.7MB • Background Music</span>
+                      </div>
+                      <span class="asset-action">Download</span>
+                      <div class="download-progress-bar"><div class="download-progress-fill" id="asset-progress-3"></div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 3: Engagement Scheduler -->
+          <div class="feature-row">
+            <div class="feature-text">
+              <div class="feature-badge">📢 DISPATCHER</div>
+              <h3 class="feature-heading">Engagement Scheduler</h3>
+              <p class="feature-description">Connect and publish video campaigns across TikTok, Instagram Reels, Facebook, and YouTube Shorts in optimal virality windows.</p>
+              <ul class="feature-bullets">
+                <li><span class="bullet-check">✓</span> Integrated multi-channel scheduling interface</li>
+                <li><span class="bullet-check">✓</span> Real-time status update indicators of API dispatchers</li>
+                <li><span class="bullet-check">✓</span> Smart scheduling alerts suggest peak user engagement times</li>
+              </ul>
+            </div>
+            <div class="feature-visual">
+              <div class="glass-card feature-mock">
+                <div class="scheduler-preview-container">
+                  <div class="scheduler-posts-column">
+                    <div class="schedule-header">📅 Post Queue</div>
+                    <div class="pending-posts-list">
+                      <div class="pending-post-card post-1 active" id="sched-post-1">
+                        <span class="post-title">Cinematic Trailer Reel</span>
+                        <span class="post-time">07:00 PM</span>
+                      </div>
+                      <div class="pending-post-card post-2" id="sched-post-2">
+                        <span class="post-title">Startup Advice Vlog</span>
+                        <span class="post-time">08:30 PM</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="scheduler-arrow-flow">
+                    <div class="scheduler-dispatch-node float-icon">API</div>
+                    <svg class="scheduler-flow-svg" viewBox="0 0 80 180">
+                      <path class="flow-path path-tiktok" d="M10,90 C30,50 50,25 70,25" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+                      <path class="flow-path path-instagram" d="M10,90 C30,70 50,65 70,65" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+                      <path class="flow-path path-youtube" d="M10,90 C30,110 50,115 70,115" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+                      <path class="flow-path path-facebook" d="M10,90 C30,130 50,155 70,155" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+                      
+                      <circle class="flow-particle" id="flow-particle-tiktok" r="3.5" fill="#00d2ff" />
+                      <circle class="flow-particle" id="flow-particle-instagram" r="3.5" fill="#704df4" />
+                      <circle class="flow-particle" id="flow-particle-youtube" r="3.5" fill="#00d2ff" />
+                      <circle class="flow-particle" id="flow-particle-facebook" r="3.5" fill="#704df4" />
+                    </svg>
+                  </div>
+                  
+                  <div class="scheduler-channels-column">
+                    <div class="chan-card chan-tiktok" id="chan-tiktok">
+                      <span class="chan-icon">🎵 TikTok</span>
+                      <span class="chan-pulse-status"></span>
+                    </div>
+                    <div class="chan-card chan-instagram" id="chan-instagram">
+                      <span class="chan-icon">📷 Instagram</span>
+                      <span class="chan-pulse-status"></span>
+                    </div>
+                    <div class="chan-card chan-youtube" id="chan-youtube">
+                      <span class="chan-icon">🎥 YouTube</span>
+                      <span class="chan-pulse-status"></span>
+                    </div>
+                    <div class="chan-card chan-facebook" id="chan-facebook">
+                      <span class="chan-icon">👥 Facebook</span>
+                      <span class="chan-pulse-status"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 4: Growth Mentorship Track -->
+          <div class="feature-row reverse">
+            <div class="feature-text">
+              <div class="feature-badge">🎓 ACADEMY</div>
+              <h3 class="feature-heading">Growth Mentorship Track</h3>
+              <p class="feature-description">Identify marketing roadblocks, submit Academy advising requests, and schedule private, secure 1-on-1 sessions with expert startup advisors.</p>
+              <ul class="feature-bullets">
+                <li><span class="bullet-check">✓</span> Private 1-on-1 consultations directly from the Mentee panel</li>
+                <li><span class="bullet-check">✓</span> Dynamic roadblock checklists help founders systematically solve bottlenecks</li>
+                <li><span class="bullet-check">✓</span> Strict security filter blocks unauthorized access to advisor meeting logs</li>
+              </ul>
+            </div>
+            <div class="feature-visual">
+              <div class="glass-card feature-mock">
+                <div class="mentorship-preview">
+                  <div class="mentorship-header">
+                    <span>🎓 Mentor Board</span>
+                    <span class="advisors-active">2 Advisors Online</span>
+                  </div>
+                  <div class="roadblock-steps">
+                    <div class="roadblock-step checked">
+                      <span class="step-check">✓</span>
+                      <div class="step-details">
+                        <span class="step-title">Identify Scaling Roadblock</span>
+                        <span class="step-desc">Detailing SMM channel bottlenecks</span>
+                      </div>
+                    </div>
+                    <div class="roadblock-step active">
+                      <span class="step-indicator pulse"></span>
+                      <div class="step-details">
+                        <span class="step-title">1-on-1 Secure Advising Consultation</span>
+                        <span class="step-desc">Taha Khan & Advisor (Today, 04:00 PM)</span>
+                      </div>
+                    </div>
+                    <div class="roadblock-step pending">
+                      <span class="step-circle"></span>
+                      <div class="step-details">
+                        <span class="step-title">Deploy Virality Action Items</span>
+                        <span class="step-desc">Implement feedback template & tracks</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -149,44 +374,72 @@
       </div>
     </section>
 
-    <!-- Section 4: Strategic Audit Overview (with background loop video) -->
-    <section id="audit-desk" class="audit-demo-section">
-      <div class="video-bg-container">
-        <video autoplay loop muted playsinline class="section-bg-video">
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-futuristic-neon-wireframe-grid-tunnel-background-42171-large.mp4" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
-      </div>
+    <!-- Media Production Pipeline -->
+    <section id="media-center" class="pipeline-section">
       <div class="container">
-        <div class="split-layout reverse">
-          <div class="split-text">
-            <h2>Strict Audit Logs & Business Visibility</h2>
-            <p>Control who sees what. Our secure visibility rules ensure business owners only see meetings and invoices linked to their specific portfolio. Meanwhile, Super Admins can access the Executive Console to generate on-demand performance summaries, audit log lists, and team productivity charts.</p>
-            <div class="metrics-row">
-              <div class="metric-item">
-                <span class="num">100%</span>
-                <span class="lbl">Visibility Security</span>
+        <div class="section-header">
+          <h2 class="section-title">Media Production Pipeline</h2>
+          <p class="section-subtitle">A high-fidelity flow showing how content transitions from raw asset to live SMM dispatch.</p>
+        </div>
+        
+        <div class="pipeline-timeline-wrapper">
+          <div class="timeline-glow-line">
+            <svg class="pipeline-svg-line" viewBox="0 0 1000 10" fill="none" style="width:100%; height:10px;">
+              <path d="M0 5 L1000 5" stroke="rgba(255,255,255,0.05)" stroke-width="4" />
+              <path id="pipeline-flow-active" d="M0 5 L0 5" stroke="url(#pipeline-grad)" stroke-width="4" stroke-linecap="round" />
+              <defs>
+                <linearGradient id="pipeline-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#704df4" />
+                  <stop offset="100%" stop-color="#00d2ff" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="pipeline-flow-file" id="pipeline-file-particle">📄</div>
+          </div>
+          
+          <div class="timeline-steps">
+            <div class="timeline-step" id="pipeline-step-1">
+              <div class="step-node">
+                <span class="step-number">1</span>
+                <span class="node-ripple"></span>
               </div>
-              <div class="metric-item">
-                <span class="num">&lt; 1s</span>
-                <span class="lbl">Audit Generation</span>
+              <div class="step-content">
+                <h4>1. Raw Footage Ingestion</h4>
+                <p>Upload files. Files are encrypted and stored in local cache folder.</p>
+                <span class="step-status-tag" id="pipeline-status-1">Pending</span>
               </div>
             </div>
-          </div>
-          <div class="split-visual">
-            <div class="glass-mockup">
-              <div class="mockup-header">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-                <span class="mockup-title">Boss Audit logs Console</span>
+            <div class="timeline-step" id="pipeline-step-2">
+              <div class="step-node">
+                <span class="step-number">2</span>
+                <span class="node-ripple"></span>
               </div>
-              <div class="mockup-body" style="padding:15px; font-size:12px; font-family:monospace; color:var(--accent-cyan);">
-                <div class="terminal-line">&gt; Loading admin_activity_logs...</div>
-                <div class="terminal-line" style="color:var(--text-secondary); margin-top:5px;">[06:12:05 AM] User admin-1: Logged in successfully</div>
-                <div class="terminal-line" style="color:var(--text-secondary);">[06:14:12 AM] User sm-1: Published TikTok Video asset_22</div>
-                <div class="terminal-line" style="color:var(--text-secondary);">[06:18:30 AM] User admin-1: Approved Business owner ktaha8967</div>
-                <div class="terminal-line" style="color:#2ed573; margin-top:8px;">&gt; Executive summary report compiled. READY.</div>
+              <div class="step-content">
+                <h4>2. Safe-Zone Crop Check</h4>
+                <p>Verify vertical 9:16 safe areas and apply overlays automatically.</p>
+                <span class="step-status-tag" id="pipeline-status-2">Pending</span>
+              </div>
+            </div>
+            <div class="timeline-step" id="pipeline-step-3">
+              <div class="step-node">
+                <span class="step-number">3</span>
+                <span class="node-ripple"></span>
+              </div>
+              <div class="step-content">
+                <h4>3. Editor Approval</h4>
+                <p>Senior editor reviews assets and triggers dispatch scheduler queue.</p>
+                <span class="step-status-tag" id="pipeline-status-3">Pending</span>
+              </div>
+            </div>
+            <div class="timeline-step" id="pipeline-step-4">
+              <div class="step-node">
+                <span class="step-number">4</span>
+                <span class="node-ripple"></span>
+              </div>
+              <div class="step-content">
+                <h4>4. SMM Slot Dispatch</h4>
+                <p>Publish to TikTok, YouTube, Reels during optimal virality hours.</p>
+                <span class="step-status-tag" id="pipeline-status-4">Pending</span>
               </div>
             </div>
           </div>
@@ -194,137 +447,1058 @@
       </div>
     </section>
 
-    <!-- Section 5: Academy Advisement Hub -->
+    <!-- Security & Audit Section -->
+    <section id="strategy-deck" class="security-section">
+      <div class="container security-grid">
+        <div class="security-text">
+          <div class="feature-badge security-badge">🛡️ ENTERPRISE SECURITY</div>
+          <h2 class="section-title">Strict Audit Logs & Business Visibility</h2>
+          <p class="section-subtitle">Our secure visibility rules ensure business owners only see meetings and invoices linked to their portfolio. Meanwhile, Super Admins can access the Executive Console to generate summaries, audit logs, and team charts.</p>
+          
+          <!-- Shield Icon emitting glowing rings -->
+          <div class="shield-security-badge-wrapper">
+            <div class="shield-security-badge float-icon">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#704df4" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(112, 77, 244, 0.1)"/>
+              </svg>
+              <div class="shield-glow-ring ring-1"></div>
+              <div class="shield-glow-ring ring-2"></div>
+            </div>
+          </div>
+          
+          <div class="performance-stats">
+            <div class="stat-card">
+              <div class="donut-chart-wrapper">
+                <svg class="donut-chart" viewBox="0 0 36 36">
+                  <path class="donut-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                  <path class="donut-fill stroke-cyan" id="security-donut" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="url(#cyan-grad)" stroke-width="3" stroke-linecap="round" stroke-dasharray="100, 100" stroke-dashoffset="100" />
+                  <defs>
+                    <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#00d2ff" />
+                      <stop offset="100%" stop-color="#704df4" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="donut-val">
+                  <span class="stat-num" id="stat-security">0</span><span class="stat-suffix">%</span>
+                </div>
+              </div>
+              <span class="stat-label">Visibility Security</span>
+            </div>
+            
+            <div class="stat-card">
+              <div class="donut-chart-wrapper">
+                <svg class="donut-chart" viewBox="0 0 36 36">
+                  <path class="donut-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                  <path class="donut-fill stroke-purple" id="audit-donut" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="url(#purple-grad)" stroke-width="3" stroke-linecap="round" stroke-dasharray="100, 100" stroke-dashoffset="100" />
+                  <defs>
+                    <linearGradient id="purple-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#704df4" />
+                      <stop offset="100%" stop-color="#00d2ff" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="donut-val">
+                  <span class="stat-num" id="stat-audit">0.00</span><span class="stat-suffix">s</span>
+                </div>
+              </div>
+              <span class="stat-label">Audit Generation</span>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-main" style="flex-direction:column; justify-content:center; align-items:center; gap:8px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span class="stat-label-live">Active</span>
+                  <span class="live-pulse-dot"></span>
+                </div>
+                <div class="live-wave-container">
+                  <svg class="live-wave" viewBox="0 0 100 30">
+                    <path class="wave-path" d="M0 15 Q 12.5 5, 25 15 T 50 15 T 75 15 T 100 15" fill="none" stroke="#00d2ff" stroke-width="2"></path>
+                  </svg>
+                </div>
+              </div>
+              <span class="stat-label">Real-Time Monitoring</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="security-visual">
+          <div class="glass-card terminal-card">
+            <div class="terminal-header">
+              <div class="mockup-window-controls">
+                <span class="control-dot red"></span>
+                <span class="control-dot yellow"></span>
+                <span class="control-dot green"></span>
+              </div>
+              <span class="terminal-title">live_audit_stream - Terminal</span>
+              <span class="terminal-badge">SECURE</span>
+            </div>
+            <div class="terminal-body" id="live-terminal-console">
+              <!-- Logs typed dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Academy Section Roadmap -->
     <section id="academy" class="academy-section">
       <div class="container">
-        <div class="text-center">
+        <div class="section-header">
           <h2 class="section-title">Growth Academy & Strategic Advisement</h2>
           <p class="section-subtitle">Direct, uninhibited pathways to scale operational bottlenecks with expert mentorship.</p>
         </div>
-        <div class="grid-3col mt-40">
-          <div class="academy-card">
-            <div class="acad-num">01</div>
-            <h4>Identify Bottlenecks</h4>
-            <p>Describe your specific strategic bottlenecks, marketing problems, or team scaling issues via the Mentee Desk.</p>
-          </div>
-          <div class="academy-card">
-            <div class="acad-num">02</div>
-            <h4>Consult Advisors</h4>
-            <p>Request 1-on-1 advisor consultations. Meetings are filtered securely so only authorized parties can join the rooms.</p>
-          </div>
-          <div class="academy-card">
-            <div class="acad-num">03</div>
-            <h4>Track Progress</h4>
-            <p>Access notes, action items, and performance dashboards to track how fast your operations are growing.</p>
+        
+        <div class="roadmap-wrapper">
+          <svg class="roadmap-svg-lines" viewBox="0 0 1000 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path id="roadmap-line-path" d="M166 100 C333 100, 333 100, 500 100 C666 100, 666 100, 833 100" stroke="url(#roadmap-glow-grad)" stroke-width="3" stroke-dasharray="10 10" />
+            <defs>
+              <linearGradient id="roadmap-glow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#704df4" />
+                <stop offset="50%" stop-color="#00d2ff" />
+                <stop offset="100%" stop-color="#704df4" />
+              </linearGradient>
+            </defs>
+          </svg>
+          
+          <div class="roadmap-grid">
+            <!-- Step 1 -->
+            <div class="roadmap-card" id="roadmap-card-1">
+              <div class="roadmap-icon-wrapper">
+                <span class="roadmap-step-num">01</span>
+                <svg class="roadmap-illus" viewBox="0 0 64 64" fill="none">
+                  <rect x="12" y="12" width="40" height="40" rx="6" stroke="#704df4" stroke-width="2" />
+                  <line x1="22" y1="26" x2="42" y2="26" stroke="#704df4" stroke-width="2" />
+                  <line x1="22" y1="36" x2="34" y2="36" stroke="#00d2ff" stroke-width="2" />
+                  <circle cx="44" cy="40" r="6" stroke="#00d2ff" stroke-width="2" />
+                  <line x1="48" y1="44" x2="54" y2="50" stroke="#00d2ff" stroke-width="2" />
+                </svg>
+              </div>
+              <h4>Identify Bottlenecks</h4>
+              <p>Describe your specific strategic bottlenecks, marketing problems, or team scaling issues via the Mentee Desk.</p>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="roadmap-card" id="roadmap-card-2" style="position:relative;">
+              <div class="roadmap-icon-wrapper">
+                <span class="roadmap-step-num">02</span>
+                <svg class="roadmap-illus" viewBox="0 0 64 64" fill="none">
+                  <circle cx="24" cy="24" r="12" stroke="#00d2ff" stroke-width="2" />
+                  <path d="M12 44C12 36 18 36 24 36C30 36 36 36 36 44" stroke="#00d2ff" stroke-width="2" />
+                  <circle cx="44" cy="32" r="8" stroke="#704df4" stroke-width="2" />
+                  <path d="M36 48C36 42 40 42 44 42C48 42 52 42 52 48" stroke="#704df4" stroke-width="2" />
+                </svg>
+              </div>
+              <h4>Consult Advisors</h4>
+              <p>Request 1-on-1 advisor consultations. Meetings are filtered securely so only authorized parties can join the rooms.</p>
+              
+              <!-- Floating advisor avatars around consultation stage -->
+              <div class="floating-avatars-container">
+                <div class="floating-avatar avatar-1 float-icon" style="animation-delay: 0s;"><img src="testimonial_user_2.jpg" alt="Advisor Chloe"></div>
+                <div class="floating-avatar avatar-2 float-icon" style="animation-delay: 2.5s;"><img src="testimonial_user_3.jpg" alt="Advisor Alexander"></div>
+              </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="roadmap-card" id="roadmap-card-3">
+              <div class="roadmap-icon-wrapper">
+                <span class="roadmap-step-num">03</span>
+                <svg class="roadmap-illus" viewBox="0 0 64 64" fill="none">
+                  <path d="M8 56H56" stroke="#704df4" stroke-width="2" stroke-linecap="round" />
+                  <path d="M12 44L24 30L38 38L52 14" stroke="#00d2ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                  <circle cx="52" cy="14" r="4" fill="#704df4" />
+                  <circle cx="24" cy="30" r="3" fill="#00d2ff" />
+                </svg>
+              </div>
+              <h4>Track Progress</h4>
+              <p>Access notes, action items, and performance dashboards to track how fast your operations are growing.</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-
-
-    <!-- Section 7: Case Studies & Partners (Realistic Images) -->
+    <!-- Testimonials Carousel Section -->
     <section id="testimonials" class="testimonials-section">
       <div class="container">
-        <div class="text-center">
+        <div class="section-header">
           <h2 class="section-title">Trusted By Leading Growth Partners</h2>
           <p class="section-subtitle">Real feedback from business owners and founders scaling with Ascentra Hub.</p>
         </div>
-        <div class="testimonials-grid mt-40">
-          <div class="testimonial-card">
-            <div class="testimonial-user">
-              <img src="testimonial_user_1.jpg" alt="Middle Eastern Business Owner headshot">
+        
+        <div class="carousel-container">
+          <button class="carousel-arrow prev" aria-label="Previous slide">←</button>
+          <button class="carousel-arrow next" aria-label="Next slide">→</button>
+          
+          <div class="carousel-viewport-3d">
+            <!-- Slide 1 -->
+            <div class="testimonial-card-3d active">
               <div>
-                <h5>Tariq Al-Mansoor</h5>
-                <span>Founder, Apex Logistics</span>
+                <div class="rating-stars">★★★★★</div>
+                <p class="quote">"Ascentra Hub changed our workflow. The secure meeting visibility feature ensures our logistics proposals remain strictly confidential while allowing us to request advisor advice on bottlenecks. Outstanding UX!"</p>
+              </div>
+              <div class="testimonial-user">
+                <img src="testimonial_user_1.jpg" alt="Tariq Al-Mansoor">
+                <div>
+                  <h5>Tariq Al-Mansoor</h5>
+                  <span class="company">Founder, Apex Logistics</span>
+                </div>
               </div>
             </div>
-            <p class="quote">"Ascentra Hub changed our workflow. The secure meeting visibility feature ensures our logistics proposals remain strictly confidential while allowing us to request advisor advice on bottlenecks. Outstanding UX!"</p>
+            
+            <!-- Slide 2 -->
+            <div class="testimonial-card-3d next-slide">
+              <div>
+                <div class="rating-stars">★★★★★</div>
+                <p class="quote">"Managing video editors and SMM channels became seamless. Editors access stock tracks directly, and SMMs dispatch approved assets in optimal slots. Our TikTok viewership grew by 300%!"</p>
+              </div>
+              <div class="testimonial-user">
+                <img src="testimonial_user_2.jpg" alt="Chloe Lin">
+                <div>
+                  <h5>Chloe Lin</h5>
+                  <span class="company">CEO, Vertex SaaS</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Slide 3 -->
+            <div class="testimonial-card-3d prev-slide">
+              <div>
+                <div class="rating-stars">★★★★★</div>
+                <p class="quote">"The Super Admin Executive console gives me complete visibility over operations. I can review what audit logs were registered and print a complete team performance report in a single click."</p>
+              </div>
+              <div class="testimonial-user">
+                <img src="testimonial_user_3.jpg" alt="Alexander Vance">
+                <div>
+                  <h5>Alexander Vance</h5>
+                  <span class="company">Director, GreenPulse</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="testimonial-card">
-            <div class="testimonial-user">
-              <img src="testimonial_user_2.jpg" alt="Asian Female Founder headshot">
-              <div>
-                <h5>Chloe Lin</h5>
-                <span>CEO, Vertex SaaS</span>
-              </div>
-            </div>
-            <p class="quote">"Managing video editors and SMM channels became seamless. Editors access stock tracks directly, and SMMs dispatch approved assets in optimal slots. Our TikTok viewership grew by 300%!"</p>
-          </div>
-          <div class="testimonial-card">
-            <div class="testimonial-user">
-              <img src="testimonial_user_3.jpg" alt="European Creative Director headshot">
-              <div>
-                <h5>Alexander Vance</h5>
-                <span>Director, GreenPulse</span>
-              </div>
-            </div>
-            <p class="quote">"The Super Admin Executive console gives me complete visibility over operations. I can review what audit logs were registered and print a complete team performance report in a single click."</p>
+          
+          <div class="carousel-dots">
+            <span class="dot active" data-index="0"></span>
+            <span class="dot" data-index="1"></span>
+            <span class="dot" data-index="2"></span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Section 8: Consultation & Booking Request Form -->
+    <!-- Consultation Section -->
     <section class="contact-section">
-      <div class="container">
-        <div class="split-layout">
-          <div class="split-text">
-            <h2>Ready to Streamline Your Scaling Infrastructure?</h2>
-            <p>Send a message to our business development desk to set up a private consultation and walk through how the Ascentra Hub OS can be customized to support your operations team.</p>
-            <div style="margin-top:20px; font-size:14px; color:var(--text-secondary);">
-              <span>📧 admin@ascentra.com</span><br>
-              <span>📞 +1 (800) 555-0199</span>
-            </div>
+      <div class="container form-centered-container">
+        
+        <div class="trust-badges">
+          <span class="trust-badge">🛡️ SOC 2 Type II Certified</span>
+          <span class="trust-badge">🔒 GDPR Compliant</span>
+          <span class="trust-badge">💎 Uptime SLA 99.9%</span>
+          <span class="trust-badge">🔑 AES-256 Encrypted</span>
+        </div>
+        
+        <div class="glass-card consultation-card">
+          <div class="card-glow"></div>
+          <div class="consultation-header">
+            <h3>Request Custom Consultation</h3>
+            <p>Send a message to our business development desk to set up a private consultation and walk through how the Ascentra Hub OS can support your operations.</p>
           </div>
-          <div class="split-visual">
-            <div class="panel-card">
-              <h4>Request Custom Consultation</h4>
-              <form onsubmit="event.preventDefault(); showToast('success', 'Thank you! Our operations director will reach out shortly.'); this.reset();">
-                <div class="form-group">
-                  <label for="contact-name">Full Name</label>
-                  <input type="text" id="contact-name" required placeholder="John Doe">
-                </div>
-                <div class="form-group">
-                  <label for="contact-email">Email Address</label>
-                  <input type="email" id="contact-email" required placeholder="john@example.com">
-                </div>
-                <div class="form-group">
-                  <label for="contact-company">Company / Business Name</label>
-                  <input type="text" id="contact-company" placeholder="e.g. Apex Corp">
-                </div>
-                <div class="form-group">
-                  <label for="contact-message">Consultation Requirements</label>
-                  <textarea id="contact-message" required placeholder="Explain your operational team scale..."></textarea>
-                </div>
-                <button type="submit" class="btn-primary w-100 mt-15">Submit Consultation Request</button>
-              </form>
+          
+          <form onsubmit="event.preventDefault(); showToast('success', 'Thank you! Our operations director will reach out shortly.'); this.reset();" class="consultation-form">
+            <div class="form-grid-2col">
+              <div class="form-group">
+                <label for="contact-name">Full Name</label>
+                <input type="text" id="contact-name" required placeholder="John Doe">
+              </div>
+              <div class="form-group">
+                <label for="contact-email">Email Address</label>
+                <input type="email" id="contact-email" required placeholder="john@example.com">
+              </div>
             </div>
-          </div>
+            
+            <div class="form-group">
+              <label for="contact-company">Company / Business Name</label>
+              <input type="text" id="contact-company" placeholder="e.g. Apex Corp">
+            </div>
+            
+            <div class="form-group">
+              <label for="contact-message">Consultation Requirements</label>
+              <textarea id="contact-message" required placeholder="Explain your operational team scale..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn-gradient-submit btn-magnetic">Submit Consultation Request</button>
+          </form>
         </div>
       </div>
     </section>
 
     <!-- Footer -->
     <footer class="landing-footer">
-      <div class="container">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
-          <div>
-            <strong>Ascentra Hub Platform</strong><br>
-            <span style="font-size:12px; color:var(--text-secondary);">Unified Business Scale Ecosystem.</span>
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <svg class="logo-icon-sm" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 3L3 25H29L16 3Z" fill="url(#logo-grad-sm)" />
+              <path d="M16 11L8 25H24L16 11Z" fill="#0B0F19" />
+              <defs>
+                <linearGradient id="logo-grad-sm" x1="3" y1="3" x2="29" y2="25" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#704df4" />
+                  <stop offset="1" stop-color="#00d2ff" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span class="logo-text-sm">Ascentra Hub</span>
           </div>
-          <div style="display:flex; gap:15px; font-size:13px;">
-            <a href="#features" style="color:var(--text-secondary);">Features</a>
-            <a href="#" onclick="showAuthPanel()" style="color:var(--accent-cyan);">Sign In Portal</a>
-          </div>
+          <p class="footer-tagline">Unified Business Scale Ecosystem.</p>
+          <span class="footer-security-grade">Security Audit Grade: <span class="grade-badge">A+</span></span>
         </div>
-        <hr style="border:0; border-top:1px solid rgba(255,255,255,0.05); margin:20px 0;">
-        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); flex-wrap:wrap; gap:10px;">
-          <span>© 2026 Ascentra Unified Systems Inc. All rights reserved.</span>
-          <span>Security Audit Grade: A+</span>
+        
+        <div class="footer-links">
+          <a href="#features">Features</a>
+          <a href="#media-center">Media Center</a>
+          <a href="#strategy-deck">Strategy Deck</a>
+          <a href="#academy">Academy</a>
+          <a href="#testimonials">Testimonials</a>
+          <a href="#" onclick="showAuthPanel()">Portal Login</a>
+        </div>
+        
+        <div class="footer-bottom">
+          <span class="copyright">© 2026 Ascentra Unified Systems Inc. All rights reserved.</span>
+          <div class="social-icons">
+            <a href="#" aria-label="Twitter">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+            <a href="#" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.75a1.75 1.75 0 110-3.5 1.75 1.75 0 010 3.5zM19 19h-3v-4.5c0-1.1-.9-2-2-2s-2 .9-2 2V19h-3v-9h3v1.25c.75-1.1 2.25-1.75 3.5-1.75 2.25 0 4.5 2 4.5 5.5z"/>
+              </svg>
+            </a>
+            <a href="#" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </footer>
+
+    <!-- Script for Premium Landing Page Interactions -->
+    <script>
+      // Global Mouse Track Spotlight
+      const container = document.getElementById('landing-page-container');
+      if (container) {
+        container.addEventListener('mousemove', (e) => {
+          container.style.setProperty('--cursor-x', `${e.clientX}px`);
+          container.style.setProperty('--cursor-y', `${e.clientY}px`);
+        });
+      }
+
+      // Generate Background Particles
+      const particlesContainer = document.getElementById('glowing-particles');
+      if (particlesContainer) {
+        const particleCount = 15;
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'glowing-particle';
+          particle.style.left = `${Math.random() * 100}%`;
+          particle.style.animationDelay = `${Math.random() * 15}s`;
+          particle.style.animationDuration = `${10 + Math.random() * 10}s`;
+          particlesContainer.appendChild(particle);
+        }
+      }
+
+      // 1. Scroll Navbar Effect
+      window.addEventListener('scroll', () => {
+        const header = document.querySelector('.landing-header');
+        if (window.scrollY > 50) {
+          header.classList.add('scrolled');
+        } else {
+          header.classList.remove('scrolled');
+        }
+      });
+
+      // 2. 3D Tilt & Orbit Parallax Effect for Hero Mockup
+      const mockupWrapper = document.querySelector('.hero-mockup-wrapper');
+      const mockupContainer = document.querySelector('.hero-mockup-container');
+      const cards = document.querySelectorAll('.floating-mockup-card');
+      
+      if (mockupWrapper && mockupContainer) {
+        mockupWrapper.addEventListener('mousemove', (e) => {
+          const rect = mockupWrapper.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          
+          const percentX = (x - centerX) / centerX;
+          const percentY = (y - centerY) / centerY;
+          
+          // Max rotation 35 degrees on Y, 15 degrees on X
+          const maxRotY = 35; 
+          const maxRotX = 15; 
+          
+          const rotY = percentX * maxRotY - 12; // offset by default -12
+          const rotX = -percentY * maxRotX + 8;  // offset by default 8
+          
+          mockupContainer.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg) rotateZ(-2deg) scale(1.03)`;
+          
+          // Parallax for floating cards
+          cards.forEach((card, index) => {
+            const depth = (index + 1) * 15; // translation factor
+            const moveX = percentX * depth;
+            const moveY = percentY * depth;
+            const originalTransform = card.getAttribute('style') || '';
+            const zMatch = originalTransform.match(/translateZ\((\d+)px\)/);
+            const z = zMatch ? zMatch[1] : 40;
+            
+            card.style.transform = `translate3d(${moveX}px, ${moveY}px, ${z}px) scale(1.05)`;
+          });
+        });
+        
+        mockupWrapper.addEventListener('mouseleave', () => {
+          mockupContainer.style.transform = 'rotateY(-12deg) rotateX(8deg) rotateZ(-2deg) scale(1)';
+          cards.forEach((card) => {
+            const originalTransform = card.getAttribute('style') || '';
+            const zMatch = originalTransform.match(/translateZ\((\d+)px\)/);
+            const z = zMatch ? zMatch[1] : 40;
+            card.style.transform = `translate3d(0, 0, ${z}px) scale(1)`;
+          });
+        });
+      }
+
+      // 3. Magnetic Hover Button Interaction
+      const magneticBtns = document.querySelectorAll('.btn-magnetic');
+      magneticBtns.forEach(btn => {
+        btn.addEventListener('mousemove', (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          
+          // Pull offset
+          btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px) scale(1.03)`;
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+          btn.style.transform = 'translate(0px, 0px) scale(1)';
+        });
+      });
+
+      // Button Click Ripple Animation
+      magneticBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          const rect = this.getBoundingClientRect();
+          const ripple = document.createElement('span');
+          const size = Math.max(rect.width, rect.height);
+          const x = e.clientX - rect.left - size / 2;
+          const y = e.clientY - rect.top - size / 2;
+          
+          ripple.style.width = ripple.style.height = `${size}px`;
+          ripple.style.left = `${x}px`;
+          ripple.style.top = `${y}px`;
+          ripple.className = 'btn-ripple';
+          
+          // Remove old ripples
+          const oldRipple = this.querySelector('.btn-ripple');
+          if (oldRipple) oldRipple.remove();
+          
+          this.appendChild(ripple);
+        });
+      });
+
+      // 4. Chart.js in Hero Mockup & Executive Ops MRR increments
+      let heroChartInstance = null;
+      const initHeroChart = () => {
+        const canvas = document.getElementById('heroChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'rgba(0, 210, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(112, 77, 244, 0.0)');
+        
+        heroChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+              label: 'MRR Growth',
+              data: [35, 48, 62, 55, 80, 110, 142],
+              borderColor: '#00d2ff',
+              borderWidth: 3,
+              pointBackgroundColor: '#704df4',
+              pointBorderColor: '#ffffff',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              fill: true,
+              backgroundColor: gradient,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { color: '#676b88', font: { size: 9 } }
+              },
+              y: {
+                grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                ticks: { color: '#676b88', font: { size: 9 } }
+              }
+            }
+          }
+        });
+      };
+      
+      setTimeout(initHeroChart, 500);
+
+      // Smooth charts updates & MRR counter increments
+      let baseMrr = 142390;
+      setInterval(() => {
+        if (!heroChartInstance) return;
+        
+        // Random slight increments
+        baseMrr += Math.floor(Math.random() * 45) + 5;
+        const valElem = document.getElementById('hero-mrr-val');
+        if (valElem) valElem.innerText = `$${baseMrr.toLocaleString()}`;
+        
+        // Update Chart data slightly
+        const dataset = heroChartInstance.data.datasets[0].data;
+        const lastVal = dataset[dataset.length - 1];
+        // fluctuate last point
+        dataset[dataset.length - 1] = lastVal + (Math.random() > 0.5 ? 1 : -1);
+        heroChartInstance.update('active');
+      }, 4000);
+
+      // 5. Shared Assets Library - Progress Bars Simulator
+      window.simulateAssetDownload = (item, id) => {
+        const actionBtn = item.querySelector('.asset-action');
+        const progressFill = document.getElementById(`asset-progress-${id}`);
+        const progressBar = progressFill.parentElement;
+        
+        if (item.classList.contains('downloading') || item.classList.contains('completed')) return;
+        
+        item.classList.add('downloading');
+        progressBar.style.display = 'block';
+        actionBtn.innerText = '0%';
+        actionBtn.style.color = '#cbd5e1';
+        actionBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += Math.floor(Math.random() * 15) + 5;
+          if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            
+            actionBtn.innerText = 'Completed ✓';
+            actionBtn.style.color = '#27c93f';
+            actionBtn.style.borderColor = 'rgba(39, 201, 63, 0.3)';
+            progressFill.style.width = '100%';
+            item.classList.remove('downloading');
+            item.classList.add('completed');
+            
+            setTimeout(() => {
+              progressBar.style.display = 'none';
+              progressFill.style.width = '0%';
+            }, 1000);
+          } else {
+            actionBtn.innerText = `${progress}%`;
+            progressFill.style.width = `${progress}%`;
+          }
+        }, 150);
+      };
+
+      // 6. Engagement Scheduler Loop
+      const channels = ['tiktok', 'instagram', 'youtube', 'facebook'];
+      let chanIdx = 0;
+      
+      setInterval(() => {
+        // Sequentially glow channels
+        channels.forEach(ch => {
+          const card = document.getElementById(`chan-${ch}`);
+          if (card) card.classList.remove('glowing');
+        });
+        
+        const activeChan = channels[chanIdx];
+        const card = document.getElementById(`chan-${activeChan}`);
+        if (card) {
+          card.classList.add('glowing');
+          
+          // Animate particle flow along path
+          const particle = document.getElementById(`flow-particle-${activeChan}`);
+          if (particle) {
+            particle.classList.add('animating');
+            setTimeout(() => {
+              particle.classList.remove('animating');
+            }, 1000);
+          }
+        }
+        
+        // Toggle active scheduled post preview
+        const post1 = document.getElementById('sched-post-1');
+        const post2 = document.getElementById('sched-post-2');
+        if (post1 && post2) {
+          if (chanIdx % 2 === 0) {
+            post1.classList.add('active');
+            post2.classList.remove('active');
+          } else {
+            post1.classList.remove('active');
+            post2.classList.add('active');
+          }
+        }
+        
+        chanIdx = (chanIdx + 1) % channels.length;
+      }, 3000);
+
+      // 7. Media Production Pipeline SVG Path Transit
+      const activeFlow = document.getElementById('pipeline-flow-active');
+      const fileParticle = document.getElementById('pipeline-file-particle');
+      let pipelineIdx = 0;
+      
+      const animatePipeline = () => {
+        if (!activeFlow || !fileParticle) return;
+        
+        pipelineIdx++;
+        if (pipelineIdx > 4) {
+          // Reset
+          pipelineIdx = 1;
+        }
+        
+        // Coordinates for timeline
+        const targetPercent = (pipelineIdx - 1) * 33.33; // 0, 33.33, 66.66, 100
+        const activeX = (pipelineIdx - 1) * 333.33;
+        
+        activeFlow.setAttribute('d', `M0 5 L${activeX} 5`);
+        fileParticle.style.left = `${targetPercent}%`;
+        
+        // Reset steps status
+        for (let i = 1; i <= 4; i++) {
+          const step = document.getElementById(`pipeline-step-${i}`);
+          const status = document.getElementById(`pipeline-status-${i}`);
+          
+          if (i < pipelineIdx) {
+            step.classList.add('active');
+            step.classList.remove('processing');
+            if (status) status.innerText = 'Completed ✓';
+            if (status) {
+              status.className = 'step-status-tag';
+            }
+          } else if (i === pipelineIdx) {
+            step.classList.add('active');
+            step.classList.add('processing');
+            if (status) status.innerText = 'Processing...';
+            if (status) {
+              status.className = 'step-status-tag processing';
+            }
+          } else {
+            step.classList.remove('active');
+            step.classList.remove('processing');
+            if (status) status.innerText = 'Pending';
+            if (status) {
+              status.className = 'step-status-tag pending';
+            }
+          }
+        }
+      };
+      
+      setInterval(animatePipeline, 4000);
+
+      // 8. Live Terminal Audit Console Simulation
+      const terminal = document.getElementById('live-terminal-console');
+      const auditLogs = [
+        'Initializing secure audit handshake...',
+        '[OK] TLS 1.3 encrypted tunnel opened',
+        '[OK] Verification token approved: Level 1 (Super Admin)',
+        '[AUDIT] Fetching partner database integrity reports...',
+        '[LOG] User admin-1: Logged in from IP 192.168.1.1',
+        '[LOG] Business Owner (Taha Khan): Approved portfolio Apex_Logistics',
+        '[LOG] Video Editor (ed-3): Uploaded file transition_sfx.wav (3.2MB)',
+        '[LOG] SMM (smm-2): Scheduled video campaign on YouTube Shorts',
+        '[AUDIT] Invoicing system check: 24 active invoice logs verified',
+        '[SECURITY] Visibility check: 100% compartmentalization PASS',
+        '[AUDIT] Generating summary report for partner ktaha8967...',
+        '[SUCCESS] Strategy Audit Compiled: Grade A+ (Speed 0.85s)',
+        '-------------------------------------------------------',
+        'System monitoring active. Log stream listening...'
+      ];
+      
+      let lineIdx = 0;
+      let charIdx = 0;
+      
+      const typeLogs = () => {
+        if (!terminal) return;
+        
+        if (lineIdx < auditLogs.length) {
+          const currentLine = auditLogs[lineIdx];
+          
+          if (charIdx === 0) {
+            const div = document.createElement('div');
+            div.className = 'term-line';
+            
+            if (currentLine.includes('[OK]') || currentLine.includes('[SUCCESS]')) {
+              div.className += ' success';
+            } else if (currentLine.includes('[AUDIT]')) {
+              div.className += ' info';
+            } else if (currentLine.includes('[SECURITY]')) {
+              div.style.color = '#e28743';
+            } else if (currentLine.includes('[LOG]')) {
+              div.style.color = '#a4a9c6';
+            }
+            
+            div.innerHTML = '&gt; <span class="text-content"></span>';
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+          }
+          
+          const textSpan = terminal.lastElementChild.querySelector('.text-content');
+          textSpan.textContent += currentLine.charAt(charIdx);
+          charIdx++;
+          
+          if (charIdx < currentLine.length) {
+            setTimeout(typeLogs, 15);
+          } else {
+            charIdx = 0;
+            lineIdx++;
+            setTimeout(typeLogs, 300);
+          }
+        } else {
+          // Continuous streaming of logs once standard set completes
+          setTimeout(() => {
+            const div = document.createElement('div');
+            div.className = 'term-line info';
+            const timestamp = new Date().toLocaleTimeString();
+            div.innerHTML = `&gt; [${timestamp}] Running real-time integrity check... OK`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+            
+            if (terminal.childElementCount > 30) {
+              terminal.removeChild(terminal.firstElementChild);
+            }
+            
+            typeLogs();
+          }, 3000);
+        }
+      };
+
+      // 9. Counting Stats & Gauges when In View
+      const statSecurity = document.getElementById('stat-security');
+      const statAudit = document.getElementById('stat-audit');
+      const securityDonutFill = document.getElementById('security-donut');
+      const auditDonutFill = document.getElementById('audit-donut');
+      
+      let statsAnimated = false;
+      
+      const animateStats = () => {
+        if (statsAnimated) return;
+        statsAnimated = true;
+        
+        // Security gauge: count to 100%
+        let secVal = 0;
+        const secInterval = setInterval(() => {
+          secVal += 2;
+          if (secVal >= 100) {
+            secVal = 100;
+            clearInterval(secInterval);
+          }
+          if (statSecurity) statSecurity.innerText = secVal;
+          if (securityDonutFill) {
+            // stroke-dashoffset: 100 to 0
+            const offset = 100 - secVal;
+            securityDonutFill.style.strokeDashoffset = offset;
+          }
+        }, 20);
+        
+        // Audit speed: count to 0.85s
+        let auditVal = 0.00;
+        const auditInterval = setInterval(() => {
+          auditVal += 0.03;
+          if (auditVal >= 0.85) {
+            auditVal = 0.85;
+            clearInterval(auditInterval);
+          }
+          if (statAudit) statAudit.innerText = auditVal.toFixed(2);
+          if (auditDonutFill) {
+            // count to 85% dash offset
+            const offset = 100 - (auditVal / 0.85) * 85;
+            auditDonutFill.style.strokeDashoffset = offset;
+          }
+        }, 30);
+      };
+      
+      const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            animateStats();
+            
+            // Draw Roadmap SVG dash line path dynamically
+            const roadmapPath = document.getElementById('roadmap-line-path');
+            if (roadmapPath) {
+              roadmapPath.style.strokeDashoffset = '0';
+              roadmapPath.style.transition = 'stroke-dashoffset 3s ease';
+            }
+            
+            if (lineIdx === 0 && charIdx === 0) {
+              typeLogs();
+            }
+          }
+        });
+      }, { threshold: 0.2 });
+      
+      const secSection = document.getElementById('strategy-deck');
+      if (secSection) {
+        statsObserver.observe(secSection);
+      }
+
+      // 10. Testimonials Carousel Controller with 3D Card Tilt
+      const slides = Array.from(document.querySelectorAll('.carousel-container .testimonial-card-3d'));
+      const nextButton = document.querySelector('.carousel-arrow.next');
+      const prevButton = document.querySelector('.carousel-arrow.prev');
+      const dotsContainer = document.querySelector('.carousel-dots');
+      const dots = Array.from(document.querySelectorAll('.carousel-dots .dot'));
+      
+      let currentSlideIdx = 0;
+      let slideInterval;
+      
+      const updateCarousel = (targetIndex) => {
+        if (slides.length === 0) return;
+        
+        slides.forEach((slide, index) => {
+          slide.className = 'testimonial-card-3d'; // Reset classes
+          
+          if (index === targetIndex) {
+            slide.classList.add('active');
+          } else if (index === (targetIndex - 1 + slides.length) % slides.length) {
+            slide.classList.add('prev-slide');
+          } else if (index === (targetIndex + 1) % slides.length) {
+            slide.classList.add('next-slide');
+          } else {
+            slide.classList.add('hidden-slide');
+          }
+        });
+        
+        dots.forEach(dot => dot.classList.remove('active'));
+        if (dots[targetIndex]) dots[targetIndex].classList.add('active');
+        
+        currentSlideIdx = targetIndex;
+      };
+      
+      const nextSlide = () => {
+        let nextIdx = currentSlideIdx + 1;
+        if (nextIdx >= slides.length) nextIdx = 0;
+        updateCarousel(nextIdx);
+      };
+      
+      const prevSlide = () => {
+        let prevIdx = currentSlideIdx - 1;
+        if (prevIdx < 0) prevIdx = slides.length - 1;
+        updateCarousel(prevIdx);
+      };
+      
+      if (nextButton && prevButton) {
+        nextButton.addEventListener('click', () => {
+          nextSlide();
+          resetSlideTimer();
+        });
+        
+        prevButton.addEventListener('click', () => {
+          prevSlide();
+          resetSlideTimer();
+        });
+      }
+      
+      if (dotsContainer) {
+        dotsContainer.addEventListener('click', e => {
+          const clickedDot = e.target.closest('.dot');
+          if (!clickedDot) return;
+          
+          const targetIdx = parseInt(clickedDot.getAttribute('data-index'), 10);
+          updateCarousel(targetIdx);
+          resetSlideTimer();
+        });
+      }
+      
+      // Allow clicking adjacent cards to navigate
+      slides.forEach((slide, index) => {
+        slide.addEventListener('click', () => {
+          if (slide.classList.contains('prev-slide')) {
+            prevSlide();
+            resetSlideTimer();
+          } else if (slide.classList.contains('next-slide')) {
+            nextSlide();
+            resetSlideTimer();
+          }
+        });
+      });
+      
+      const startSlideTimer = () => {
+        slideInterval = setInterval(nextSlide, 5000);
+      };
+      
+      const resetSlideTimer = () => {
+        clearInterval(slideInterval);
+        startSlideTimer();
+      };
+      
+      startSlideTimer();
+
+      // Testimonial 3D tilt interaction (only on the active slide)
+      slides.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          if (!card.classList.contains('active')) return;
+          
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          
+          // Tilt up to 8 degrees
+          const rotY = ((x - centerX) / centerX) * 8;
+          const rotX = -((y - centerY) / centerY) * 8;
+          
+          card.style.transform = `perspective(1000px) translate3d(-50%, -50%, 0) rotateY(${rotY}deg) rotateX(${rotX}deg) scale(1.02)`;
+        });
+        
+        card.addEventListener('mouseleave', () => {
+          if (card.classList.contains('active')) {
+            card.style.transform = 'perspective(1000px) translate3d(-50%, -50%, 0) rotateY(0deg) rotateX(0deg) scale(1)';
+          }
+        });
+      });
+
+      // 11. Scroll Reveal Fade-in effect
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+      
+      document.querySelectorAll('.feature-row, .roadmap-card, .testimonial-card, .consultation-card').forEach(el => {
+        el.classList.add('fade-in');
+        revealObserver.observe(el);
+      });
+    </script>
+  </div>
+
+  <!-- First-Time Onboarding Experience (App-only overlay) -->
+  <div id="onboarding-container" class="hidden">
+    <div class="onboarding-glow glow-top"></div>
+    <div class="onboarding-glow glow-bottom"></div>
+
+    <div class="onboarding-header">
+      <button class="btn-onboarding-skip" onclick="completeOnboarding()">Skip</button>
+    </div>
+
+    <div class="onboarding-carousel-viewport">
+      <div class="onboarding-track" id="onboarding-track">
+        <!-- Slide 1: Welcome to Ascentra Hub -->
+        <div class="onboarding-slide">
+          <div class="onboarding-illus-container">
+            <div class="onboarding-glass-card">
+              <svg viewBox="0 0 200 200" width="160" height="160" class="float-icon">
+                <rect x="20" y="20" width="160" height="160" rx="16" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+                <line x1="20" y1="60" x2="180" y2="60" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+                <line x1="60" y1="60" x2="60" y2="180" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+                <circle cx="100" cy="110" r="25" stroke="#704df4" stroke-width="3" fill="none" stroke-dasharray="120" />
+                <circle cx="100" cy="110" r="15" stroke="#00d2ff" stroke-width="3" fill="none" stroke-dasharray="80" />
+                <rect x="140" y="80" width="25" height="12" rx="4" fill="rgba(39, 201, 63, 0.1)" stroke="#27c93f" stroke-width="1" />
+                <rect x="140" y="105" width="25" height="12" rx="4" fill="rgba(112, 77, 244, 0.1)" stroke="#704df4" stroke-width="1" />
+              </svg>
+            </div>
+          </div>
+          <h2>Ascentra Hub</h2>
+          <p>The Unified Operating System to manage metrics, video production schedules, and start-up operations in one dashboard.</p>
+        </div>
+
+        <!-- Slide 2: Executive Operations -->
+        <div class="onboarding-slide">
+          <div class="onboarding-illus-container">
+            <div class="onboarding-glass-card">
+              <svg viewBox="0 0 200 200" width="160" height="160" class="float-icon">
+                <path d="M30,150 L60,110 L90,130 L120,80 L150,120 L170,50" fill="none" stroke="#00d2ff" stroke-width="4" stroke-linecap="round" />
+                <circle cx="170" cy="50" r="6" fill="#704df4" />
+                <line x1="30" y1="150" x2="170" y2="150" stroke="rgba(255,255,255,0.1)" stroke-width="2" />
+                <circle cx="70" cy="65" r="20" stroke="rgba(255,255,255,0.05)" stroke-width="4" fill="none" />
+                <circle cx="70" cy="65" r="20" stroke="#704df4" stroke-width="4" fill="none" stroke-dasharray="100" stroke-dashoffset="20" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+          <h2>Executive Operations</h2>
+          <p>Supervise operations in real time. Track system activity logs, analyze team performance, and generate strategic PDF audits.</p>
+        </div>
+
+        <!-- Slide 3: Media Production -->
+        <div class="onboarding-slide">
+          <div class="onboarding-illus-container">
+            <div class="onboarding-glass-card">
+              <svg viewBox="0 0 200 200" width="160" height="160" class="float-icon">
+                <rect x="40" y="30" width="120" height="140" rx="12" fill="none" stroke="#704df4" stroke-width="3" />
+                <rect x="50" y="40" width="20" height="20" rx="4" fill="rgba(0, 210, 255, 0.2)" />
+                <rect x="130" y="40" width="20" height="20" rx="4" fill="rgba(0, 210, 255, 0.2)" />
+                <path d="M50,110 L70,80 L90,140 L110,70 L130,130 L150,110" fill="none" stroke="#00d2ff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+          <h2>Media Production</h2>
+          <p>Access safe-zone crop guidelines, transition SFX, background tracks, and SMM dispatcher schedules on the go.</p>
+        </div>
+
+        <!-- Slide 4: Growth Academy -->
+        <div class="onboarding-slide">
+          <div class="onboarding-illus-container">
+            <div class="onboarding-glass-card">
+              <svg viewBox="0 0 200 200" width="160" height="160" class="float-icon">
+                <path d="M40,140 C80,140 120,60 160,60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4" stroke-dasharray="6 6" />
+                <circle cx="40" cy="140" r="10" fill="#704df4" />
+                <circle cx="100" cy="100" r="10" fill="#00d2ff" />
+                <circle cx="160" cy="60" r="10" fill="#27c93f" />
+              </svg>
+            </div>
+          </div>
+          <h2>Growth Academy</h2>
+          <p>Submit advisement roadblocks and coordinate secure 1-on-1 private advisor consultations directly in the app.</p>
+        </div>
+
+        <!-- Slide 5: Security & Permissions -->
+        <div class="onboarding-slide">
+          <div class="onboarding-illus-container">
+            <div class="onboarding-glass-card">
+              <svg viewBox="0 0 200 200" width="160" height="160" class="float-icon">
+                <path d="M100,30 L160,50 L160,110 C160,150 100,180 100,180 C100,180 40,150 40,110 L40,50 Z" fill="rgba(112,77,244,0.1)" stroke="#704df4" stroke-width="3" />
+                <circle cx="100" cy="105" r="25" stroke="#00d2ff" stroke-width="2" fill="none" stroke-dasharray="100" stroke-dashoffset="0" />
+                <circle cx="85" cy="105" r="6" stroke="#00d2ff" stroke-width="1.5" fill="none" />
+                <path d="M110,105 L115,100 L120,105 L115,110 Z" fill="#704df4" />
+              </svg>
+            </div>
+          </div>
+          <h2>Device Access & Security</h2>
+          <p>This application requires camera and microphone permissions to connect secure 1-on-1 advisor consultations and manage media uploads.</p>
+          <button class="btn-onboarding-action btn-magnetic" onclick="requestAppPermissions()" style="margin-top: 15px; background: rgba(0, 210, 255, 0.15); border: 1px solid #00d2ff; color: #00d2ff; box-shadow: 0 0 10px rgba(0, 210, 255, 0.2); width: 220px; height: 42px; font-size: 13px;">🎙️ Grant Media Permissions</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="onboarding-footer">
+      <div class="onboarding-pagination">
+        <span class="onboarding-dot active"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
+      </div>
+      <button class="btn-onboarding-action" id="btn-onboarding-action">Next</button>
+    </div>
   </div>
 
   <!-- Authentication Panel (Rendered if not logged in) -->
@@ -461,6 +1635,9 @@
         <!-- Dashboard Home (Shared) -->
         <a href="#" class="nav-item active" onclick="switchMainTab('dashboard')">
           <span class="nav-icon">📊</span> Command Dashboard
+        </a>
+        <a href="#" class="nav-item" onclick="switchMainTab('team-chat')">
+          <span class="nav-icon">💬</span> Team Chat
         </a>
 
         <!-- Super Admin / Admin Team links -->
@@ -639,6 +1816,53 @@
                 <!-- Rendered dynamically -->
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- ==================== T-CHAT. TEAM COMMUNICATION CENTER ==================== -->
+        <section id="view-team-chat" class="dashboard-view">
+          <div class="grid-2col chat-layout-grid" style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: calc(100vh - 200px); min-height: 500px;">
+            
+            <!-- Left Panel: Contacts List -->
+            <div class="panel-card chat-contacts-card" style="display: flex; flex-direction: column; padding: 20px; gap: 15px; height: 100%; box-sizing: border-box; background: rgba(11, 15, 25, 0.6); border: 1px solid var(--border-color); border-radius: 18px;">
+              <h4 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">💬 Team Contacts</h4>
+              <div class="search-box">
+                <input type="text" id="chat-contact-search" placeholder="Search contacts..." oninput="filterChatContacts()" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; box-sizing: border-box; font-size: 13px;">
+              </div>
+              <div id="chat-contacts-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                <div class="chat-loader" style="color: var(--text-secondary); text-align: center; margin-top: 20px; font-size: 13px;">Loading contacts...</div>
+              </div>
+            </div>
+
+            <!-- Right Panel: Message Area -->
+            <div class="panel-card chat-message-card" style="display: flex; flex-direction: column; padding: 0; overflow: hidden; height: 100%; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 18px; background: rgba(11, 15, 25, 0.6);">
+              <!-- Active Header -->
+              <div id="chat-active-header" style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.25);">
+                <div>
+                  <h4 id="chat-active-partner-name" style="margin: 0; font-size: 15px; color: #ffffff;">Select a contact</h4>
+                  <span id="chat-active-partner-role" style="font-size: 11px; color: var(--text-secondary);">Start a conversation</span>
+                </div>
+                <div id="chat-active-status" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #a4a9c6;" id="chat-status-dot"></span>
+                  <span style="font-size: 11px; color: var(--text-secondary);" id="chat-status-text">offline</span>
+                </div>
+              </div>
+
+              <!-- Message History -->
+              <div id="chat-messages-container" style="flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: rgba(0,0,0,0.1);">
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); flex-direction: column; gap: 10px; text-align: center;">
+                  <span style="font-size: 40px;">💬</span>
+                  <span style="font-size: 13px;">Choose a team member from the contacts list to start chatting.</span>
+                </div>
+              </div>
+
+              <!-- Input bar -->
+              <form id="chat-input-form" onsubmit="handleSendChatMessage(event)" style="padding: 15px 20px; border-top: 1px solid var(--border-color); display: flex; gap: 12px; background: rgba(0,0,0,0.25); align-items: center;">
+                <input type="text" id="chat-message-input" placeholder="Type your message..." required disabled style="flex: 1; padding: 12px 16px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 12px; color: #fff; font-size: 13px;">
+                <button type="submit" id="chat-send-btn" disabled class="btn-primary" style="padding: 10px 20px; border-radius: 12px; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">Send 🚀</button>
+              </form>
+            </div>
+
           </div>
         </section>
 
