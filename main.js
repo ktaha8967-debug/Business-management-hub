@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray } = require('electron');
+const { app, BrowserWindow, Menu, Tray, session } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -66,6 +66,15 @@ function createWindow() {
 }
 
 app.on('ready', () => {
+  // Automatically grant camera, microphone, and notification permissions
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowedPermissions = ['media', 'audioCapture', 'videoCapture', 'notifications'];
+    if (allowedPermissions.includes(permission)) {
+      return callback(true);
+    }
+    callback(false);
+  });
+
   createWindow();
   createTray();
 });

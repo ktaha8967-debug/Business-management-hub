@@ -1793,12 +1793,29 @@ async function triggerVoiceBriefing(query = null) {
     // Use Web Speech Synthesis to speak aloud
     const utterance = new SpeechSynthesisUtterance(data.speechText);
     utterance.lang = 'en-US';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 1.2; // Fast-paced and professional
+    utterance.pitch = 1.05; // Slightly higher pitch for a natural feminine sound
 
-    // Try to find a premium native voice if available
+    // Search for a natural, premium female English voice
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft')));
+    let preferredVoice = voices.find(v => 
+      v.lang.includes('en') && 
+      (v.name.toLowerCase().includes('female') || 
+       v.name.toLowerCase().includes('zira') || 
+       v.name.toLowerCase().includes('hazel') || 
+       v.name.toLowerCase().includes('susan') || 
+       v.name.toLowerCase().includes('aria') || 
+       v.name.toLowerCase().includes('heera') || 
+       v.name.toLowerCase().includes('google us english') || 
+       v.name.toLowerCase().includes('natural') || 
+       v.name.toLowerCase().includes('guy') === false) // exclude male voices
+    );
+
+    // Fallback if no specific female voice was matched
+    if (!preferredVoice) {
+      preferredVoice = voices.find(v => v.lang.includes('en'));
+    }
+
     if (preferredVoice) utterance.voice = preferredVoice;
 
     utterance.onend = () => {
