@@ -9,7 +9,7 @@
     "dev": "node server.js",
     "test-llm": "node scratch_test.js",
     "electron-dev": "electron .",
-    "electron-build": "electron-builder --windows"
+    "electron-build": "electron-builder --windows --publish never"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
