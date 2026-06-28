@@ -2,6 +2,7 @@
   "name": "ascentra-unified-hub",
   "version": "2.0.0",
   "description": "Unified Private Operating System for Ascentra Hub partners",
+  "author": "Ascentra Operations Team <admin@ascentra.com>",
   "main": "main.js",
   "scripts": {
     "start": "node server.js",
@@ -38,7 +39,7 @@
         "nsis",
         "portable"
       ],
-      "icon": "public/ascentra_logo.jpg"
+      "icon": "public/ascentra_logo.png"
     }
   }
 }

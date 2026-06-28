@@ -10,7 +10,7 @@ function createWindow() {
     minWidth: 1000,
     minHeight: 600,
     title: "Ascentra Command Center",
-    icon: path.join(__dirname, 'public', 'ascentra_logo.jpg'),
+    icon: path.join(__dirname, 'public', 'ascentra_logo.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
