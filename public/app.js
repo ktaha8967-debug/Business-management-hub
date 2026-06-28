@@ -54,6 +54,17 @@ let currentBusiness = null; // Stored if user is a Business Owner
 let activeTab = 'dashboard';
 let chartsInstance = null; // Holds the business analytics Chart.js instance
 
+let allVoices = [];
+function loadVoices() {
+  if ('speechSynthesis' in window) {
+    allVoices = window.speechSynthesis.getVoices();
+  }
+}
+if ('speechSynthesis' in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
 // --- TEAM CHAT & WEBRTC CALLING STATES ---
 let activeChatPartnerId = null;
 let chatPollInterval = null;
@@ -1797,7 +1808,7 @@ async function triggerVoiceBriefing(query = null) {
     utterance.pitch = 1.05; // Slightly higher pitch for a natural feminine sound
 
     // Search for a natural, premium female English voice
-    const voices = window.speechSynthesis.getVoices();
+    const voices = allVoices.length > 0 ? allVoices : window.speechSynthesis.getVoices();
     let preferredVoice = voices.find(v => 
       v.lang.includes('en') && 
       (v.name.toLowerCase().includes('female') || 
