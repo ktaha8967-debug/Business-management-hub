@@ -1864,7 +1864,12 @@ function toggleSpeechRecognition() {
   };
 
   speechRecognition.onerror = (e) => {
-    statusEl.innerText = `Status: Microphone error (${e.error})`;
+    if (e.error === 'network' && isDesktopApp) {
+      statusEl.innerText = 'Status: Mic speech-to-text is restricted in Desktop App. Please type your query below.';
+      showToast('info', 'Mic speech-to-text is restricted in desktop app. Please use the text input below.');
+    } else {
+      statusEl.innerText = `Status: Microphone error (${e.error})`;
+    }
     isVoiceRecording = false;
     recordBtn.innerText = '🎤 Tap to Talk';
     recordBtn.style.background = '';
@@ -2420,7 +2425,11 @@ function startMeetingRoomTranscription() {
     if (e.error === 'no-speech') {
       return;
     }
-    document.getElementById('meet-copilot-status').innerText = `🎙️ AI Copilot: Error (${e.error})`;
+    if (e.error === 'network' && isDesktopApp) {
+      document.getElementById('meet-copilot-status').innerText = '🎙️ AI Copilot: Mic transcription is restricted in Desktop App. Use Chrome browser.';
+    } else {
+      document.getElementById('meet-copilot-status').innerText = `🎙️ AI Copilot: Error (${e.error})`;
+    }
   };
 
   meetingSpeechRecognition.onend = () => {
