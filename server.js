@@ -7,6 +7,22 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const db = require('./database');
+const webpush = require('web-push');
+
+// Initialize Web Push VAPID keys
+let vapidKeys = db.findOne('vapid_keys', () => true);
+if (!vapidKeys) {
+  const keys = webpush.generateVAPIDKeys();
+  vapidKeys = db.insert('vapid_keys', {
+    publicKey: keys.publicKey,
+    privateKey: keys.privateKey
+  });
+}
+webpush.setVapidDetails(
+  'mailto:admin@ascentra.com',
+  vapidKeys.publicKey,
+  vapidKeys.privateKey
+);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -782,10 +798,11 @@ app.get('/api/meetings', authenticateToken, (req, res) => {
       res.json(allMeetings);
     } else if (req.user.role === 'Business Owners') {
       const bus = db.findOne('businesses', b => b.owner_id === req.user.id);
-      if (!bus) return res.status(404).json({ error: 'Business profile not found' });
-      res.json(allMeetings.filter(m => m.business_id === bus.id || !m.business_id));
+      if (!bus) return res.json([]);
+      res.json(allMeetings.filter(m => m.business_id === bus.id));
     } else {
-      res.json(allMeetings);
+      // General users / Editors / SMMs / Mentees should only see meetings if specifically assigned or scheduled for them
+      res.json(allMeetings.filter(m => m.user_id === req.user.id || (m.attendance && m.attendance.includes(req.user.id)) || (m.attendance && m.attendance.includes(req.user.email))));
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -919,7 +936,53 @@ app.get('/api/users', authenticateToken, authorizeRoles('Super Admin', 'Admin Te
   res.json(users);
 });
 
-// --- NOTIFICATIONS ---
+// --- NOTIFICATIONS & WEB PUSH ---
+// Override sendNotification to support real-time Web Push notifications in the background
+const originalSendNotification = db.sendNotification;
+db.sendNotification = (userId, title, message) => {
+  originalSendNotification(userId, title, message);
+  
+  // Find push subscriptions for this user
+  const subscriptions = db.find('push_subscriptions', sub => sub.user_id === userId);
+  const payload = JSON.stringify({ title, body: message });
+  
+  subscriptions.forEach(sub => {
+    webpush.sendNotification(sub.subscription, payload)
+      .catch(err => {
+        console.error('Error sending push notification:', err);
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          // Remove dead subscription
+          db.delete('push_subscriptions', sub.id);
+        }
+      });
+  });
+};
+
+app.get('/api/notifications/vapid-public-key', (req, res) => {
+  const keys = db.findOne('vapid_keys', () => true);
+  if (!keys) return res.status(500).json({ error: 'VAPID keys not configured' });
+  res.json({ publicKey: keys.publicKey });
+});
+
+app.post('/api/notifications/subscribe', authenticateToken, (req, res) => {
+  const { subscription } = req.body;
+  if (!subscription) return res.status(400).json({ error: 'Subscription object required' });
+
+  // Avoid duplicate subscriptions for the same endpoint
+  const existing = db.findOne('push_subscriptions', sub => sub.subscription.endpoint === subscription.endpoint);
+  if (existing) {
+    db.update('push_subscriptions', existing.id, { user_id: req.user.id });
+    return res.status(200).json({ message: 'Subscription updated' });
+  }
+
+  db.insert('push_subscriptions', {
+    user_id: req.user.id,
+    subscription
+  });
+
+  res.status(201).json({ message: 'Subscribed successfully' });
+});
+
 app.get('/api/notifications', authenticateToken, (req, res) => {
   const list = db.find('notifications', n => n.user_id === req.user.id);
   res.json(list);

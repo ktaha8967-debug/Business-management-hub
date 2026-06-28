@@ -1445,6 +1445,34 @@
       "user_id": "admin-1",
       "action": "schedule_meeting",
       "details": "Scheduled/requested meeting: sdfsdf"
+    },
+    {
+      "id": "act-1782609285433-a7jk3",
+      "created_at": "2026-06-28T01:14:45.433Z",
+      "user_id": "editor-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782609312703-fso8t",
+      "created_at": "2026-06-28T01:15:12.703Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782609423121-flwlf",
+      "created_at": "2026-06-28T01:17:03.121Z",
+      "user_id": "sm-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782609467654-irrkw",
+      "created_at": "2026-06-28T01:17:47.654Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
     }
   ],
   "orders": [
@@ -1495,6 +1523,30 @@
       "status": "completed",
       "notes": "Integration complete.",
       "date": "2026-06-25"
+    }
+  ],
+  "vapid_keys": [
+    {
+      "id": "vap-1782608660036-3hq8t",
+      "created_at": "2026-06-28T01:04:20.036Z",
+      "publicKey": "BMdFLesaxfpA1xFcQP8F9wELPMYxn6L1Y361BSLehPibd-9RmMS2-shsfyJCFGdH9ahSvcpFoLTliOIw8TRbovw",
+      "privateKey": "BAd1mKwunhEBmwx7g-zL35X8MTITB37F0N6Pl6fvXsE"
+    }
+  ],
+  "push_subscriptions": [
+    {
+      "id": "pus-1782609248752-ulyea",
+      "created_at": "2026-06-28T01:14:08.752Z",
+      "user_id": "use-1782404624056-5svlf",
+      "subscription": {
+        "endpoint": "https://fcm.googleapis.com/fcm/send/fleeXjl2qcA:APA91bENXHlim3hQB2_th-9s-SP9NXktylkyZ6b4nFgbRdh8dxls298L-s8TQ2RQ8rD7OG3LwTvZF-kbTDcdUgJr-PleEhWk7BsYh6mJbkUh5YRS7DFeNWG1p--EhTqbABZSwKf0ILs8",
+        "expirationTime": null,
+        "keys": {
+          "p256dh": "BJPAukgsIWk4Ls3NGNTj82qcSvidTIs5devgRKf7sluB2OMaYSInwtIJqShQFZt4dfU0291QQhQUCXVbsTtfxUs",
+          "auth": "yUpONUh_g1qWuGocAC59YA"
+        }
+      },
+      "updated_at": "2026-06-28T01:17:47.836Z"
     }
   ]
 }

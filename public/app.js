@@ -1,6 +1,14 @@
-const API_URL = window.location.protocol === 'file:'
-  ? 'http://localhost:5000'
-  : window.location.origin;
+// Live hosted website URL
+// Jab aap isko push karein ge, to mobile APK automatic live website ke database se connect ho jaye ga.
+const LIVE_BACKEND_URL = 'https://taha.mayfairmarketing.online';
+
+const isMobileApp = window.Capacitor || 
+                    window.location.protocol.startsWith('capacitor') || 
+                    window.location.protocol === 'file:';
+
+const API_URL = isMobileApp
+  ? LIVE_BACKEND_URL
+  : (window.location.origin.includes('localhost') ? 'http://localhost:5000' : window.location.origin);
 let currentUser = null;
 let currentToken = null;
 let currentBusiness = null; // Stored if user is a Business Owner
@@ -48,6 +56,7 @@ function initCommandShell() {
 
   // Set roles navigation visibility
   document.querySelector('.admin-links').classList.add('hidden');
+  document.querySelector('.boss-links').classList.add('hidden');
   document.querySelector('.owner-links').classList.add('hidden');
   document.querySelector('.editor-links').classList.add('hidden');
   document.querySelector('.smm-links').classList.add('hidden');
@@ -55,7 +64,11 @@ function initCommandShell() {
 
   if (['Super Admin', 'Admin Team'].includes(currentUser.role)) {
     document.querySelector('.admin-links').classList.remove('hidden');
-  } else if (currentUser.role === 'Business Owners') {
+  }
+  if (currentUser.role === 'Super Admin') {
+    document.querySelector('.boss-links').classList.remove('hidden');
+  }
+  if (currentUser.role === 'Business Owners') {
     document.querySelector('.owner-links').classList.remove('hidden');
   } else if (currentUser.role === 'Video Editors') {
     document.querySelector('.editor-links').classList.remove('hidden');
@@ -79,6 +92,7 @@ function initCommandShell() {
   switchMainTab('dashboard');
   loadNotifications();
   startNotificationsPoll();
+  initPushNotifications();
 }
 
 function switchAuthTab(tab) {
@@ -306,6 +320,8 @@ async function fetchTabData(tabId) {
     loadSmmDashboard();
   } else if (tabId === 'mentee-workspace') {
     loadMenteeWorkspace();
+  } else if (tabId === 'boss-logs') {
+    loadBossAuditLogs();
   }
 }
 
@@ -2470,4 +2486,234 @@ function toggleMobileSidebar() {
   if (overlay) {
     overlay.classList.toggle('active');
   }
+}
+
+// Push notifications initializer
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.warn('Push notifications are not supported in this environment.');
+    return;
+  }
+
+  try {
+    // Register service worker
+    const registration = await navigator.serviceWorker.register('service-worker.js');
+    console.log('Service Worker registered:', registration.scope);
+
+    // Request notification permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.warn('Push notification permission denied.');
+      return;
+    }
+
+    // Fetch VAPID public key
+    const keyRes = await fetch(`${API_URL}/api/notifications/vapid-public-key`);
+    const keyData = await keyRes.json();
+    if (!keyRes.ok) throw new Error(keyData.error || 'Failed to fetch public VAPID key');
+
+    // Subscribe to Push Service
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+    });
+
+    // Send subscription object to backend
+    await fetch(`${API_URL}/api/notifications/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentToken}`
+      },
+      body: JSON.stringify({ subscription })
+    });
+    console.log('Successfully subscribed to push notifications!');
+  } catch (err) {
+    console.error('Error establishing push subscription:', err);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+  
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Global variable to store active logs for report compilation
+let activeAuditLogs = [];
+let activeAuditStats = {};
+
+async function loadBossAuditLogs() {
+  try {
+    const res = await fetch(`${API_URL}/api/admin/dashboard`, { headers: getHeaders() });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    activeAuditLogs = data.logs || [];
+    activeAuditStats = data.stats || {};
+
+    // Render Metrics
+    const metricsGrid = document.getElementById('boss-metrics-grid');
+    if (metricsGrid) {
+      metricsGrid.innerHTML = `
+        <div style="padding:15px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:12px; color:var(--text-secondary);">Total Businesses</div>
+          <div style="font-size:24px; font-weight:700; color:var(--accent-cyan); margin-top:5px;">${activeAuditStats.total_businesses || 0}</div>
+        </div>
+        <div style="padding:15px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:12px; color:var(--text-secondary);">Active Staff / Team</div>
+          <div style="font-size:24px; font-weight:700; color:var(--accent-purple); margin-top:5px;">${activeAuditStats.total_team_members || 0}</div>
+        </div>
+        <div style="padding:15px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:12px; color:var(--text-secondary);">Pending Invoices</div>
+          <div style="font-size:24px; font-weight:700; color:#ff9f43; margin-top:5px;">$${parseFloat(activeAuditStats.total_pending_billing || 0).toFixed(2)}</div>
+        </div>
+        <div style="padding:15px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:12px; color:var(--text-secondary);">Total Revenue Billed</div>
+          <div style="font-size:24px; font-weight:700; color:#2ed573; margin-top:5px;">$${parseFloat(activeAuditStats.total_billing || 0).toFixed(2)}</div>
+        </div>
+      `;
+    }
+
+    // Render Logs Table
+    const tbody = document.querySelector('#boss-activity-logs-table tbody');
+    if (tbody) {
+      if (activeAuditLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">No system operations logged yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = activeAuditLogs.map(log => `
+        <tr>
+          <td><small>${new Date(log.created_at).toLocaleString()}</small></td>
+          <td><strong>${log.user_id}</strong></td>
+          <td><span class="badge badge-active">${log.action.replace(/_/g, ' ')}</span></td>
+          <td><span style="color:var(--text-secondary);">${log.details || 'No details provided'}</span></td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    showToast('error', 'Error loading boss logs: ' + err.message);
+  }
+}
+
+function generateExecutiveReport() {
+  if (activeAuditLogs.length === 0) {
+    return showToast('error', 'No activity logs available to compile a report today.');
+  }
+
+  const modal = document.getElementById('boss-report-modal');
+  const container = document.getElementById('boss-report-content');
+
+  // Compile breakdown of actions by categories
+  const breakdown = {};
+  activeAuditLogs.forEach(log => {
+    breakdown[log.action] = (breakdown[log.action] || 0) + 1;
+  });
+
+  // Compile timeline summaries
+  const actionListHTML = activeAuditLogs.slice(0, 10).map(log => `
+    <div style="margin-bottom:12px; padding:10px; background:rgba(255,255,255,0.02); border-radius:6px; border-left: 3px solid var(--accent-purple);">
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted);">
+        <span>User ID: ${log.user_id}</span>
+        <span>${new Date(log.created_at).toLocaleTimeString()}</span>
+      </div>
+      <div style="margin-top:4px; font-size:13px;">
+        <strong>Category:</strong> ${log.action.toUpperCase().replace(/_/g, ' ')} | <strong>Details:</strong> ${log.details}
+      </div>
+    </div>
+  `).join('');
+
+  const breakdownHTML = Object.entries(breakdown).map(([action, count]) => `
+    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 8px 0;">
+      <span style="text-transform: capitalize;">${action.replace(/_/g, ' ')}</span>
+      <strong>${count} operations</strong>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <div style="text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+      <h3 style="margin: 0; color: var(--accent-cyan);">Ascentra Hub OS</h3>
+      <h4 style="margin: 5px 0 0 0; color: var(--text-secondary); font-weight: 500;">DAILY EXECUTIVE PERFORMANCE AUDIT SUMMARY</h4>
+      <p style="margin: 5px 0 0 0; font-size: 12px; color: var(--text-muted);">Report Generated on: ${new Date().toLocaleString()} | Access Level: OWNER/BOSS</p>
+    </div>
+
+    <div style="margin-bottom: 25px;">
+      <h5 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-purple); font-size: 14px;">1. STRATEGIC METRICS STATUS</h5>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
+        <div><strong>Total Registered Portfolios:</strong> ${activeAuditStats.total_businesses || 0}</div>
+        <div><strong>Total Active Team Staff:</strong> ${activeAuditStats.total_team_members || 0}</div>
+        <div><strong>Total Billing Billed (Paid):</strong> $${parseFloat(activeAuditStats.total_billing || 0).toFixed(2)}</div>
+        <div><strong>Unpaid Billing Registry:</strong> $${parseFloat(activeAuditStats.total_pending_billing || 0).toFixed(2)}</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 25px;">
+      <h5 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-purple); font-size: 14px;">2. OPERATION CATEGORIES SUMMARY (TODAY)</h5>
+      <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px; font-size: 13px;">
+        ${breakdownHTML}
+      </div>
+    </div>
+
+    <div>
+      <h5 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-purple); font-size: 14px;">3. CHRONOLOGICAL OPERATIONS TRAIL (LAST 10 ACTIONS)</h5>
+      ${actionListHTML}
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+function closeBossReportModal() {
+  document.getElementById('boss-report-modal').classList.add('hidden');
+}
+
+function printBossReport() {
+  const content = document.getElementById('boss-report-content').innerHTML;
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Ascentra Executive Operations Report</title>
+        <style>
+          body {
+            background-color: #ffffff;
+            color: #111111;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+          }
+          h3, h4, h5 {
+            color: #333333;
+            margin-bottom: 5px;
+          }
+          div {
+            margin-bottom: 15px;
+          }
+          hr {
+            border: 0;
+            border-top: 1px solid #ccc;
+          }
+        </style>
+      </head>
+      <body>
+        ${content}
+        <script>
+          window.onload = function() {
+            window.print();
+            window.close();
+          };
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }

@@ -186,6 +186,14 @@
           </a>
         </div>
 
+        <!-- Super Admin (Boss) only links -->
+        <div class="boss-links hidden">
+          <div class="nav-section-title">Executive Control</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('boss-logs')">
+            <span class="nav-icon">🛡️</span> Executive Audit Logs
+          </a>
+        </div>
+
         <!-- Business Owners links -->
         <div class="owner-links hidden">
           <div class="nav-section-title">Business Console</div>
@@ -788,6 +796,33 @@
               </table>
             </div>
           </div>
+
+          <div class="grid-2col mt-25">
+            <!-- Media Library -->
+            <div class="panel-card">
+              <h4>📦 Shared Assets & Stock Library</h4>
+              <p class="subtitle" style="font-size: 11px; margin-bottom: 12px; color: var(--text-secondary);">Direct links to download music packs, sound effects, overlays, and stock videos.</p>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <a href="#" class="doc-download-link" onclick="showToast('info', 'Downloading Cinematic Background Tracks Pack...')">🎵 Cinematic Music Pack (140MB)</a>
+                <a href="#" class="doc-download-link" onclick="showToast('info', 'Downloading High Impact Transitions SFX...')">🔊 Transition SFX Bundle (32MB)</a>
+                <a href="#" class="doc-download-link" onclick="showToast('info', 'Downloading Creator Graphic Overlays...')">🎨 Graphics & Safe-Zone Overlay (15MB)</a>
+                <a href="#" class="doc-download-link" onclick="showToast('info', 'Downloading Ascentra Motion Logo templates...')">🎬 Intro/Outro Logo Files (45MB)</a>
+              </div>
+            </div>
+
+            <!-- Compliance Guidelines -->
+            <div class="panel-card">
+              <h4>📏 Output Safe-Zone & Styling Guidelines</h4>
+              <div style="font-size:13px; line-height:1.6; color:var(--text-secondary); padding-top: 10px;">
+                <ul style="margin-left: 15px; display:flex; flex-direction:column; gap:8px;">
+                  <li><strong>Dimensions:</strong> 1080x1920 (Vertical 9:16) for TikTok, Shorts, and Reels.</li>
+                  <li><strong>Subtitles:</strong> Dynamic, high-contrast text. Use Outfit font with black outline or shadow.</li>
+                  <li><strong>Pacing:</strong> High-impact hook in the first 2 seconds, no silent pauses.</li>
+                  <li><strong>Branding:</strong> Place the Ascentra watermarked logo in the top-right corner.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- ==================== T13. SOCIAL MEDIA MANAGER DASHBOARD ==================== -->
@@ -812,6 +847,53 @@
                   <!-- Dynamic rows -->
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <div class="grid-2col mt-25">
+            <!-- SMM Calendar -->
+            <div class="panel-card">
+              <h4>📅 Posting Calendar & Optimal Slots</h4>
+              <div style="display:flex; flex-direction:column; gap:12px; font-size:13px; padding-top:10px;">
+                <div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.02); border-radius:6px;">
+                  <span>🌅 Morning Peak</span>
+                  <strong>08:00 AM - 10:00 AM</strong>
+                  <span class="badge badge-active">High CTR</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.02); border-radius:6px;">
+                  <span>🌇 Afternoon Peak</span>
+                  <strong>01:00 PM - 03:00 PM</strong>
+                  <span class="badge badge-pending">Active</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.02); border-radius:6px;">
+                  <span>🌃 Night Rush</span>
+                  <strong>07:00 PM - 09:30 PM</strong>
+                  <span class="badge badge-success">Viral Hours</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connected Accounts -->
+            <div class="panel-card">
+              <h4>🔗 Connected Brand Channels</h4>
+              <div style="display:flex; flex-direction:column; gap:10px; font-size:13px; padding-top:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>🎵 TikTok Profile: @ascentra.hub</span>
+                  <span class="badge badge-success">Online</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>📸 Instagram: @ascentra.operations</span>
+                  <span class="badge badge-success">Online</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>📺 YouTube: Ascentra Unified</span>
+                  <span class="badge badge-success">Online</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>👥 Facebook Page: Ascentra Operating System</span>
+                  <span class="badge badge-success">Online</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -997,6 +1079,41 @@
                 </thead>
                 <tbody>
                   <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== T15-B. BOSS (SUPER ADMIN) EXECUTIVE COMMAND & LOGS ==================== -->
+        <section id="view-boss-logs" class="dashboard-view">
+          <div class="section-actions-header">
+            <h3>Executive Command & Audit Deck</h3>
+            <button class="btn-primary" onclick="generateExecutiveReport()">📊 Generate Performance Audit Report</button>
+          </div>
+          
+          <div class="panel-card" style="background: linear-gradient(135deg, rgba(0, 210, 255, 0.1), rgba(112, 77, 244, 0.05)); border: 1px solid var(--border-color-glow); margin-bottom: 25px;">
+            <h4>📋 System Performance Summary</h4>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;" id="boss-metrics-grid">
+              <!-- Dynamically populated metrics -->
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <h4>🔍 Admin & Team Activity Logs (Realtime Audit)</h4>
+            <p class="subtitle" style="font-size:12px; margin-bottom:15px; color:var(--text-secondary);">Real-time log tracking of all Admin Actions, Video Submissions, and Social Media Publishing workflows.</p>
+            <div class="table-responsive">
+              <table class="data-table" id="boss-activity-logs-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User ID / Name</th>
+                    <th>Action Category</th>
+                    <th>Operation Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="4" class="text-center">Awaiting logs fetch...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1311,6 +1428,23 @@
           </div>
           <button type="submit" class="btn-primary w-100 mt-15">Record Order</button>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Boss Report Modal -->
+  <div id="boss-report-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h4>📊 Executive Operations Performance Audit Report</h4>
+        <button class="close-modal" onclick="closeBossReportModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="boss-report-content" style="font-family: inherit; line-height: 1.6; color: var(--text-primary);">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="modal-footer" style="padding: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn-secondary" onclick="printBossReport()">Print / PDF Report</button>
+        <button class="btn-primary" onclick="closeBossReportModal()">Close Report</button>
       </div>
     </div>
   </div>

@@ -2,5 +2,9 @@
   "appId": "com.ascentra.command",
   "appName": "Ascentra Command",
   "webDir": "public",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://taha.mayfairmarketing.online",
+    "cleartext": true
+  }
 }
