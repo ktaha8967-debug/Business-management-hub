@@ -1830,70 +1830,121 @@ async function submitTextQuery() {
   await triggerVoiceBriefing(query);
 }
 
-function toggleSpeechRecognition() {
+let voiceMediaRecorder = null;
+let voiceAudioChunks = [];
+
+async function toggleSpeechRecognition() {
   const statusEl = document.getElementById('voice-agent-status');
   const recordBtn = document.getElementById('voice-record-btn');
   const transcriptPanel = document.getElementById('voice-agent-transcript');
   const transcriptText = document.getElementById('voice-transcript-text');
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    return showToast('error', 'Web Speech API is not supported in this browser. Please try Google Chrome.');
-  }
+  // Cancel any ongoing speaking
+  window.speechSynthesis.cancel();
 
   if (isVoiceRecording) {
-    if (speechRecognition) {
-      speechRecognition.stop();
+    // Stop recording
+    if (voiceMediaRecorder && voiceMediaRecorder.state !== 'inactive') {
+      voiceMediaRecorder.stop();
     }
     return;
   }
 
-  // Cancel any ongoing speaking
-  window.speechSynthesis.cancel();
+  // Start recording
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return showToast('error', 'Microphone access is not supported in this environment.');
+  }
 
-  speechRecognition = new SpeechRecognition();
-  speechRecognition.lang = 'en-US';
-  speechRecognition.interimResults = false;
-  speechRecognition.maxAlternatives = 1;
-
-  speechRecognition.onstart = () => {
-    isVoiceRecording = true;
-    statusEl.innerText = 'Status: Listening... Speak clear and close to microphone';
-    recordBtn.innerText = '🛑 Stop Recording';
-    recordBtn.style.background = 'red';
-  };
-
-  speechRecognition.onerror = (e) => {
-    if (e.error === 'network' && isDesktopApp) {
-      statusEl.innerText = 'Status: Mic speech-to-text is restricted in Desktop App. Please type your query below.';
-      showToast('info', 'Mic speech-to-text is restricted in desktop app. Please use the text input below.');
-    } else {
-      statusEl.innerText = `Status: Microphone error (${e.error})`;
-    }
-    isVoiceRecording = false;
-    recordBtn.innerText = '🎤 Tap to Talk';
-    recordBtn.style.background = '';
-  };
-
-  speechRecognition.onend = () => {
-    isVoiceRecording = false;
-    recordBtn.innerText = '🎤 Tap to Talk';
-    recordBtn.style.background = '';
-    if (statusEl.innerText.includes('Listening')) {
-      statusEl.innerText = 'Status: Ready';
-    }
-  };
-
-  speechRecognition.onresult = (event) => {
-    const resultText = event.results[0][0].transcript;
-    transcriptPanel.classList.remove('hidden');
-    transcriptText.innerText = resultText;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     
-    // Trigger custom AI Voice Agent briefing with user query
-    triggerVoiceBriefing(resultText);
-  };
+    voiceAudioChunks = [];
+    // Choose fallback audio format depending on device capabilities
+    const options = { mimeType: 'audio/webm' };
+    if (!MediaRecorder.isTypeSupported('audio/webm')) {
+      options.mimeType = 'audio/ogg';
+    }
+    if (!MediaRecorder.isTypeSupported('audio/ogg')) {
+      options.mimeType = ''; // Let device pick default
+    }
 
-  speechRecognition.start();
+    voiceMediaRecorder = new MediaRecorder(stream, options);
+    
+    voiceMediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        voiceAudioChunks.push(event.data);
+      }
+    };
+
+    voiceMediaRecorder.onstart = () => {
+      isVoiceRecording = true;
+      statusEl.innerText = 'Status: Recording voice... Speak clearly and tap stop when done.';
+      recordBtn.innerText = '🛑 Stop Recording';
+      recordBtn.style.background = 'red';
+    };
+
+    voiceMediaRecorder.onstop = async () => {
+      isVoiceRecording = false;
+      recordBtn.innerText = '🎤 Tap to Talk';
+      recordBtn.style.background = '';
+      statusEl.innerText = 'Status: Transcribing audio...';
+
+      // Release microphone resources
+      stream.getTracks().forEach(track => track.stop());
+
+      // Create audio blob
+      const audioBlob = new Blob(voiceAudioChunks, { type: voiceMediaRecorder.mimeType || 'audio/webm' });
+      if (audioBlob.size === 0) {
+        statusEl.innerText = 'Status: Error (No audio captured)';
+        return;
+      }
+
+      // Upload to backend for Whisper transcription
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'voice-briefing.webm');
+
+      try {
+        const res = await fetch(`${API_URL}/api/voice-agent/transcribe`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentToken}`
+          },
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to transcribe audio');
+        }
+
+        const result = await res.json();
+        const queryText = result.text ? result.text.trim() : '';
+        
+        if (!queryText) {
+          statusEl.innerText = 'Status: Ready (No speech detected)';
+          showToast('warning', 'Could not detect any speech. Please try again.');
+          return;
+        }
+
+        statusEl.innerText = 'Status: Ready';
+        transcriptPanel.classList.remove('hidden');
+        transcriptText.innerText = queryText;
+
+        // Trigger custom AI Voice Agent briefing with transcribed query
+        triggerVoiceBriefing(queryText);
+      } catch (err) {
+        console.error('Transcription error:', err);
+        statusEl.innerText = `Status: Transcription error (${err.message})`;
+        showToast('error', 'Transcription failed: ' + err.message);
+      }
+    };
+
+    voiceMediaRecorder.start();
+  } catch (err) {
+    console.error('Failed to get mic stream:', err);
+    statusEl.innerText = 'Status: Microphone access denied or failed.';
+    showToast('error', 'Microphone error: ' + err.message);
+  }
 }
 
 // Bulk download helper

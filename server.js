@@ -1772,6 +1772,57 @@ You must respond with a JSON object containing two keys: "notes" and "follow_ups
   }
 });
 
+// POST /api/voice-agent/transcribe
+// Transcribes uploaded voice agent audio chunk using Groq Whisper API
+app.post('/api/voice-agent/transcribe', authenticateToken, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No audio file uploaded' });
+    }
+
+    const groqApiKey = (process.env.GROQ_API_KEY || '').trim().replace(/[\r\n\t]/g, '');
+    if (!groqApiKey || groqApiKey.includes('placeholder')) {
+      return res.status(500).json({ error: 'Groq API Key is not configured on the server' });
+    }
+
+    // Read the uploaded file
+    const fileBuffer = fs.readFileSync(req.file.path);
+    
+    // Create FormData for Groq
+    const formData = new FormData();
+    const fileBlob = new Blob([fileBuffer], { type: req.file.mimetype });
+    formData.append('file', fileBlob, req.file.originalname);
+    formData.append('model', 'whisper-large-v3');
+
+    // Send to Groq Whisper API
+    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`
+      },
+      body: formData
+    });
+
+    // Cleanup local temp file asynchronously
+    fs.unlink(req.file.path, () => {});
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Groq transcription API failed:', errorText);
+      return res.status(response.status).json({ error: 'Groq transcription failed: ' + errorText });
+    }
+
+    const data = await response.json();
+    res.json({ text: data.text });
+  } catch (error) {
+    console.error('Error in transcribe endpoint:', error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
+  }
+});
+
 // Serve frontend SPA index file
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {
