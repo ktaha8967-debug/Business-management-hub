@@ -2717,60 +2717,74 @@
         </section>
 
         <!-- ==================== T17. VIRTUAL MEETING ROOM ==================== -->
-        <section id="view-meeting-room" class="dashboard-view">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; flex-wrap:wrap; gap:10px;">
-            <div>
-              <h3 id="meet-room-title" style="margin: 0; font-size: 24px;">🎥 Secure Encrypted Meeting Room</h3>
-              <p class="subtitle" id="meet-room-subtitle" style="margin: 5px 0 0 0; color: var(--text-secondary);">Real-time operations video call, synced notepad, and action items desk.</p>
-            </div>
-            <button class="btn-secondary" onclick="exitMeetingRoom()" style="padding: 8px 16px; border-color: red; color: red;">🚪 Exit Meeting Room</button>
+        <section id="view-meeting-room" class="dashboard-view meeting-room-layout">
+          <!-- Mobile Tab Headers (only visible on mobile) -->
+          <div class="meeting-mobile-tabs">
+            <button class="meet-tab-btn active" onclick="switchMeetingTab('video')">📞 Video Call</button>
+            <button class="meet-tab-btn" onclick="switchMeetingTab('notes')">📝 Notes & AI Minutes</button>
           </div>
 
-          <!-- AI Copilot Transcription Control Panel -->
-          <div class="panel-card" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; background: linear-gradient(135deg, rgba(112, 77, 244, 0.15), rgba(0, 210, 255, 0.05)); border: 1px solid var(--border-color-glow); padding: 15px;">
-            <div>
-              <h5 style="margin: 0; font-size: 14px;" id="meet-copilot-status">🎙️ AI Copilot: Ready</h5>
-              <p style="margin: 4px 0 0 0; font-size: 11px; color: var(--text-secondary);">Listening to what is said and preparing automated minutes transcript buffer.</p>
+          <div class="meeting-header-bar">
+            <div class="meeting-info">
+              <h3 id="meet-room-title">🎥 Secure Encrypted Meeting Room</h3>
+              <p class="subtitle" id="meet-room-subtitle">Real-time operations video call, synced notepad, and action items desk.</p>
             </div>
-            <div style="display:flex; gap:10px;">
-              <button class="btn-primary" style="padding: 8px 16px; font-size: 12px; background: #2ed573; border: none; cursor: pointer;" id="btn-trigger-ai-notes" onclick="triggerAIMeetingSummarization()">🎙️ End Meeting & AI Auto-Notes</button>
-            </div>
+            <button class="btn-exit-meeting" onclick="exitMeetingRoom()">🚪 Exit Room</button>
           </div>
 
-          <div class="grid-2col meeting-grid">
-            <!-- Video Iframe Card & Live Transcript -->
-            <div style="display:flex; flex-direction:column; gap:15px;">
-              <div class="panel-card meeting-video-card">
-                <div id="jitsi-meet-container" style="flex:1; width:100%; height:100%; background:#101424;">
+          <div class="meeting-workspace-grid">
+            <!-- Left Side: Video Section -->
+            <div class="meeting-video-section" id="meet-tab-content-video">
+              <!-- AI Copilot Transcription Control Panel -->
+              <div class="meeting-copilot-panel">
+                <div class="copilot-status-info">
+                  <h5 id="meet-copilot-status">🎙️ AI Copilot: Ready</h5>
+                  <p>Listening to what is said and preparing automated minutes transcript buffer.</p>
+                </div>
+                <button class="btn-end-meeting-ai" id="btn-trigger-ai-notes" onclick="triggerAIMeetingSummarization()">🎙️ End & AI Notes</button>
+              </div>
+
+              <div class="meeting-video-frame">
+                <div id="jitsi-meet-container" style="width:100%; height:100%; background:#101424;">
                   <!-- Embedded Jitsi Iframe will be injected dynamically -->
                 </div>
               </div>
               
-              <!-- Live Transcript Buffer Display -->
-              <div class="panel-card" style="padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px;">
-                <h5 style="margin-top:0; margin-bottom:8px; font-size:13px;">📝 Live AI Copilot Transcript</h5>
-                <div id="meet-room-live-transcript" style="max-height: 80px; overflow-y: auto; font-size: 12px; color: var(--text-secondary); font-style: italic; line-height: 1.5;">
+              <!-- Live Transcript Buffer Display (Only on Desktop) -->
+              <div class="meeting-live-transcript-card desktop-only">
+                <h5>📝 Live AI Copilot Transcript</h5>
+                <div id="meet-room-live-transcript" class="live-transcript-box">
                   Silence... Transcripts will appear here automatically when participants speak.
                 </div>
               </div>
             </div>
 
-            <!-- Collaboration Side desk -->
-            <div class="panel-card meeting-notes-card">
-              <h4 style="margin-top:0;">📝 Shared Room Minutes</h4>
-              <p class="subtitle" style="font-size:11px; margin-bottom:12px; color:var(--text-secondary);">Notes and actions captured here will sync to the partner dashboard database.</p>
-              
-              <div class="form-group" style="flex:1.5; display:flex; flex-direction:column; margin-bottom:10px;">
-                <label for="meet-room-notes" style="font-size:12px; margin-bottom:5px; font-weight:600;">Meeting Notes</label>
-                <textarea id="meet-room-notes" style="flex:1; font-size:13px; padding:10px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid var(--border-color); border-radius: 6px; resize:none;" placeholder="Document discussions, agendas, and minutes..."></textarea>
+            <!-- Right Side: Notes Section -->
+            <div class="meeting-notes-section meet-tab-hidden-mobile" id="meet-tab-content-notes">
+              <!-- Live Transcript duplicate for Mobile, so they can see it when writing notes -->
+              <div class="meeting-live-transcript-card mobile-only" style="margin-bottom:15px;">
+                <h5>📝 Live AI Copilot Transcript</h5>
+                <div id="meet-room-live-transcript-mobile" class="live-transcript-box">
+                  Silence... Transcripts will appear here automatically when participants speak.
+                </div>
               </div>
 
-              <div class="form-group" style="flex:1; display:flex; flex-direction:column; margin-bottom:10px;">
-                <label for="meet-room-followups" style="font-size:12px; margin-bottom:5px; font-weight:600;">Follow-up Actions</label>
-                <textarea id="meet-room-followups" style="flex:1; font-size:13px; padding:10px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid var(--border-color); border-radius: 6px; resize:none;" placeholder="List action items (e.g. 1. Submit design, 2. Approve budget)..."></textarea>
-              </div>
+              <div class="meeting-notes-card">
+                <h4>📝 Shared Room Minutes</h4>
+                <p class="subtitle">Notes and actions captured here will sync to the partner dashboard database.</p>
+                
+                <div class="form-group flex-textarea">
+                  <label for="meet-room-notes">Meeting Notes</label>
+                  <textarea id="meet-room-notes" placeholder="Document discussions, agendas, and minutes..."></textarea>
+                </div>
 
-              <button class="btn-primary w-100" style="padding: 12px; border: none; cursor: pointer;" onclick="handleSaveMeetingRoomMinutes()">💾 Save & Sync Room Minutes</button>
+                <div class="form-group flex-textarea">
+                  <label for="meet-room-followups">Follow-up Actions</label>
+                  <textarea id="meet-room-followups" placeholder="List action items (e.g. 1. Submit design, 2. Approve budget)..."></textarea>
+                </div>
+
+                <button class="btn-save-minutes" onclick="handleSaveMeetingRoomMinutes()">💾 Save & Sync Room Minutes</button>
+              </div>
             </div>
           </div>
         </section>

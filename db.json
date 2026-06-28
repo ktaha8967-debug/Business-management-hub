@@ -703,6 +703,18 @@
       "attendance": [],
       "notes": "",
       "follow_ups": ""
+    },
+    {
+      "id": "mee-1782612321045-ivpew",
+      "created_at": "2026-06-28T02:05:21.045Z",
+      "business_id": "bus-1782404624088-l4o0z",
+      "business_name": "Download Any Video",
+      "title": "business",
+      "date_time": "2026-06-28T07:09",
+      "status": "pending_approval",
+      "attendance": [],
+      "notes": "",
+      "follow_ups": ""
     }
   ],
   "mentorship_requests": [
@@ -714,8 +726,8 @@
       "challenges": "Struggling to find early corporate pilot partners for our product validation.",
       "topics": "Sales outreach B2B, validation metrics, corporate sales pipelines",
       "requested_date": "2026-06-28",
-      "status": "pending",
-      "meeting_date": null,
+      "status": "approved",
+      "meeting_date": "2026-06-28T11:47",
       "notes": "",
       "recommendations": "",
       "action_plans": [],
@@ -724,8 +736,14 @@
           "status": "pending",
           "timestamp": "2026-06-25T16:54:17.989Z",
           "notes": "Mentorship request submitted"
+        },
+        {
+          "status": "approved",
+          "timestamp": "2026-06-28T06:47:11.051Z",
+          "notes": "Approved and scheduled for 2026-06-28T11:47"
         }
-      ]
+      ],
+      "updated_at": "2026-06-28T06:47:11.054Z"
     }
   ],
   "notifications": [
@@ -752,7 +770,7 @@
       "title": "Editor Submission",
       "message": "Video editor David Editor submitted task for Download Any Video",
       "is_read": true,
-      "updated_at": "2026-06-27T15:04:11.241Z"
+      "updated_at": "2026-06-28T07:01:22.351Z"
     },
     {
       "id": "not-1782404918265-00kt4",
@@ -801,7 +819,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Review Request",
       "is_read": true,
-      "updated_at": "2026-06-27T15:04:11.248Z"
+      "updated_at": "2026-06-28T07:01:22.365Z"
     },
     {
       "id": "not-1782407256959-66f03",
@@ -826,7 +844,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reject Request",
       "is_read": true,
-      "updated_at": "2026-06-27T15:04:11.266Z"
+      "updated_at": "2026-06-28T07:01:22.373Z"
     },
     {
       "id": "not-1782407257309-jqlbp",
@@ -851,7 +869,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reschedule Request",
       "is_read": true,
-      "updated_at": "2026-06-27T15:04:11.292Z"
+      "updated_at": "2026-06-28T07:01:22.381Z"
     },
     {
       "id": "not-1782407257378-a4g3u",
@@ -900,7 +918,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: weekly ",
       "is_read": true,
-      "updated_at": "2026-06-27T15:04:11.299Z"
+      "updated_at": "2026-06-28T07:01:22.388Z"
     },
     {
       "id": "not-1782408481369-twgbx",
@@ -924,6 +942,31 @@
       "user_id": "use-1782404624056-5svlf",
       "title": "New Meeting Scheduled",
       "message": "A new weekly meeting has been scheduled: sdfsdf on 2026-06-27T20:05",
+      "is_read": false
+    },
+    {
+      "id": "not-1782612321063-vkdwm",
+      "created_at": "2026-06-28T02:05:21.063Z",
+      "user_id": "admin-1",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: business",
+      "is_read": true,
+      "updated_at": "2026-06-28T07:01:22.396Z"
+    },
+    {
+      "id": "not-1782612321075-74dsm",
+      "created_at": "2026-06-28T02:05:21.075Z",
+      "user_id": "admin-2",
+      "title": "Meeting Request",
+      "message": "Business partner \"Download Any Video\" requested a meeting: business",
+      "is_read": false
+    },
+    {
+      "id": "not-1782629231062-2ypps",
+      "created_at": "2026-06-28T06:47:11.063Z",
+      "user_id": "use-approved-mentee",
+      "title": "Mentorship Session Approved",
+      "message": "Your mentorship session has been approved and scheduled for 2026-06-28T11:47",
       "is_read": false
     }
   ],
@@ -1473,6 +1516,104 @@
       "user_id": "use-1782404624056-5svlf",
       "action": "login",
       "details": "User logged in"
+    },
+    {
+      "id": "act-1782612297409-tnldz",
+      "created_at": "2026-06-28T02:04:57.409Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782612321089-5ya07",
+      "created_at": "2026-06-28T02:05:21.089Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "schedule_meeting",
+      "details": "Scheduled/requested meeting: business"
+    },
+    {
+      "id": "act-1782612330810-z8ph2",
+      "created_at": "2026-06-28T02:05:30.810Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782626260864-fw4p0",
+      "created_at": "2026-06-28T05:57:40.864Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629210245-jr3id",
+      "created_at": "2026-06-28T06:46:50.245Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629231079-13xch",
+      "created_at": "2026-06-28T06:47:11.079Z",
+      "user_id": "admin-1",
+      "action": "approve_mentorship_request",
+      "details": "Approved mentorship request for Mark Approved Mentee"
+    },
+    {
+      "id": "act-1782629278178-7bjzv",
+      "created_at": "2026-06-28T06:47:58.178Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629285058-a4ilp",
+      "created_at": "2026-06-28T06:48:05.058Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629285785-fyyjg",
+      "created_at": "2026-06-28T06:48:05.785Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629286187-lwnr4",
+      "created_at": "2026-06-28T06:48:06.187Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629286473-bjrc9",
+      "created_at": "2026-06-28T06:48:06.473Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629286766-an2u2",
+      "created_at": "2026-06-28T06:48:06.766Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629287013-j1xxz",
+      "created_at": "2026-06-28T06:48:07.013Z",
+      "user_id": "use-approved-mentee",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782629287310-jwhgr",
+      "created_at": "2026-06-28T06:48:07.310Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
     }
   ],
   "orders": [
@@ -1537,7 +1678,7 @@
     {
       "id": "pus-1782609248752-ulyea",
       "created_at": "2026-06-28T01:14:08.752Z",
-      "user_id": "use-1782404624056-5svlf",
+      "user_id": "admin-1",
       "subscription": {
         "endpoint": "https://fcm.googleapis.com/fcm/send/fleeXjl2qcA:APA91bENXHlim3hQB2_th-9s-SP9NXktylkyZ6b4nFgbRdh8dxls298L-s8TQ2RQ8rD7OG3LwTvZF-kbTDcdUgJr-PleEhWk7BsYh6mJbkUh5YRS7DFeNWG1p--EhTqbABZSwKf0ILs8",
         "expirationTime": null,
@@ -1546,7 +1687,7 @@
           "auth": "yUpONUh_g1qWuGocAC59YA"
         }
       },
-      "updated_at": "2026-06-28T01:51:43.901Z"
+      "updated_at": "2026-06-28T07:19:04.236Z"
     }
   ]
 }

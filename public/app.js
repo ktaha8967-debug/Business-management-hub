@@ -67,6 +67,11 @@ let webrtcIsCamOff = false;
 
 // On page load, check authentication status and onboarding state
 window.addEventListener('DOMContentLoaded', () => {
+  // Request notification permission early
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission().catch(err => console.warn("Failed to request notification permission:", err));
+  }
+
   const savedToken = localStorage.getItem('token');
   const savedUser = localStorage.getItem('user');
   const savedBusiness = localStorage.getItem('business');
@@ -1657,6 +1662,37 @@ function showToast(type, message) {
   }, 4000);
 }
 
+let notifiedIds = null;
+
+function showDesktopNotification(title, body) {
+  if (!("Notification" in window)) return;
+  
+  if (Notification.permission === "granted") {
+    try {
+      new Notification(title, {
+        body: body,
+        icon: 'ascentra_logo.jpg'
+      });
+    } catch (e) {
+      console.warn("HTML5 Notification constructor failed, trying service worker:", e);
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification(title, {
+            body: body,
+            icon: 'ascentra_logo.jpg'
+          });
+        });
+      }
+    }
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        showDesktopNotification(title, body);
+      }
+    });
+  }
+}
+
 async function loadNotifications() {
   try {
     const res = await fetch(`${API_URL}/api/notifications`, { headers: getHeaders() });
@@ -1666,6 +1702,23 @@ async function loadNotifications() {
     const bellCount = document.getElementById('notification-count');
     const unread = list.filter(n => !n.is_read);
     bellCount.innerText = unread.length;
+
+    // Track which ones have been shown to avoid duplicate alerts
+    if (notifiedIds === null) {
+      // First load: just cache current notification IDs so we don't alert old notifications
+      notifiedIds = new Set(list.map(n => n.id));
+    } else {
+      // Subsequent loads: check for any new notifications
+      list.forEach(n => {
+        if (!notifiedIds.has(n.id)) {
+          notifiedIds.add(n.id);
+          // Show system notification alert for new unread notifications
+          if (!n.is_read) {
+            showDesktopNotification(n.title, n.message);
+          }
+        }
+      });
+    }
 
     const listContainer = document.getElementById('notifications-list');
     if (list.length === 0) {
@@ -2320,7 +2373,12 @@ function startMeetingRoomTranscription() {
   meetingTranscriptBuffer = '';
   isMeetingRecording = true;
   document.getElementById('meet-copilot-status').innerText = '🎙️ AI Copilot: Listening & Transcribing...';
-  document.getElementById('meet-room-live-transcript').innerText = 'Starting transcription... Say something to transcribe.';
+  
+  const startText = 'Starting transcription... Say something to transcribe.';
+  const tEl = document.getElementById('meet-room-live-transcript');
+  if (tEl) tEl.innerText = startText;
+  const mEl = document.getElementById('meet-room-live-transcript-mobile');
+  if (mEl) mEl.innerText = startText;
 
   meetingSpeechRecognition = new SpeechRecognition();
   meetingSpeechRecognition.continuous = true;
@@ -2344,10 +2402,17 @@ function startMeetingRoomTranscription() {
     }
 
     const displayText = meetingTranscriptBuffer + (interimTranscript ? ` [${interimTranscript}]` : '');
-    document.getElementById('meet-room-live-transcript').innerText = displayText || 'Listening...';
     
-    const transcriptEl = document.getElementById('meet-room-live-transcript');
-    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+    const tEl2 = document.getElementById('meet-room-live-transcript');
+    if (tEl2) {
+      tEl2.innerText = displayText || 'Listening...';
+      tEl2.scrollTop = tEl2.scrollHeight;
+    }
+    const mEl2 = document.getElementById('meet-room-live-transcript-mobile');
+    if (mEl2) {
+      mEl2.innerText = displayText || 'Listening...';
+      mEl2.scrollTop = mEl2.scrollHeight;
+    }
   };
 
   meetingSpeechRecognition.onerror = (e) => {
@@ -2403,7 +2468,11 @@ async function triggerAIMeetingSummarization() {
   if (!transcript) {
     transcript = "Let's review the active client orders. We need to assign the new bulk videos of Apex Solutions to our video editors. The editor will submit Google Drive folder links for review. Also, the team must draft the new branding strategy for GreenPulse Co by next week.";
     showToast('info', 'No speech detected. Using a demo transcript for AI analysis.');
-    document.getElementById('meet-room-live-transcript').innerText = `[Demo Transcript]: ${transcript}`;
+    const dText = `[Demo Transcript]: ${transcript}`;
+    const tEl3 = document.getElementById('meet-room-live-transcript');
+    if (tEl3) tEl3.innerText = dText;
+    const mEl3 = document.getElementById('meet-room-live-transcript-mobile');
+    if (mEl3) mEl3.innerText = dText;
   }
 
   try {
@@ -2433,7 +2502,9 @@ let jitsiAPIInstance = null;
 
 async function joinMeetingRoom(meetingId) {
   currentMeetingRoomId = meetingId;
+  document.body.classList.add('in-meeting');
   switchMainTab('meeting-room');
+  switchMeetingTab('video');
 
   try {
     const res = await fetch(`${API_URL}/api/meetings`, { headers: getHeaders() });
@@ -2477,6 +2548,7 @@ async function joinMeetingRoom(meetingId) {
 
 function exitMeetingRoom(skipConfirm = false) {
   if (skipConfirm || confirm('Are you sure you want to leave the virtual meeting room?')) {
+    document.body.classList.remove('in-meeting');
     stopMeetingRoomTranscription();
     
     // Dispose Jitsi instance
@@ -2513,6 +2585,30 @@ function exitMeetingRoom(skipConfirm = false) {
     currentMeetingRoomId = null;
     showToast('info', 'Left meeting room');
     switchMainTab('dashboard');
+  }
+}
+
+function switchMeetingTab(tabName) {
+  document.querySelectorAll('.meet-tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Highlight active tab
+  const activeBtn = Array.from(document.querySelectorAll('.meet-tab-btn')).find(btn => {
+    const onclickAttr = btn.getAttribute('onclick');
+    return onclickAttr && onclickAttr.includes(tabName);
+  });
+  if (activeBtn) activeBtn.classList.add('active');
+
+  const videoSection = document.getElementById('meet-tab-content-video');
+  const notesSection = document.getElementById('meet-tab-content-notes');
+
+  if (tabName === 'video') {
+    if (videoSection) videoSection.classList.remove('meet-tab-hidden-mobile');
+    if (notesSection) notesSection.classList.add('meet-tab-hidden-mobile');
+  } else {
+    if (videoSection) videoSection.classList.add('meet-tab-hidden-mobile');
+    if (notesSection) notesSection.classList.remove('meet-tab-hidden-mobile');
   }
 }
 

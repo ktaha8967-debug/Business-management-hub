@@ -39,7 +39,16 @@
         "nsis",
         "portable"
       ],
-      "icon": "public/ascentra_logo.png"
+      "icon": "public/ascentra_logo.png",
+      "publisherName": "Ascentra Operations Team"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
     }
   }
 }

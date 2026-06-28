@@ -1,7 +1,30 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, Tray } = require('electron');
 const path = require('path');
 
 let mainWindow;
+let tray = null;
+let isQuitting = false;
+
+function createTray() {
+  const iconPath = path.join(__dirname, 'public', 'ascentra_logo.png');
+  tray = new Tray(iconPath);
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show App', click: () => mainWindow.show() },
+    { label: 'Quit', click: () => {
+        isQuitting = true;
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setToolTip('Ascentra Command Center');
+  tray.setContextMenu(contextMenu);
+  
+  tray.on('click', () => {
+    mainWindow.show();
+  });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -29,16 +52,33 @@ function createWindow() {
     mainWindow.loadURL('https://taha.mayfairmarketing.online');
   }
 
+  mainWindow.on('close', function (event) {
+    if (!isQuitting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+    return false;
+  });
+
   mainWindow.on('closed', function () {
     mainWindow = null;
   });
 }
 
-app.on('ready', createWindow);
+app.on('ready', () => {
+  createWindow();
+  createTray();
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
+});
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') {
-    app.quit();
+    if (isQuitting) {
+      app.quit();
+    }
   }
 });
 
