@@ -341,19 +341,20 @@ async function handleRegisterGeneral(e) {
   const email = document.getElementById('gen-email').value;
   const password = document.getElementById('gen-password').value;
   const role = document.getElementById('gen-role').value;
+  const invite_code = document.getElementById('gen-invite-code').value.trim();
 
   try {
     const response = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ full_name, email, password, role })
+      body: JSON.stringify({ full_name, email, password, role, invite_code })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Registration failed');
 
-    const msg = role === 'Mentorship Members' 
-      ? 'Mentorship Account created. Awaiting admin approval to request sessions.' 
-      : 'Account created! You can now log in.';
+    const msg = (invite_code || role !== 'Mentorship Members')
+      ? 'Account created! You can now log in.'
+      : 'Mentorship Account created. Awaiting admin approval to request sessions.';
     showToast('success', msg);
     form.reset();
     switchAuthTab('login');
@@ -1012,26 +1013,68 @@ async function handleSaveMentorshipSession(e) {
   }
 }
 
+// Global cache for modal viewing
+let currentInvitations = [];
+
+function toggleBizField() {
+  const roleSelect = document.getElementById('invite-role');
+  const bizGroup = document.getElementById('invite-biz-group');
+  const bizName = document.getElementById('invite-biz-name');
+  if (roleSelect && bizGroup && bizName) {
+    if (roleSelect.value === 'Business Owners') {
+      bizGroup.style.display = 'block';
+      bizName.required = true;
+    } else {
+      bizGroup.style.display = 'none';
+      bizName.required = false;
+      bizName.value = '';
+    }
+  }
+}
+
 // 6. Admin Invitations Loader
 async function loadAdminInvitations() {
   try {
+    // Ensure correct fields display/hide initially
+    toggleBizField();
+
     const res = await fetch(`${API_URL}/api/invitations`, { headers: getHeaders() });
     const list = await res.json();
     if (!res.ok) throw new Error(list.error);
 
+    currentInvitations = list;
+
     const tbody = document.querySelector('#admin-invitations-list-table tbody');
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" class="text-center">No invitation links generated.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No invitation links generated.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = list.map(inv => `
-      <tr>
-        <td><strong>${inv.business_name}</strong></td>
-        <td><code>${inv.code}</code></td>
-        <td><span class="badge ${inv.is_used ? 'badge-success' : 'badge-active'}">${inv.is_used ? 'Used' : 'Active'}</span></td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = list.map(inv => {
+      const emailText = inv.email || '<span style="color:var(--text-muted);">N/A (Legacy link)</span>';
+      const roleText = inv.role || 'Business Owners';
+      const bizText = inv.business_name || 'N/A';
+      
+      const contractHtml = inv.contract_path 
+        ? `<a href="${API_URL}${inv.contract_path}" target="_blank" class="doc-download-link" style="padding: 2px 6px; font-size: 11px; display: inline-block;">⬇️ Download PDF</a>`
+        : '<span style="color:var(--text-muted);">None</span>';
+        
+      const actionHtml = inv.email_body
+        ? `<button class="btn-secondary" onclick="viewInvitationDetails('${inv.id}')" style="padding:4px 8px; font-size:11px; margin: 0; line-height: 1;">View Email</button>`
+        : '<span style="color:var(--text-muted);">N/A</span>';
+
+      return `
+        <tr>
+          <td>${emailText}</td>
+          <td><span class="badge badge-active" style="background-color: rgba(255,255,255,0.05); color: var(--primary-color);">${roleText}</span></td>
+          <td><strong>${bizText}</strong></td>
+          <td><code>${inv.code}</code></td>
+          <td><span class="badge ${inv.is_used ? 'badge-success' : 'badge-active'}">${inv.is_used ? 'Used' : 'Active'}</span></td>
+          <td>${contractHtml}</td>
+          <td>${actionHtml}</td>
+        </tr>
+      `;
+    }).join('');
   } catch (err) {
     showToast('error', err.message);
   }
@@ -1040,20 +1083,68 @@ async function loadAdminInvitations() {
 async function handleGenerateInvite(e) {
   e.preventDefault();
   const business_name = document.getElementById('invite-biz-name').value;
+  const email = document.getElementById('invite-email').value;
+  const role = document.getElementById('invite-role').value;
+  const contractField = document.getElementById('invite-contract');
+
+  const formData = new FormData();
+  formData.append('business_name', business_name);
+  formData.append('email', email);
+  formData.append('role', role);
+  if (contractField && contractField.files.length > 0) {
+    formData.append('contract', contractField.files[0]);
+  }
+
+  showToast('info', 'Analyzing contract & drafting invitation email... Please wait.');
+
   try {
     const res = await fetch(`${API_URL}/api/invitations/create`, {
       method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ business_name })
+      headers: {
+        'Authorization': `Bearer ${currentToken}`
+      },
+      body: formData
     });
-    if (!res.ok) throw new Error('Error creating invite link');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error sending invitation');
 
-    showToast('success', 'Invitation link generated');
+    showToast('success', 'Invitation email sent successfully!');
+    
+    // Reset form
+    document.getElementById('invite-email').value = '';
     document.getElementById('invite-biz-name').value = '';
+    if (contractField) contractField.value = '';
+    
     loadAdminInvitations();
   } catch (err) {
     showToast('error', err.message);
   }
+}
+
+function viewInvitationDetails(id) {
+  const inv = currentInvitations.find(x => x.id === id);
+  if (!inv) return;
+
+  document.getElementById('modal-inv-email').innerText = inv.email || 'N/A';
+  document.getElementById('modal-inv-role').innerText = inv.role || 'Business Owners';
+  
+  const bizRow = document.getElementById('modal-inv-biz-row');
+  const bizVal = document.getElementById('modal-inv-biz');
+  if (inv.business_name && inv.business_name !== 'N/A') {
+    bizRow.style.display = 'block';
+    bizVal.innerText = inv.business_name;
+  } else {
+    bizRow.style.display = 'none';
+  }
+
+  document.getElementById('modal-inv-code').innerText = inv.code;
+  document.getElementById('modal-inv-email-body').innerText = inv.email_body || 'No email body drafted.';
+  
+  document.getElementById('invitation-details-modal').classList.remove('hidden');
+}
+
+function closeInvitationDetailsModal() {
+  document.getElementById('invitation-details-modal').classList.add('hidden');
 }
 
 // 7. Owner Profile Loader
@@ -1880,20 +1971,29 @@ async function toggleSpeechRecognition() {
 
   // Start recording
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    return showToast('error', 'Microphone access is not supported in this environment.');
+    return showToast('error', 'Microphone access is not supported. Please use HTTPS or localhost to enable voice commands.');
+  }
+
+  if (typeof MediaRecorder === 'undefined') {
+    return showToast('error', 'Audio recording is not supported in this browser.');
   }
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     
     voiceAudioChunks = [];
-    // Choose fallback audio format depending on device capabilities
-    const options = { mimeType: 'audio/webm' };
-    if (!MediaRecorder.isTypeSupported('audio/webm')) {
-      options.mimeType = 'audio/ogg';
-    }
-    if (!MediaRecorder.isTypeSupported('audio/ogg')) {
-      options.mimeType = ''; // Let device pick default
+    // Choose fallback audio format depending on device capabilities safely (especially for Safari/iOS)
+    let options = {};
+    if (typeof MediaRecorder.isTypeSupported === 'function') {
+      if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/webm' };
+      } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+        options = { mimeType: 'audio/ogg' };
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        options = { mimeType: 'audio/mp4' };
+      } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+        options = { mimeType: 'audio/wav' };
+      }
     }
 
     voiceMediaRecorder = new MediaRecorder(stream, options);
@@ -3080,17 +3180,37 @@ function completeOnboarding() {
 async function requestAppPermissions() {
   try {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      // Trigger native permission prompts for Camera and Microphone
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-      // Stop media tracks immediately to release devices
-      stream.getTracks().forEach(track => track.stop());
-      showToast('success', 'Camera & Microphone access successfully granted!');
+      let stream;
+      try {
+        // Try getting both camera and microphone
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        showToast('success', 'Camera & Microphone access successfully granted!');
+      } catch (mediaErr) {
+        console.warn('Dual media request failed, trying audio only...', mediaErr);
+        try {
+          // Fallback to microphone only
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          showToast('info', 'Microphone access granted. No camera detected or available.');
+        } catch (audioErr) {
+          console.warn('Audio-only request failed, trying video only...', audioErr);
+          try {
+            // Fallback to camera only
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            showToast('info', 'Camera access granted. No microphone detected or available.');
+          } catch (videoErr) {
+            throw new Error('Both audio and video devices are unavailable or permission was denied.');
+          }
+        }
+      }
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
     } else {
-      showToast('info', 'Secure context permission request APIs registered.');
+      showToast('error', 'Insecure context detected! Browsers block Camera/Mic on HTTP. Please use HTTPS or localhost to enable permissions.');
     }
   } catch (err) {
     console.warn('Permissions rejected or failed:', err);
-    showToast('warn', 'Meetings require Microphone & Camera access. Please enable them in system settings if disabled.');
+    showToast('error', 'Media access failed: ' + err.message);
   }
 }
 
@@ -3259,7 +3379,23 @@ async function startWebRTCCall(meetingId) {
   peerConnection = new RTCPeerConnection(configuration);
   
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    } catch (mediaErr) {
+      console.warn('Meeting call: Dual media failed, trying audio only...', mediaErr);
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        showToast('info', 'Joined call with audio only.');
+      } catch (audioErr) {
+        console.warn('Meeting call: Audio only failed, trying video only...', audioErr);
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          showToast('info', 'Joined call with video only.');
+        } catch (videoErr) {
+          throw new Error('Could not access microphone or camera. Please verify permissions.');
+        }
+      }
+    }
     const localVideo = document.getElementById('webrtc-local-video');
     if (localVideo) localVideo.srcObject = localStream;
     
@@ -3268,7 +3404,7 @@ async function startWebRTCCall(meetingId) {
     });
   } catch (e) {
     console.error('Camera/Mic permission failed:', e);
-    showToast('error', 'Camera or microphone block. Access required for WebRTC call.');
+    showToast('error', e.message || 'Camera or microphone block. Access required for WebRTC call.');
     return;
   }
 
@@ -3397,3 +3533,17 @@ function toggleWebRTCCam() {
     }
   }
 }
+
+function togglePasswordVisibility(inputId, iconEl) {
+  const input = document.getElementById(inputId);
+  if (input) {
+    if (input.type === 'password') {
+      input.type = 'text';
+      iconEl.innerText = '🙈';
+    } else {
+      input.type = 'password';
+      iconEl.innerText = '👁️';
+    }
+  }
+}
+

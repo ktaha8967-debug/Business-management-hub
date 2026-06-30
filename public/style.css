@@ -4172,3 +4172,373 @@ body.in-meeting #view-meeting-room {
   }
 }
 
+/* ==================== BRIGHT MODERN LANDING PAGE & LOGIN THEME ==================== */
+
+#landing-page-container {
+  background-color: #f3f5fa !important;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(112, 77, 244, 0.08) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, rgba(0, 210, 255, 0.08) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, rgba(255, 0, 128, 0.06) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(112, 77, 244, 0.06) 0, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(0, 210, 255, 0.07) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(255, 0, 128, 0.06) 0, transparent 50%) !important;
+  color: #1e293b !important;
+}
+
+#landing-page-container .morphing-bg-mesh {
+  background: 
+    radial-gradient(circle at 15% 25%, rgba(112, 77, 244, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 85% 75%, rgba(0, 210, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 0, 128, 0.08) 0%, transparent 60%) !important;
+}
+
+/* Sections Backgrounds */
+#landing-page-container section {
+  background: transparent !important;
+}
+
+/* Header */
+.landing-header {
+  background: rgba(243, 245, 250, 0.8) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.landing-header.scrolled {
+  background: rgba(243, 245, 250, 0.95) !important;
+  border-bottom-color: rgba(112, 77, 244, 0.15) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+.logo-text {
+  color: #0f172a !important;
+}
+
+.landing-nav a {
+  color: #334155 !important; /* Darker Slate for high contrast */
+}
+
+.landing-nav a:hover {
+  color: #0f172a !important;
+}
+
+.btn-portal {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+}
+
+.btn-portal:hover {
+  background: linear-gradient(135deg, rgba(112, 77, 244, 0.1), rgba(0, 210, 255, 0.1)) !important;
+  border-color: rgba(112, 77, 244, 0.3) !important;
+  box-shadow: 0 5px 15px rgba(112, 77, 244, 0.08) !important;
+}
+
+/* Typography & Titles - High Contrast Overrides */
+#landing-page-container h1,
+#landing-page-container h2,
+#landing-page-container h3,
+#landing-page-container h4,
+#landing-page-container h5,
+#landing-page-container h6,
+#landing-page-container .section-title,
+#landing-page-container .feature-heading,
+#landing-page-container .consultation-header h3 {
+  color: #0f172a !important; /* Force high contrast dark slate */
+}
+
+#landing-page-container p,
+#landing-page-container .section-subtitle,
+#landing-page-container .hero-desc,
+#landing-page-container .feature-desc,
+#landing-page-container .pipeline-section p,
+#landing-page-container .security-section p,
+#landing-page-container .academy-section p,
+#landing-page-container .testimonials-section p,
+#landing-page-container .consultation-header p,
+#landing-page-container .card-detail,
+#landing-page-container .footer-tagline,
+#landing-page-container .footer-security-grade {
+  color: #334155 !important; /* Force high contrast readable Slate 700 */
+}
+
+#landing-page-container a {
+  color: #334155 !important;
+}
+#landing-page-container a:hover {
+  color: #0f172a !important;
+}
+
+.hero-title {
+  background: linear-gradient(135deg, #0f172a 30%, #312e81 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Buttons */
+.btn-glass-cta {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+}
+
+.btn-glass-cta:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  color: #0f172a !important;
+}
+
+/* Mockup Layout */
+.hero-mockup-container {
+  transform: none !important;
+  transform-style: flat !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+
+.mockup-header-bar {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  color: #0f172a !important;
+}
+
+.mockup-sidebar {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.sidebar-item {
+  color: #475569 !important;
+}
+
+.sidebar-item.active {
+  color: #704df4 !important;
+  background: rgba(112, 77, 244, 0.1) !important;
+}
+
+.mockup-stat-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
+}
+
+.stat-title {
+  color: #475569 !important;
+}
+
+.floating-mockup-card {
+  transform: none !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+}
+
+.card-title {
+  color: #0f172a !important;
+}
+
+.card-detail {
+  color: #475569 !important;
+}
+
+/* Glass Cards & Elements on Landing */
+#landing-page-container .glass-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+  color: #0f172a !important;
+}
+
+#landing-page-container .glass-card:hover {
+  border-color: rgba(112, 77, 244, 0.35) !important;
+  box-shadow: 0 20px 40px rgba(112, 77, 244, 0.08) !important;
+}
+
+/* Specific Section Tweaks */
+.pipeline-section {
+  border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.timeline-glow-line {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+.roadmap-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+}
+
+.roadmap-card:hover {
+  border-color: rgba(112, 77, 244, 0.35) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 15px 35px rgba(112, 77, 244, 0.08) !important;
+}
+
+.roadmap-card h4 {
+  color: #0f172a !important;
+}
+
+.roadmap-card p {
+  color: #334155 !important;
+}
+
+.roadmap-icon-wrapper {
+  background: rgba(112, 77, 244, 0.08) !important;
+  border: 1px solid rgba(112, 77, 244, 0.15) !important;
+}
+
+.testimonial-card-3d {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
+}
+
+.quote {
+  color: #0f172a !important;
+  font-weight: 500 !important;
+}
+
+.testimonial-user h5 {
+  color: #0f172a !important;
+}
+
+.testimonial-user p {
+  color: #334155 !important;
+}
+
+.trust-badge {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+}
+
+/* Landing Form Controls */
+#landing-page-container label {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+#landing-page-container input[type="text"],
+#landing-page-container input[type="email"],
+#landing-page-container input[type="password"],
+#landing-page-container input[type="number"],
+#landing-page-container select,
+#landing-page-container textarea {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+}
+
+#landing-page-container input:focus,
+#landing-page-container select:focus,
+#landing-page-container textarea:focus {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: #704df4 !important;
+  box-shadow: 0 0 10px rgba(112, 77, 244, 0.15) !important;
+}
+
+/* Footer Section */
+.landing-footer {
+  background: #f1f3f9 !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.logo-text-sm {
+  color: #0f172a !important;
+}
+
+.footer-tagline {
+  color: #334155 !important;
+}
+
+.footer-links a {
+  color: #334155 !important;
+}
+
+.footer-links a:hover {
+  color: #0f172a !important;
+}
+
+/* ==================== BRIGHT AUTHENTICATION CARD OVERRIDE ==================== */
+
+#auth-panel {
+  background: rgba(243, 245, 250, 0.4) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+}
+
+#auth-panel .auth-card {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
+}
+
+#auth-panel .auth-brand {
+  color: #0f172a !important;
+}
+
+#auth-panel .auth-subtitle {
+  color: #334155 !important;
+}
+
+#auth-panel .auth-tab {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+}
+
+#auth-panel .auth-tab.active {
+  background: linear-gradient(135deg, #704df4, #5c3ce0) !important;
+  color: #ffffff !important;
+  border-color: #704df4 !important;
+  box-shadow: 0 4px 10px rgba(112, 77, 244, 0.2) !important;
+}
+
+#auth-panel label {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+#auth-panel input[type="text"],
+#auth-panel input[type="email"],
+#auth-panel input[type="password"],
+#auth-panel input[type="number"],
+#auth-panel select,
+#auth-panel textarea {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+
+#auth-panel input:focus,
+#auth-panel select:focus,
+#auth-panel textarea:focus {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: #704df4 !important;
+  box-shadow: 0 0 10px rgba(112, 77, 244, 0.15) !important;
+}
+
+#auth-panel .close-modal {
+  color: #475569 !important;
+}
+
+#auth-panel .close-modal:hover {
+  color: #0f172a !important;
+}
+
+#auth-panel .checkbox-group label {
+  text-transform: none !important;
+  font-size: 13px !important;
+  display: inline !important;
+  color: #334155 !important;
+}
+
+
+

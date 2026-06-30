@@ -109,6 +109,15 @@
       "password_hash": "$2a$10$bFaaVcaccoHGbobreHf1y.MmTEw9bOOG304o25cWH6.a1JftbVgCq",
       "role": "Mentorship Members",
       "status": "approved"
+    },
+    {
+      "id": "use-1782837242056-58gir",
+      "created_at": "2026-06-30T16:34:02.056Z",
+      "full_name": "John Editor",
+      "email": "new_editor@example.com",
+      "password_hash": "$2a$10$qeBxs3GufeaXs8MmImvarOBXjfocziXnEjsRzq9NDRERa8KOPMMRa",
+      "role": "Video Editors",
+      "status": "approved"
     }
   ],
   "invitations": [
@@ -134,6 +143,95 @@
       "business_name": "Vertex",
       "is_used": true,
       "updated_at": "2026-06-25T16:23:43.754Z"
+    },
+    {
+      "id": "inv-1782837241782-ccu2n",
+      "created_at": "2026-06-30T16:34:01.782Z",
+      "code": "INV-SUPER-CUT-STUDIO-5221",
+      "business_name": "Super Cut Studio",
+      "email": "new_editor@example.com",
+      "role": "Video Editors",
+      "contract_path": "",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Video Editors. \n\nYou have been successfully added to our operations list. Please complete your registration on our platform using the invitation code below:\n\nInvitation Code: INV-SUPER-CUT-STUDIO-5221\n\nRegistration Link: http://localhost:5000/ (Select the appropriate registration tab for your role)\n\nWe look forward to working closely with you as our valued partner.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": true,
+      "updated_at": "2026-06-30T16:34:01.817Z"
+    },
+    {
+      "id": "inv-1782840261558-zry2r",
+      "created_at": "2026-06-30T17:24:21.558Z",
+      "code": "INV-MAISA-ENTERPRISE-4307",
+      "business_name": "Maisa enterprise",
+      "email": "ktaha8967@gmail.com",
+      "role": "Business Owners",
+      "contract_path": "/uploads/1782840259579-BUSINESS DEVELOPMENT & PARTNERSHIP.pdf",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Business Owners. \n\nYou have been successfully added to our operations list. Please complete your registration on our platform using the invitation code below:\n\nInvitation Code: INV-MAISA-ENTERPRISE-4307\n\nRegistration Link: http://localhost:5000/ (Select the appropriate registration tab for your role)\n\nWe look forward to working closely with you as our valued partner.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": false
+    },
+    {
+      "id": "inv-1782840531895-jhlj9",
+      "created_at": "2026-06-30T17:28:51.896Z",
+      "code": "INV-MAISA-ENTERPRISE-5571",
+      "business_name": "Maisa enterprise",
+      "email": "ktaha8967@gmail.com",
+      "role": "Business Owners",
+      "contract_path": "/uploads/1782840530838-BUSINESS DEVELOPMENT & PARTNERSHIP.pdf",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Business Owners. \n\nYou have been successfully added to our operations list. Please complete your registration on our platform using the invitation code below:\n\nInvitation Code: INV-MAISA-ENTERPRISE-5571\n\nRegistration Link: http://localhost:5000/ (Select the appropriate registration tab for your role)\n\nWe look forward to working closely with you as our valued partner.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": false
+    },
+    {
+      "id": "inv-1782840585789-1rrfo",
+      "created_at": "2026-06-30T17:29:45.790Z",
+      "code": "INV-MAISA-ENTERPRISE-9529",
+      "business_name": "Maisa enterprise",
+      "email": "ktaha8967@gmail.com",
+      "role": "Business Owners",
+      "contract_path": "/uploads/1782840583541-BUSINESS DEVELOPMENT & PARTNERSHIP.pdf",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Business Owners. \n\nYou have signed this contract with us. This is our platform to manage operations and tasks, so please register to join us:\n\nInvitation Code: INV-MAISA-ENTERPRISE-9529\n\nRegistration Link: https://taha.mayfairmarketing.online (Select the appropriate registration tab for your role)\n\nWe look forward to working closely with you as our valued partner.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": false
+    },
+    {
+      "id": "inv-1782840848623-3ap7q",
+      "created_at": "2026-06-30T17:34:08.623Z",
+      "code": "INV-MAISA-ENTERPRISE-7253",
+      "business_name": "Maisa enterprise",
+      "email": "ktaha8967@gmail.com",
+      "role": "Business Owners",
+      "contract_path": "/uploads/1782840848565-BUSINESS DEVELOPMENT & PARTNERSHIP.pdf",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Business Owners. \n\nYou have signed this contract with us. This is our platform to manage operations and tasks, so please register to join us:\n\nInvitation Code: INV-MAISA-ENTERPRISE-7253\n\nRegistration Link: https://taha.mayfairmarketing.online (Select the appropriate registration tab for your role)\n\nWe look forward to working closely with you as our valued partner.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": false
+    },
+    {
+      "id": "inv-1782840883224-zjolo",
+      "created_at": "2026-06-30T17:34:43.224Z",
+      "code": "INV-MAISA-ENTERPRISE-4358",
+      "business_name": "Maisa enterprise",
+      "email": "ktaha8967@gmail.com",
+      "role": "Business Owners",
+      "contract_path": "/uploads/1782840883205-BUSINESS DEVELOPMENT & PARTNERSHIP.pdf",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Business Owners. \n\nYou have signed this contract with us. This is our platform to manage operations and tasks, so please register to join us:\n\nInvitation Code: INV-MAISA-ENTERPRISE-4358\n\nRegistration Link: https://taha.mayfairmarketing.online (Select the appropriate registration tab for your role)\n\nWe look forward to working closely with you as our valued partner.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": false
+    },
+    {
+      "id": "inv-1782842324962-bpl08",
+      "created_at": "2026-06-30T17:58:44.962Z",
+      "code": "INV-PARTY-B-FOR-THE-DEVELOPMENT--BRANDING--MA-1489",
+      "business_name": "Party B for the development, branding, ma",
+      "email": "ktaha8967@gmail.com",
+      "role": "Business Owners",
+      "contract_path": "/uploads/1782842322198-BUSINESS DEVELOPMENT & PARTNERSHIP.pdf",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Business Owners. \n\nYou have signed this contract with us. This is our platform to manage operations and tasks, so please register to join us:\n\nInvitation Code: INV-PARTY-B-FOR-THE-DEVELOPMENT--BRANDING--MA-1489\n\nRegistration Link: https://taha.mayfairmarketing.online (Select the appropriate registration tab for your role)\n\nWe look forward to working closely with you as our valued partner.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": false
+    },
+    {
+      "id": "inv-1782844494450-ux3f1",
+      "created_at": "2026-06-30T18:34:54.450Z",
+      "code": "INV-MAISA-ENTERPRISE-5864",
+      "business_name": "Maisa enterprise",
+      "email": "ktaha8967@gmail.com",
+      "role": "Business Owners",
+      "contract_path": "/uploads/1782844494394-BUSINESS DEVELOPMENT & PARTNERSHIP.pdf",
+      "email_body": "Subject: Welcome to Ascentra - Invitation to Join Platform\n\nDear Partner,\n\nWe are delighted to invite you to join the Ascentra platform as a Business Owners representing Maisa enterprise.\n\nYou have signed a contract agreement with us. This is our unified platform to manage operations, tasks, schedules, and start-up operations in one central place. Please register your account to join us on the platform using the details below:\n\nInvitation Code: INV-MAISA-ENTERPRISE-5864\n\nRegistration Link: https://taha.mayfairmarketing.online (Please select the appropriate registration tab for your role)\n\nWe look forward to working closely with you.\n\nBest regards,\nAscentra Operations Team\nadmin@ascentra.com",
+      "is_used": false
     }
   ],
   "businesses": [
@@ -1614,6 +1712,90 @@
       "user_id": "admin-1",
       "action": "login",
       "details": "User logged in"
+    },
+    {
+      "id": "act-1782837241682-8w51h",
+      "created_at": "2026-06-30T16:34:01.682Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782837241789-4espy",
+      "created_at": "2026-06-30T16:34:01.789Z",
+      "user_id": "admin-1",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-SUPER-CUT-STUDIO-5221 for new_editor@example.com as Video Editors"
+    },
+    {
+      "id": "act-1782837242249-nu6hc",
+      "created_at": "2026-06-30T16:34:02.249Z",
+      "user_id": "use-1782837242056-58gir",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782838197116-mj1es",
+      "created_at": "2026-06-30T16:49:57.116Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782840212592-1k4nr",
+      "created_at": "2026-06-30T17:23:32.592Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1782840261707-u37zg",
+      "created_at": "2026-06-30T17:24:21.707Z",
+      "user_id": "admin-2",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-MAISA-ENTERPRISE-4307 for ktaha8967@gmail.com as Business Owners"
+    },
+    {
+      "id": "act-1782840531905-9p61g",
+      "created_at": "2026-06-30T17:28:51.905Z",
+      "user_id": "admin-2",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-MAISA-ENTERPRISE-5571 for ktaha8967@gmail.com as Business Owners"
+    },
+    {
+      "id": "act-1782840585796-pd7ni",
+      "created_at": "2026-06-30T17:29:45.796Z",
+      "user_id": "admin-2",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-MAISA-ENTERPRISE-9529 for ktaha8967@gmail.com as Business Owners"
+    },
+    {
+      "id": "act-1782840848643-du88f",
+      "created_at": "2026-06-30T17:34:08.643Z",
+      "user_id": "admin-2",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-MAISA-ENTERPRISE-7253 for ktaha8967@gmail.com as Business Owners"
+    },
+    {
+      "id": "act-1782840883241-vds2x",
+      "created_at": "2026-06-30T17:34:43.241Z",
+      "user_id": "admin-2",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-MAISA-ENTERPRISE-4358 for ktaha8967@gmail.com as Business Owners"
+    },
+    {
+      "id": "act-1782842324980-hzlo4",
+      "created_at": "2026-06-30T17:58:44.980Z",
+      "user_id": "admin-2",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-PARTY-B-FOR-THE-DEVELOPMENT--BRANDING--MA-1489 for ktaha8967@gmail.com as Business Owners"
+    },
+    {
+      "id": "act-1782844494457-ulbt5",
+      "created_at": "2026-06-30T18:34:54.457Z",
+      "user_id": "admin-2",
+      "action": "create_invitation",
+      "details": "Generated invitation email & code INV-MAISA-ENTERPRISE-5864 for ktaha8967@gmail.com as Business Owners"
     }
   ],
   "orders": [
@@ -1678,7 +1860,7 @@
     {
       "id": "pus-1782609248752-ulyea",
       "created_at": "2026-06-28T01:14:08.752Z",
-      "user_id": "admin-1",
+      "user_id": "admin-2",
       "subscription": {
         "endpoint": "https://fcm.googleapis.com/fcm/send/fleeXjl2qcA:APA91bENXHlim3hQB2_th-9s-SP9NXktylkyZ6b4nFgbRdh8dxls298L-s8TQ2RQ8rD7OG3LwTvZF-kbTDcdUgJr-PleEhWk7BsYh6mJbkUh5YRS7DFeNWG1p--EhTqbABZSwKf0ILs8",
         "expirationTime": null,
@@ -1687,7 +1869,7 @@
           "auth": "yUpONUh_g1qWuGocAC59YA"
         }
       },
-      "updated_at": "2026-06-28T07:19:04.236Z"
+      "updated_at": "2026-06-30T18:34:40.325Z"
     }
   ]
 }

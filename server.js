@@ -8,6 +8,8 @@ const path = require('path');
 const fs = require('fs');
 const db = require('./database');
 const webpush = require('web-push');
+const nodemailer = require('nodemailer');
+const pdfParse = require('pdf-parse');
 
 // Initialize Web Push VAPID keys
 let vapidKeys = db.findOne('vapid_keys', () => true);
@@ -79,13 +81,32 @@ function authorizeRoles(...roles) {
 // General Register (Video Editor, Social Media Manager, Mentorship Member)
 app.post('/api/auth/register', (req, res) => {
   try {
-    const { full_name, email, password, role } = req.body;
+    const { full_name, email, password, role, invite_code } = req.body;
     if (!full_name || !email || !password || !role) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
     const existingUser = db.findOne('users', u => u.email === email);
     if (existingUser) return res.status(400).json({ error: 'Email already registered' });
+
+    let finalRole = role;
+    let autoApprove = false;
+
+    if (invite_code) {
+      const invitation = db.findOne('invitations', inv => inv.code === invite_code && !inv.is_used);
+      if (!invitation) {
+        return res.status(400).json({ error: 'Invalid or already used invitation code' });
+      }
+      
+      // Mark invitation as used
+      db.update('invitations', invitation.id, { is_used: true });
+      
+      // Override role from invitation
+      if (invitation.role) {
+        finalRole = invitation.role;
+      }
+      autoApprove = true; // Auto approved since invited by admin
+    }
 
     // Hash password
     const password_hash = bcrypt.hashSync(password, 10);
@@ -94,8 +115,8 @@ app.post('/api/auth/register', (req, res) => {
       full_name,
       email,
       password_hash,
-      role,
-      status: role === 'Mentorship Members' ? 'pending' : 'approved' // Mentorship needs approval, editors/sm approved by default
+      role: finalRole,
+      status: autoApprove ? 'approved' : (finalRole === 'Mentorship Members' ? 'pending' : 'approved')
     });
 
     res.status(201).json({ message: 'User registered successfully', userId: newUser.id });
@@ -208,25 +229,112 @@ app.post('/api/auth/login', (req, res) => {
 
 // --- INVITATION ROUTES ---
 
-// Create Invitation (Admin Only)
-app.post('/api/invitations/create', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), (req, res) => {
-  try {
-    const { business_name } = req.body;
-    if (!business_name) return res.status(400).json({ error: 'Business name is required' });
+// --- INVITATION HELPERS ---
 
-    const code = `INV-${business_name.replace(/\s+/g, '-').toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+function generateDefaultEmailBody(role, businessName, code) {
+  return `Subject: Welcome to Ascentra - Invitation to Join Platform
+
+Dear Partner,
+
+We are delighted to invite you to join the Ascentra platform as a ${role} representing ${businessName}.
+
+You have signed a contract agreement with us. This is our unified platform to manage operations, tasks, schedules, and start-up operations in one central place. Please register your account to join us on the platform using the details below:
+
+Invitation Code: ${code}
+
+Registration Link: https://taha.mayfairmarketing.online (Please select the appropriate registration tab for your role)
+
+We look forward to working closely with you.
+
+Best regards,
+Ascentra Operations Team
+admin@ascentra.com`;
+}
+
+// Create Invitation (Admin Only)
+app.post('/api/invitations/create', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), upload.single('contract'), async (req, res) => {
+  try {
+    const { business_name, email, role } = req.body;
+    if (!email || !role) {
+      return res.status(400).json({ error: 'Email and role are required' });
+    }
+    if (!business_name) {
+      return res.status(400).json({ error: 'Business name is required' });
+    }
+
+    const targetBizName = business_name;
+    const cleanBizName = targetBizName.replace(/[^a-zA-Z0-9]/g, '-').replace(/\s+/g, '-').toUpperCase();
+    const code = `INV-${cleanBizName}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    let contract_path = '';
+    if (req.file) {
+      contract_path = `/uploads/${req.file.filename}`;
+    }
+
+    // Set the email body using the enhanced default template directly!
+    const email_body = generateDefaultEmailBody(role, targetBizName, code);
+
     const invite = db.insert('invitations', {
       code,
-      business_name,
+      business_name: targetBizName,
+      email,
+      role,
+      contract_path,
+      email_body,
       is_used: false
     });
 
-    db.logActivity(req.user.id, 'create_invitation', `Generated invitation ${code} for ${business_name}`);
+    db.logActivity(req.user.id, 'create_invitation', `Generated invitation email & code ${code} for ${email} as ${role}`);
+    
+    // Parse subject and body out of the generated email text
+    let subject = `Welcome to Ascentra Hub - Platform Invitation`;
+    let bodyText = email_body;
+    if (email_body.startsWith('Subject:')) {
+      const lines = email_body.split('\n');
+      subject = lines[0].replace('Subject:', '').trim();
+      bodyText = lines.slice(1).join('\n').trim();
+    }
+
+    // Fire email sending asynchronously so it doesn't block the HTTP response
+    sendGmailEmail(email, subject, bodyText);
+
     res.status(201).json(invite);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+async function sendGmailEmail(to, subject, text) {
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || '').trim();
+
+  if (!user || !pass) {
+    console.log(`[SMTP Simulation] No SMTP credentials found in .env. Mock sent email to ${to}`);
+    return false;
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: user,
+        pass: pass
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"Ascentra Operations" <${user}>`,
+      to: to,
+      subject: subject,
+      text: text
+    });
+    console.log(`[SMTP] Real Gmail email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.error('[SMTP Error] Failed to send email via Gmail:', error.message);
+    return false;
+  }
+}
 
 // Get Invitation List
 app.get('/api/invitations', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), (req, res) => {

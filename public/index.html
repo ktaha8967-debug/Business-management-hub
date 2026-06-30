@@ -70,7 +70,6 @@
       
       <div class="container hero-grid">
         <div class="hero-content">
-          <span class="hero-badge"><span class="badge-pulse"></span>OPERATING SYSTEM V2.0</span>
           <h1 class="hero-title">The Unified Operating System for Startups & Creators</h1>
           <p class="hero-desc">A sleek, centralized platform to track growth metrics, manage video workflows, schedule secure mentorship sessions, and audit operations in real time.</p>
           <div class="hero-ctas">
@@ -820,55 +819,7 @@
         }
       });
 
-      // 2. 3D Tilt & Orbit Parallax Effect for Hero Mockup
-      const mockupWrapper = document.querySelector('.hero-mockup-wrapper');
-      const mockupContainer = document.querySelector('.hero-mockup-container');
-      const cards = document.querySelectorAll('.floating-mockup-card');
-      
-      if (mockupWrapper && mockupContainer) {
-        mockupWrapper.addEventListener('mousemove', (e) => {
-          const rect = mockupWrapper.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          const centerX = rect.width / 2;
-          const centerY = rect.height / 2;
-          
-          const percentX = (x - centerX) / centerX;
-          const percentY = (y - centerY) / centerY;
-          
-          // Max rotation 35 degrees on Y, 15 degrees on X
-          const maxRotY = 35; 
-          const maxRotX = 15; 
-          
-          const rotY = percentX * maxRotY - 12; // offset by default -12
-          const rotX = -percentY * maxRotX + 8;  // offset by default 8
-          
-          mockupContainer.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg) rotateZ(-2deg) scale(1.03)`;
-          
-          // Parallax for floating cards
-          cards.forEach((card, index) => {
-            const depth = (index + 1) * 15; // translation factor
-            const moveX = percentX * depth;
-            const moveY = percentY * depth;
-            const originalTransform = card.getAttribute('style') || '';
-            const zMatch = originalTransform.match(/translateZ\((\d+)px\)/);
-            const z = zMatch ? zMatch[1] : 40;
-            
-            card.style.transform = `translate3d(${moveX}px, ${moveY}px, ${z}px) scale(1.05)`;
-          });
-        });
-        
-        mockupWrapper.addEventListener('mouseleave', () => {
-          mockupContainer.style.transform = 'rotateY(-12deg) rotateX(8deg) rotateZ(-2deg) scale(1)';
-          cards.forEach((card) => {
-            const originalTransform = card.getAttribute('style') || '';
-            const zMatch = originalTransform.match(/translateZ\((\d+)px\)/);
-            const z = zMatch ? zMatch[1] : 40;
-            card.style.transform = `translate3d(0, 0, ${z}px) scale(1)`;
-          });
-        });
-      }
+      // 2. 3D Tilt & Orbit Parallax Effect for Hero Mockup - Disabled for flat modern design
 
       // 3. Magnetic Hover Button Interaction
       const magneticBtns = document.querySelectorAll('.btn-magnetic');
@@ -1525,7 +1476,10 @@
         </div>
         <div class="form-group">
           <label for="login-password">Password</label>
-          <input type="password" id="login-password" required placeholder="••••••••">
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input type="password" id="login-password" required placeholder="••••••••" style="padding-right: 45px;">
+            <span class="password-toggle-icon" onclick="togglePasswordVisibility('login-password', this)" style="position: absolute; right: 15px; cursor: pointer; color: var(--text-muted); font-size: 16px; user-select: none; z-index: 10;">👁️</span>
+          </div>
         </div>
         <button type="submit" class="btn-primary auth-submit-btn">Enter Command Center</button>
       </form>
@@ -1549,7 +1503,10 @@
           </div>
           <div class="form-group">
             <label for="owner-password">Password</label>
-            <input type="password" id="owner-password" required placeholder="Minimum 8 characters">
+            <div style="position: relative; display: flex; align-items: center; width: 100%;">
+              <input type="password" id="owner-password" required placeholder="Minimum 8 characters" style="padding-right: 45px;">
+              <span class="password-toggle-icon" onclick="togglePasswordVisibility('owner-password', this)" style="position: absolute; right: 15px; cursor: pointer; color: var(--text-muted); font-size: 16px; user-select: none; z-index: 10;">👁️</span>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -1599,7 +1556,10 @@
         </div>
         <div class="form-group">
           <label for="gen-password">Password</label>
-          <input type="password" id="gen-password" required placeholder="Minimum 8 characters">
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input type="password" id="gen-password" required placeholder="Minimum 8 characters" style="padding-right: 45px;">
+            <span class="password-toggle-icon" onclick="togglePasswordVisibility('gen-password', this)" style="position: absolute; right: 15px; cursor: pointer; color: var(--text-muted); font-size: 16px; user-select: none; z-index: 10;">👁️</span>
+          </div>
         </div>
         <div class="form-group">
           <label for="gen-role">Platform Role</label>
@@ -1608,6 +1568,10 @@
             <option value="Social Media Managers">Social Media Manager</option>
             <option value="Mentorship Members">Mentorship Program Member</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label for="gen-invite-code">Invitation Code (If invited by admin)</label>
+          <input type="text" id="gen-invite-code" placeholder="INV-XXXX-XXXX">
         </div>
         <button type="submit" class="btn-primary auth-submit-btn">Register Team Account</button>
       </form>
@@ -2067,27 +2031,50 @@
 
         <!-- ==================== T6. ADMIN INVITATIONS GENERATOR ==================== -->
         <section id="view-admin-invites" class="dashboard-view">
-          <h3>Partner Invitation Dispatcher</h3>
+          <h3>Platform & Partner Invitation Dispatcher</h3>
           <div class="grid-2col">
             <div class="panel-card">
-              <h4>Generate New Invitation</h4>
+              <h4>Send New Invitation Email</h4>
               <form id="generate-invite-form" onsubmit="handleGenerateInvite(event)">
                 <div class="form-group">
-                  <label for="invite-biz-name">Target Business Name</label>
+                  <label for="invite-email">Recipient Email Address <span class="required">*</span></label>
+                  <input type="email" id="invite-email" required placeholder="partner@example.com">
+                </div>
+                <div class="form-group">
+                  <label for="invite-role">Platform Role <span class="required">*</span></label>
+                  <select id="invite-role" required onchange="toggleBizField()">
+                    <option value="Business Owners">Business Owner (Partner)</option>
+                    <option value="Video Editors">Video Editor</option>
+                    <option value="Social Media Managers">Social Media Manager</option>
+                    <option value="Mentorship Members">Mentorship Program Member</option>
+                    <option value="Admin Team">Admin Team</option>
+                  </select>
+                </div>
+                <div class="form-group" id="invite-biz-group">
+                  <label for="invite-biz-name">Target Business Name <span class="required">*</span></label>
                   <input type="text" id="invite-biz-name" required placeholder="e.g. Vertex Technologies">
                 </div>
-                <button type="submit" class="btn-primary">Generate Invitation Link</button>
+                <div class="form-group">
+                  <label for="invite-contract">Contract PDF Agreement (Optional)</label>
+                  <input type="file" id="invite-contract" accept=".pdf">
+                  <small style="color: var(--text-muted); display: block; margin-top: 5px;">Upload the signed agreement for platform record keeping and documentation.</small>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 15px;">Send Invitation Email</button>
               </form>
             </div>
             <div class="panel-card">
-              <h4>Active Invite Links</h4>
+              <h4>Sent Invitations & Status</h4>
               <div class="table-responsive">
                 <table class="data-table" id="admin-invitations-list-table">
                   <thead>
                     <tr>
+                      <th>Recipient Email</th>
+                      <th>Role</th>
                       <th>Business</th>
                       <th>Invitation Code</th>
                       <th>Status</th>
+                      <th>Contract</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2983,6 +2970,37 @@
       <div class="modal-footer" style="padding: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn-secondary" onclick="printBossReport()">Print / PDF Report</button>
         <button class="btn-primary" onclick="closeBossReportModal()">Close Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invitation Email Details Modal -->
+  <div id="invitation-details-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h4>Sent Invitation Email Details</h4>
+        <button class="close-modal" onclick="closeInvitationDetailsModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; font-family: inherit;">
+        <div style="margin-bottom: 15px;">
+          <strong>Recipient:</strong> <span id="modal-inv-email" style="color: var(--primary-color);"></span>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <strong>Target Role:</strong> <span id="modal-inv-role" class="badge badge-active" style="background-color: var(--primary-light); color: var(--primary-color);"></span>
+        </div>
+        <div style="margin-bottom: 15px;" id="modal-inv-biz-row">
+          <strong>Business:</strong> <span id="modal-inv-biz"></span>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <strong>Invitation Code:</strong> <code id="modal-inv-code"></code>
+        </div>
+        <hr style="border-color: var(--border-color); margin: 15px 0;">
+        <strong>Drafted Email Sent:</strong>
+        <div id="modal-inv-email-body" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 8px; white-space: pre-wrap; font-family: monospace; font-size: 13px; max-height: 350px; overflow-y: auto; text-align: left;">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+        <button class="btn-primary" onclick="closeInvitationDetailsModal()">Close</button>
       </div>
     </div>
   </div>
