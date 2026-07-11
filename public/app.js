@@ -83,6 +83,17 @@ window.addEventListener('DOMContentLoaded', () => {
     Notification.requestPermission().catch(err => console.warn("Failed to request notification permission:", err));
   }
 
+  // Listen for service worker messages (chat notification clicks)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'OPEN_CHAT') {
+        if (currentUser) {
+          switchMainTab('team-chat');
+        }
+      }
+    });
+  }
+
   const savedToken = localStorage.getItem('token');
   const savedUser = localStorage.getItem('user');
   const savedBusiness = localStorage.getItem('business');
@@ -1832,11 +1843,23 @@ let notifiedIds = null;
 function showDesktopNotification(title, body) {
   if (!("Notification" in window)) return;
   
+  // Use Electron IPC for native notifications when running in Electron
+  if (isDesktopApp && window.electronAPI) {
+    try {
+      window.electronAPI.showNotification(title, body);
+      return;
+    } catch (e) {
+      console.warn('Electron IPC notification failed, falling back to HTML5:', e);
+    }
+  }
+  
   if (Notification.permission === "granted") {
     try {
       new Notification(title, {
         body: body,
-        icon: 'ascentra_logo.jpg'
+        icon: 'ascentra_logo.jpg',
+        requireInteraction: true,
+        tag: 'ascentra-chat'
       });
     } catch (e) {
       console.warn("HTML5 Notification constructor failed, trying service worker:", e);
@@ -1844,7 +1867,9 @@ function showDesktopNotification(title, body) {
         navigator.serviceWorker.ready.then(registration => {
           registration.showNotification(title, {
             body: body,
-            icon: 'ascentra_logo.jpg'
+            icon: 'ascentra_logo.jpg',
+            requireInteraction: true,
+            tag: 'ascentra-chat'
           });
         });
       }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, session } = require('electron');
+const { app, BrowserWindow, Menu, Tray, session, ipcMain, Notification } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -37,7 +37,8 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: false
+      sandbox: false,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 
@@ -63,7 +64,44 @@ function createWindow() {
   mainWindow.on('closed', function () {
     mainWindow = null;
   });
+
+  // Show window in taskbar when minimized
+  mainWindow.on('minimize', function (event) {
+    event.preventDefault();
+    mainWindow.hide();
+  });
 }
+
+// IPC handler for native notifications (from renderer process)
+ipcMain.on('show-notification', (event, { title, body }) => {
+  if (Notification.isSupported()) {
+    const notification = new Notification({
+      title: title || 'Ascentra Command',
+      body: body || '',
+      icon: path.join(__dirname, 'public', 'ascentra_logo.png'),
+      silent: false
+    });
+    
+    notification.on('click', () => {
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
+    
+    notification.show();
+  }
+});
+
+// IPC handler to focus main window (for chat notification clicks)
+ipcMain.on('focus-window', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  }
+});
 
 app.on('ready', () => {
   // Automatically grant camera, microphone, and notification permissions
@@ -73,6 +111,14 @@ app.on('ready', () => {
       return callback(true);
     }
     callback(false);
+  });
+
+  // Also grant push notification subscription permission
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+    if (permission === 'notifications' || permission === 'push') {
+      return true;
+    }
+    return false;
   });
 
   createWindow();

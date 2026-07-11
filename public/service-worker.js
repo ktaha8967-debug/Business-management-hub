@@ -78,13 +78,19 @@ self.addEventListener('push', function(event) {
     }
   }
   
+  const isChatNotification = data.title && (data.title.includes('message') || data.title.includes('message in'));
+  
   const options = {
     body: data.body,
     icon: 'ascentra_logo.jpg',
     badge: 'ascentra_logo.jpg',
-    vibrate: [100, 50, 100],
+    vibrate: [200, 100, 200, 100, 200],
+    tag: isChatNotification ? 'chat-notification' : 'general-notification',
+    renotify: true,
+    requireInteraction: true,
     data: {
-      url: self.registration.scope
+      url: self.registration.scope,
+      type: isChatNotification ? 'chat' : 'general'
     }
   };
 
@@ -96,16 +102,28 @@ self.addEventListener('push', function(event) {
 // Notification click handler
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
+  
+  const targetUrl = event.notification.data.type === 'chat' 
+    ? event.notification.data.url + '#team-chat'
+    : event.notification.data.url;
+  
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(function(clientList) {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      // Focus existing window if available
       for (let i = 0; i < clientList.length; i++) {
         let client = clientList[i];
-        if (client.url === event.notification.data.url && 'focus' in client) {
-          return client.focus();
+        if ('focus' in client) {
+          client.focus();
+          // Send message to client to open chat tab
+          if (event.notification.data.type === 'chat') {
+            client.postMessage({ type: 'OPEN_CHAT', title: event.notification.title });
+          }
+          return;
         }
       }
+      // Open new window if no existing window
       if (clients.openWindow) {
-        return clients.openWindow(event.notification.data.url);
+        return clients.openWindow(targetUrl);
       }
     })
   );

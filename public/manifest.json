@@ -6,6 +6,7 @@
   "background_color": "#0a0b10",
   "theme_color": "#0a0b10",
   "description": "Unified Partner Operating System - Unified Operations, Mentorship & Content Platform",
+  "gcm_sender_id": "",
   "icons": [
     {
       "src": "ascentra_logo.jpg",

@@ -19,7 +19,8 @@ public class MainActivity extends BridgeActivity {
     private void requestMediaPermissions() {
         String[] permissions = {
             Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.POST_NOTIFICATIONS
         };
 
         boolean needRequest = false;

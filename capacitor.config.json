@@ -10,6 +10,14 @@
   "plugins": {
     "Camera": {
       "androidPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#704df4",
+      "sound": "default"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   }
 }

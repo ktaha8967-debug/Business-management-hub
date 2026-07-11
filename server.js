@@ -1144,6 +1144,14 @@ app.post('/api/chat/groups/:id/send', authenticateToken, (req, res) => {
     };
 
     db.insert('chat_group_messages', newMsg);
+
+    // Send notification to all group members except sender
+    group.members.forEach(memberId => {
+      if (memberId !== req.user.id) {
+        db.sendNotification(memberId, `New message in ${group.name}`, `${req.user.full_name}: ${message.substring(0, 100)}`);
+      }
+    });
+
     res.json(newMsg);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1385,6 +1393,10 @@ app.post('/api/chat/send', authenticateToken, (req, res) => {
     };
     
     db.insert('chat_messages', newMsg);
+
+    // Send notification to recipient
+    db.sendNotification(recipient_id, `New message from ${req.user.full_name}`, message.substring(0, 100));
+
     res.json(newMsg);
   } catch (error) {
     res.status(500).json({ error: error.message });
