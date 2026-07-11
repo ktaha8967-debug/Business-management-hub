@@ -818,6 +818,7 @@ async function loadAdminMeetings() {
             <div class="timeline-date">
               Business: <strong>${meet.business_name}</strong> | Status: ${meet.status.toUpperCase()}
               <br>Scheduled for: ${new Date(meet.date_time).toLocaleString()}
+              ${meet.participant_names && meet.participant_names.length > 0 ? `<br>👥 Participants: ${meet.participant_names.join(', ')}` : ''}
             </div>
           </div>
           ${meet.status === 'scheduled' 
@@ -900,6 +901,17 @@ async function openScheduleMeetingModal() {
   const select = document.getElementById('meet-biz-id');
   select.innerHTML = '<option value="">Global / Platform Briefing</option>' + 
     list.map(b => `<option value="${b.id}">${b.business_name}</option>`).join('');
+
+  // Fill participants checkboxes
+  const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
+  const users = await usersRes.json();
+  const container = document.getElementById('meet-participants-checkboxes');
+  container.innerHTML = users.map(u => `
+    <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+      <input type="checkbox" class="meet-participant-check" value="${u.id}" id="mp-${u.id}">
+      <label for="mp-${u.id}" style="font-size:13px;">${u.full_name} (${u.role})</label>
+    </div>
+  `).join('');
 }
 
 function closeScheduleMeetingModal() {
@@ -911,16 +923,18 @@ async function handleAdminScheduleMeeting(e) {
   const business_id = document.getElementById('meet-biz-id').value;
   const title = document.getElementById('meet-title').value;
   const date_time = document.getElementById('meet-datetime').value;
+  const participants = [];
+  document.querySelectorAll('.meet-participant-check:checked').forEach(cb => participants.push(cb.value));
 
   try {
     const res = await fetch(`${API_URL}/api/meetings`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ business_id, title, date_time })
+      body: JSON.stringify({ business_id, title, date_time, participants })
     });
     if (!res.ok) throw new Error('Schedule request failed');
 
-    showToast('success', 'Meeting scheduled successfully');
+    showToast('success', `Meeting scheduled with ${participants.length} participant(s)`);
     closeScheduleMeetingModal();
     loadAdminMeetings();
   } catch (err) {
@@ -1525,16 +1539,34 @@ async function loadOwnerMeetings() {
         statusMeta = `<div style="margin-top: 10px; font-size:11px; color:green; font-style:italic;">✅ Meeting Completed</div>`;
       }
 
+      const participantsHtml = meet.participant_names && meet.participant_names.length > 0
+        ? `<div style="margin-top:6px; font-size:12px; color:var(--text-secondary);">👥 Participants: ${meet.participant_names.join(', ')}</div>`
+        : '';
+
       return `
       <div class="timeline-item">
         <div class="timeline-title">${meet.title}</div>
         <div class="timeline-date">Scheduled: ${new Date(meet.date_time).toLocaleString()}</div>
         ${meet.notes ? `<div style="margin-top:10px; font-size:13px; color:var(--text-secondary);"><strong>Notes:</strong> ${meet.notes}</div>` : ''}
         ${meet.follow_ups ? `<div style="margin-top:5px; font-size:13px; color:var(--text-secondary);"><strong>Actions:</strong> ${meet.follow_ups}</div>` : ''}
+        ${participantsHtml}
         ${statusMeta}
       </div>
       `;
     }).join('');
+
+    // Load participants for the owner meeting form
+    const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
+    const users = await usersRes.json();
+    const pContainer = document.getElementById('owner-meet-participants');
+    if (pContainer) {
+      pContainer.innerHTML = users.map(u => `
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+          <input type="checkbox" class="ow-participant-check" value="${u.id}" id="owp-${u.id}">
+          <label for="owp-${u.id}" style="font-size:13px;">${u.full_name} (${u.role})</label>
+        </div>
+      `).join('');
+    }
   } catch (err) {
     showToast('error', err.message);
   }
@@ -1544,12 +1576,14 @@ async function handleOwnerScheduleMeeting(e) {
   e.preventDefault();
   const title = document.getElementById('owner-meet-title').value;
   const date_time = document.getElementById('owner-meet-datetime').value;
+  const participants = [];
+  document.querySelectorAll('#owner-meet-participants .ow-participant-check:checked').forEach(cb => participants.push(cb.value));
 
   try {
     const res = await fetch(`${API_URL}/api/meetings`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ title, date_time })
+      body: JSON.stringify({ title, date_time, participants })
     });
     if (!res.ok) throw new Error('Meeting request failed');
 
@@ -3589,26 +3623,53 @@ async function loadFsDevDashboard() {
     const tbody = document.querySelector('#fsdev-tasks-table tbody');
     if (list.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center">No development tasks assigned.</td></tr>';
-      return;
+    } else {
+      tbody.innerHTML = list.map(task => `
+        <tr>
+          <td><strong>${task.title}</strong></td>
+          <td>${(task.description || '').slice(0, 60)}${task.description && task.description.length > 60 ? '...' : ''}</td>
+          <td>${task.assigned_by_name}</td>
+          <td>${task.deadline || 'N/A'}</td>
+          <td><span class="badge ${task.priority === 'high' ? 'badge-pending' : task.priority === 'urgent' ? 'badge-rejected' : 'badge-active'}">${task.priority}</span></td>
+          <td><span class="badge ${task.status === 'completed' ? 'badge-success' : 'badge-pending'}">${task.status}</span></td>
+          <td>
+            ${task.status === 'pending' || task.status === 'in_progress'
+              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateDevTaskStatus('${task.id}', 'in_progress')">Start</button>`
+              : task.status === 'in_progress'
+                ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="updateDevTaskStatus('${task.id}', 'completed')">Complete</button>`
+                : '<span style="color:green; font-size:11px;">Done</span>'}
+          </td>
+        </tr>
+      `).join('');
     }
 
-    tbody.innerHTML = list.map(task => `
-      <tr>
-        <td><strong>${task.title}</strong></td>
-        <td>${(task.description || '').slice(0, 60)}${task.description && task.description.length > 60 ? '...' : ''}</td>
-        <td>${task.assigned_by_name}</td>
-        <td>${task.deadline || 'N/A'}</td>
-        <td><span class="badge ${task.priority === 'high' ? 'badge-pending' : task.priority === 'urgent' ? 'badge-rejected' : 'badge-active'}">${task.priority}</span></td>
-        <td><span class="badge ${task.status === 'completed' ? 'badge-success' : 'badge-pending'}">${task.status}</span></td>
-        <td>
-          ${task.status === 'pending' || task.status === 'in_progress'
-            ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateDevTaskStatus('${task.id}', 'in_progress')">Start</button>`
-            : task.status === 'in_progress'
-              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="updateDevTaskStatus('${task.id}', 'completed')">Complete</button>`
-              : '<span style="color:green; font-size:11px;">Done</span>'}
-        </td>
-      </tr>
-    `).join('');
+    // Update stats
+    document.getElementById('fsdev-total-tasks').innerText = list.length;
+    document.getElementById('fsdev-completed-tasks').innerText = list.filter(t => t.status === 'completed').length;
+    document.getElementById('fsdev-pending-tasks').innerText = list.filter(t => t.status === 'in_progress').length;
+
+    // Load meetings
+    const meetRes = await fetch(`${API_URL}/api/meetings`, { headers: getHeaders() });
+    const meetings = await meetRes.json();
+    const myMeetings = meetings.filter(m => m.participants && m.participants.includes(currentUser.id));
+    const meetTimeline = document.getElementById('fsdev-meetings-timeline');
+    if (myMeetings.length === 0) {
+      meetTimeline.innerHTML = '<p style="color:var(--text-muted);">No meetings assigned.</p>';
+    } else {
+      meetTimeline.innerHTML = myMeetings.slice(0, 5).map(m => `
+        <div class="timeline-item" style="padding:10px; margin-bottom:8px; background:rgba(255,255,255,0.02); border-radius:8px; border-left:3px solid var(--accent-cyan);">
+          <div style="font-weight:600; font-size:13px;">${m.title}</div>
+          <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">${new Date(m.date_time).toLocaleString()} | ${m.status}</div>
+          ${m.status === 'scheduled' ? `<button class="btn-primary" style="margin-top:6px; padding:4px 10px; font-size:11px;" onclick="joinMeetingRoom('${m.id}')">🎥 Join</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // Load groups count
+    const groupRes = await fetch(`${API_URL}/api/chat/groups`, { headers: getHeaders() });
+    const groups = await groupRes.json();
+    document.getElementById('fsdev-group-count').innerText = groups.length;
+
   } catch (err) {
     showToast('error', err.message);
   }
@@ -3664,26 +3725,53 @@ async function loadWebDevDashboard() {
     const tbody = document.querySelector('#webdev-tasks-table tbody');
     if (filtered.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center">No web development tasks assigned.</td></tr>';
-      return;
+    } else {
+      tbody.innerHTML = filtered.map(task => `
+        <tr>
+          <td><strong>${task.title}</strong></td>
+          <td>${(task.description || '').slice(0, 60)}${task.description && task.description.length > 60 ? '...' : ''}</td>
+          <td>${task.assigned_by_name}</td>
+          <td>${task.deadline || 'N/A'}</td>
+          <td><span class="badge ${task.priority === 'high' ? 'badge-pending' : task.priority === 'urgent' ? 'badge-rejected' : 'badge-active'}">${task.priority}</span></td>
+          <td><span class="badge ${task.status === 'completed' ? 'badge-success' : 'badge-pending'}">${task.status}</span></td>
+          <td>
+            ${task.status === 'pending' || task.status === 'in_progress'
+              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateDevTaskStatus('${task.id}', 'in_progress')">Start</button>`
+              : task.status === 'in_progress'
+                ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="updateDevTaskStatus('${task.id}', 'completed')">Complete</button>`
+                : '<span style="color:green; font-size:11px;">Done</span>'}
+          </td>
+        </tr>
+      `).join('');
     }
 
-    tbody.innerHTML = filtered.map(task => `
-      <tr>
-        <td><strong>${task.title}</strong></td>
-        <td>${(task.description || '').slice(0, 60)}${task.description && task.description.length > 60 ? '...' : ''}</td>
-        <td>${task.assigned_by_name}</td>
-        <td>${task.deadline || 'N/A'}</td>
-        <td><span class="badge ${task.priority === 'high' ? 'badge-pending' : task.priority === 'urgent' ? 'badge-rejected' : 'badge-active'}">${task.priority}</span></td>
-        <td><span class="badge ${task.status === 'completed' ? 'badge-success' : 'badge-pending'}">${task.status}</span></td>
-        <td>
-          ${task.status === 'pending' || task.status === 'in_progress'
-            ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateDevTaskStatus('${task.id}', 'in_progress')">Start</button>`
-            : task.status === 'in_progress'
-              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="updateDevTaskStatus('${task.id}', 'completed')">Complete</button>`
-              : '<span style="color:green; font-size:11px;">Done</span>'}
-        </td>
-      </tr>
-    `).join('');
+    // Update stats
+    document.getElementById('webdev-total-tasks').innerText = filtered.length;
+    document.getElementById('webdev-completed-tasks').innerText = filtered.filter(t => t.status === 'completed').length;
+    document.getElementById('webdev-pending-tasks').innerText = filtered.filter(t => t.status === 'in_progress').length;
+
+    // Load meetings
+    const meetRes = await fetch(`${API_URL}/api/meetings`, { headers: getHeaders() });
+    const meetings = await meetRes.json();
+    const myMeetings = meetings.filter(m => m.participants && m.participants.includes(currentUser.id));
+    const meetTimeline = document.getElementById('webdev-meetings-timeline');
+    if (myMeetings.length === 0) {
+      meetTimeline.innerHTML = '<p style="color:var(--text-muted);">No meetings assigned.</p>';
+    } else {
+      meetTimeline.innerHTML = myMeetings.slice(0, 5).map(m => `
+        <div class="timeline-item" style="padding:10px; margin-bottom:8px; background:rgba(255,255,255,0.02); border-radius:8px; border-left:3px solid var(--accent-cyan);">
+          <div style="font-weight:600; font-size:13px;">${m.title}</div>
+          <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">${new Date(m.date_time).toLocaleString()} | ${m.status}</div>
+          ${m.status === 'scheduled' ? `<button class="btn-primary" style="margin-top:6px; padding:4px 10px; font-size:11px;" onclick="joinMeetingRoom('${m.id}')">🎥 Join</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // Load groups count
+    const groupRes = await fetch(`${API_URL}/api/chat/groups`, { headers: getHeaders() });
+    const groups = await groupRes.json();
+    document.getElementById('webdev-group-count').innerText = groups.length;
+
   } catch (err) {
     showToast('error', err.message);
   }

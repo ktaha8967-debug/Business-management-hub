@@ -2310,6 +2310,12 @@
                   <label for="owner-meet-datetime">Preferred Date & Time</label>
                   <input type="datetime-local" id="owner-meet-datetime" required>
                 </div>
+                <div class="form-group">
+                  <label>Select Participants (who should attend)</label>
+                  <div id="owner-meet-participants" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+                    <!-- Filled dynamically -->
+                  </div>
+                </div>
                 <button type="submit" class="btn-primary">Submit Schedule Proposal</button>
               </form>
             </div>
@@ -2500,6 +2506,36 @@
               </table>
             </div>
           </div>
+
+          <div class="grid-2col mt-25">
+            <div class="panel-card">
+              <h4>📅 My Meetings</h4>
+              <div id="fsdev-meetings-timeline" class="timeline">
+                <p style="color:var(--text-muted);">No meetings assigned.</p>
+              </div>
+            </div>
+            <div class="panel-card">
+              <h4>📊 Activity Summary</h4>
+              <div id="fsdev-stats" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:var(--accent-cyan);" id="fsdev-total-tasks">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">Total Tasks</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:#2ed573;" id="fsdev-completed-tasks">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">Completed</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:#ff9f43;" id="fsdev-pending-tasks">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">In Progress</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:var(--accent-purple);" id="fsdev-group-count">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">Groups</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- ==================== FULL STACK TASK MANAGER ==================== -->
@@ -2547,6 +2583,36 @@
                   <tr><td colspan="7" class="text-center">No web development tasks assigned.</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <div class="grid-2col mt-25">
+            <div class="panel-card">
+              <h4>📅 My Meetings</h4>
+              <div id="webdev-meetings-timeline" class="timeline">
+                <p style="color:var(--text-muted);">No meetings assigned.</p>
+              </div>
+            </div>
+            <div class="panel-card">
+              <h4>📊 Activity Summary</h4>
+              <div id="webdev-stats" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:var(--accent-cyan);" id="webdev-total-tasks">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">Total Tasks</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:#2ed573;" id="webdev-completed-tasks">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">Completed</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:#ff9f43;" id="webdev-pending-tasks">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">In Progress</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                  <div style="font-size:24px; font-weight:700; color:var(--accent-purple);" id="webdev-group-count">0</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">Groups</div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -3048,14 +3114,14 @@
   <div id="schedule-meeting-modal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
-        <h4>Schedule Weekly Meeting</h4>
+        <h4>Schedule Meeting (Multi-Participant)</h4>
         <button class="close-modal" onclick="closeScheduleMeetingModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="admin-schedule-meeting-form" onsubmit="handleAdminScheduleMeeting(event)">
           <div class="form-group">
             <label for="meet-biz-id">Select Partner Business</label>
-            <select id="meet-biz-id" required>
+            <select id="meet-biz-id">
               <option value="">Global / Platform Briefing</option>
               <!-- Filled dynamically -->
             </select>
@@ -3068,7 +3134,13 @@
             <label for="meet-datetime">Date & Time</label>
             <input type="datetime-local" id="meet-datetime" required>
           </div>
-          <button type="submit" class="btn-primary w-100">Schedule & Notify Partner</button>
+          <div class="form-group">
+            <label>Select Participants (who should attend)</label>
+            <div id="meet-participants-checkboxes" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+              <!-- Filled dynamically -->
+            </div>
+          </div>
+          <button type="submit" class="btn-primary w-100">Schedule & Notify Participants</button>
         </form>
       </div>
     </div>
