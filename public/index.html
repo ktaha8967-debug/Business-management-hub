@@ -1672,6 +1672,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('editor-dashboard')">
             <span class="nav-icon">✂️</span> Video Workboard
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('editor-meetings')">
+            <span class="nav-icon">📅</span> My Meetings
+          </a>
         </div>
 
         <!-- Social Media Managers links -->
@@ -1679,6 +1682,9 @@
           <div class="nav-section-title">Publishing Desk</div>
           <a href="#" class="nav-item" onclick="switchMainTab('smm-dashboard')">
             <span class="nav-icon">📱</span> Social Channels
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('smm-meetings')">
+            <span class="nav-icon">📅</span> My Meetings
           </a>
         </div>
 
@@ -1709,6 +1715,9 @@
           <div class="nav-section-title">Mentorship Desk</div>
           <a href="#" class="nav-item" onclick="switchMainTab('mentee-workspace')">
             <span class="nav-icon">🌱</span> Academy Requests & Sessions
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('mentee-meetings')">
+            <span class="nav-icon">📅</span> My Meetings
           </a>
         </div>
       </nav>
@@ -2373,6 +2382,13 @@
               </div>
             </div>
           </div>
+
+          <div class="panel-card mt-25">
+            <h4>📅 My Meetings</h4>
+            <div id="editor-meetings-timeline" class="timeline">
+              <p style="color:var(--text-muted);">No meetings assigned.</p>
+            </div>
+          </div>
         </section>
 
         <!-- ==================== T13. SOCIAL MEDIA MANAGER DASHBOARD ==================== -->
@@ -2446,6 +2462,13 @@
               </div>
             </div>
           </div>
+
+          <div class="panel-card mt-25">
+            <h4>📅 My Meetings</h4>
+            <div id="smm-meetings-timeline" class="timeline">
+              <p style="color:var(--text-muted);">No meetings assigned.</p>
+            </div>
+          </div>
         </section>
 
         <!-- ==================== T14. MENTEE WORKSPACE ==================== -->
@@ -2478,6 +2501,46 @@
               <div class="timeline" id="mentee-sessions-timeline">
                 <!-- Timeline elements -->
               </div>
+            </div>
+          </div>
+
+          <div class="panel-card mt-25">
+            <h4>📅 My Meetings</h4>
+            <div id="mentee-meetings-timeline" class="timeline">
+              <p style="color:var(--text-muted);">No meetings assigned.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== EDITOR MEETINGS ==================== -->
+        <section id="view-editor-meetings" class="dashboard-view">
+          <h3>My Meetings</h3>
+          <p class="subtitle">Meetings you have been invited to. Join scheduled meetings and view past meeting notes.</p>
+          <div class="panel-card">
+            <div id="editor-my-meetings-list" class="timeline">
+              <p style="color:var(--text-muted);">Loading meetings...</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== SMM MEETINGS ==================== -->
+        <section id="view-smm-meetings" class="dashboard-view">
+          <h3>My Meetings</h3>
+          <p class="subtitle">Meetings you have been invited to. Join scheduled meetings and view past meeting notes.</p>
+          <div class="panel-card">
+            <div id="smm-my-meetings-list" class="timeline">
+              <p style="color:var(--text-muted);">Loading meetings...</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== MENTEE MEETINGS ==================== -->
+        <section id="view-mentee-meetings" class="dashboard-view">
+          <h3>My Meetings</h3>
+          <p class="subtitle">Meetings you have been invited to. Join scheduled meetings and view past meeting notes.</p>
+          <div class="panel-card">
+            <div id="mentee-my-meetings-list" class="timeline">
+              <p style="color:var(--text-muted);">Loading meetings...</p>
             </div>
           </div>
         </section>

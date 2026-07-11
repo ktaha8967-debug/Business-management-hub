@@ -274,7 +274,10 @@ function switchMainTab(tabId) {
     'webdev-dashboard': 'Web Development Desk',
     'webdev-tasks': 'Web Developer Task Manager',
     'admin-meeting-tasks': 'Meeting Task Approvals',
-    'owner-meeting-tasks': 'Submit Task for Approval'
+    'owner-meeting-tasks': 'Submit Task for Approval',
+    'editor-meetings': 'Editor Meetings',
+    'smm-meetings': 'SMM Meetings',
+    'mentee-meetings': 'Mentee Meetings'
   };
   document.getElementById('header-view-title').innerText = titleMap[tabId] || 'Platform Dashboard';
 
@@ -462,6 +465,12 @@ async function fetchTabData(tabId) {
   } else if (tabId === 'owner-meeting-tasks') {
     loadOwnerMeetingTasks();
     loadOwnerMeetingParticipants();
+  } else if (tabId === 'editor-meetings') {
+    loadEmployeeMeetings('editor-my-meetings-list');
+  } else if (tabId === 'smm-meetings') {
+    loadEmployeeMeetings('smm-my-meetings-list');
+  } else if (tabId === 'mentee-meetings') {
+    loadEmployeeMeetings('mentee-my-meetings-list');
   }
 }
 
@@ -1655,6 +1664,9 @@ async function loadEditorDashboard() {
       </tr>
       `;
     }).join('');
+
+    // Load meetings in dashboard
+    loadEmployeeMeetings('editor-meetings-timeline');
   } catch (err) {
     showToast('error', err.message);
   }
@@ -1722,6 +1734,9 @@ async function loadSmmDashboard() {
         </td>
       </tr>
     `).join('');
+
+    // Load meetings in dashboard
+    loadEmployeeMeetings('smm-meetings-timeline');
   } catch (err) {
     showToast('error', err.message);
   }
@@ -1797,6 +1812,9 @@ async function loadMenteeWorkspace() {
         </div>
       </div>
     `).join('');
+
+    // Load meetings in dashboard
+    loadEmployeeMeetings('mentee-meetings-timeline');
   } catch (err) {
     showToast('error', err.message);
   }
@@ -3823,6 +3841,70 @@ async function handleWebDevSubmit(e) {
     showToast('success', 'Work submitted successfully');
     document.getElementById('webdev-submit-form').reset();
     loadWebDevDashboard();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+// --- EMPLOYEE MEETINGS LOADER ---
+async function loadEmployeeMeetings(containerId) {
+  try {
+    const res = await fetch(`${API_URL}/api/meetings`, { headers: getHeaders() });
+    const meetings = await res.json();
+    if (!res.ok) throw new Error(meetings.error);
+
+    // Filter meetings where user is a participant
+    const myMeetings = meetings.filter(m =>
+      (m.participants && m.participants.includes(currentUser.id)) ||
+      (m.attendance && m.attendance.includes(currentUser.id))
+    );
+
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (myMeetings.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-muted);">No meetings assigned to you yet.</p>';
+      return;
+    }
+
+    container.innerHTML = myMeetings.map(meet => {
+      let statusBadge = '';
+      if (meet.status === 'scheduled') {
+        statusBadge = '<span class="badge badge-active">Scheduled</span>';
+      } else if (meet.status === 'completed') {
+        statusBadge = '<span class="badge badge-success">Completed</span>';
+      } else if (meet.status === 'pending_approval') {
+        statusBadge = '<span class="badge badge-pending">Pending</span>';
+      } else if (meet.status === 'rejected') {
+        statusBadge = '<span class="badge badge-rejected">Rejected</span>';
+      }
+
+      let actionBtn = '';
+      if (meet.status === 'scheduled') {
+        actionBtn = `<button class="btn-primary" style="margin-top:8px; padding:5px 12px; font-size:12px; background:#704df4; border:none; cursor:pointer;" onclick="joinMeetingRoom('${meet.id}')">🎥 Join Meeting</button>`;
+      }
+
+      const participantsHtml = meet.participant_names && meet.participant_names.length > 0
+        ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">👥 Participants: ${meet.participant_names.join(', ')}</div>`
+        : '';
+
+      return `
+        <div class="timeline-item" style="padding:15px; margin-bottom:12px; background:rgba(255,255,255,0.02); border-radius:10px; border-left:3px solid var(--accent-cyan);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-weight:600; font-size:14px;">${meet.title}</div>
+              <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+                Business: ${meet.business_name} | ${new Date(meet.date_time).toLocaleString()}
+              </div>
+              ${participantsHtml}
+              ${meet.notes ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:6px;"><strong>Notes:</strong> ${meet.notes}</div>` : ''}
+              ${meet.follow_ups ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;"><strong>Actions:</strong> ${meet.follow_ups}</div>` : ''}
+            </div>
+            <div>${statusBadge}</div>
+          </div>
+          ${actionBtn}
+        </div>`;
+    }).join('');
   } catch (err) {
     showToast('error', err.message);
   }
