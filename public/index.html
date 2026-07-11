@@ -1566,6 +1566,8 @@
           <select id="gen-role" required>
             <option value="Video Editors">Video Editor</option>
             <option value="Social Media Managers">Social Media Manager</option>
+            <option value="Full Stack Developers">Full Stack Developer</option>
+            <option value="Web Developers">Web Developer</option>
             <option value="Mentorship Members">Mentorship Program Member</option>
           </select>
         </div>
@@ -1625,6 +1627,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('admin-audit')">
             <span class="nav-icon">🔍</span> Strategy & Audit
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-meeting-tasks')">
+            <span class="nav-icon">📝</span> Meeting Task Approvals
+          </a>
         </div>
 
         <!-- Super Admin (Boss) only links -->
@@ -1656,6 +1661,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('owner-orders')">
             <span class="nav-icon">📦</span> Client Orders
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-meeting-tasks')">
+            <span class="nav-icon">📋</span> Submit Meeting Task
+          </a>
         </div>
 
         <!-- Video Editors links -->
@@ -1671,6 +1679,28 @@
           <div class="nav-section-title">Publishing Desk</div>
           <a href="#" class="nav-item" onclick="switchMainTab('smm-dashboard')">
             <span class="nav-icon">📱</span> Social Channels
+          </a>
+        </div>
+
+        <!-- Full Stack Developer links -->
+        <div class="fsdev-links hidden">
+          <div class="nav-section-title">Full Stack Desk</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('fsdev-dashboard')">
+            <span class="nav-icon">⚙️</span> Development Workboard
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('fsdev-tasks')">
+            <span class="nav-icon">📋</span> Task Manager
+          </a>
+        </div>
+
+        <!-- Web Developer links -->
+        <div class="webdev-links hidden">
+          <div class="nav-section-title">Web Dev Desk</div>
+          <a href="#" class="nav-item" onclick="switchMainTab('webdev-dashboard')">
+            <span class="nav-icon">🌐</span> Web Development Board
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('webdev-tasks')">
+            <span class="nav-icon">📋</span> Task Manager
           </a>
         </div>
 
@@ -1790,6 +1820,7 @@
             <!-- Left Panel: Contacts List -->
             <div class="panel-card chat-contacts-card" style="display: flex; flex-direction: column; padding: 20px; gap: 15px; height: 100%; box-sizing: border-box; background: rgba(11, 15, 25, 0.6); border: 1px solid var(--border-color); border-radius: 18px;">
               <h4 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">💬 Team Contacts</h4>
+              <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; width: 100%;" onclick="openCreateGroupModal()">+ Create Group</button>
               <div class="search-box">
                 <input type="text" id="chat-contact-search" placeholder="Search contacts..." oninput="filterChatContacts()" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; box-sizing: border-box; font-size: 13px;">
               </div>
@@ -2046,6 +2077,8 @@
                     <option value="Business Owners">Business Owner (Partner)</option>
                     <option value="Video Editors">Video Editor</option>
                     <option value="Social Media Managers">Social Media Manager</option>
+                    <option value="Full Stack Developers">Full Stack Developer</option>
+                    <option value="Web Developers">Web Developer</option>
                     <option value="Mentorship Members">Mentorship Program Member</option>
                     <option value="Admin Team">Admin Team</option>
                   </select>
@@ -2443,6 +2476,164 @@
           </div>
         </section>
 
+        <!-- ==================== FULL STACK DEVELOPER DASHBOARD ==================== -->
+        <section id="view-fsdev-dashboard" class="dashboard-view">
+          <h3>Full Stack Development Desk</h3>
+          <p class="subtitle">View and manage your assigned development tasks. Update status and submit completed work.</p>
+          <div class="panel-card">
+            <div class="table-responsive">
+              <table class="data-table" id="fsdev-tasks-table">
+                <thead>
+                  <tr>
+                    <th>Task Title</th>
+                    <th>Description</th>
+                    <th>Assigned By</th>
+                    <th>Deadline</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="7" class="text-center">No development tasks assigned.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== FULL STACK TASK MANAGER ==================== -->
+        <section id="view-fsdev-tasks" class="dashboard-view">
+          <h3>Full Stack Task Manager</h3>
+          <p class="subtitle">Submit completed work with notes and links.</p>
+          <div class="panel-card">
+            <form id="fsdev-submit-form" onsubmit="handleFsDevSubmit(event)">
+              <div class="form-group">
+                <label>Task ID</label>
+                <input type="text" id="fsdev-submit-task-id" required placeholder="Task ID from your workboard">
+              </div>
+              <div class="form-group">
+                <label>Submission Notes</label>
+                <textarea id="fsdev-submit-notes" required placeholder="Describe what you completed..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Submission URL (if applicable)</label>
+                <input type="url" id="fsdev-submit-url" placeholder="https://github.com/...">
+              </div>
+              <button type="submit" class="btn-primary">Submit Work</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ==================== WEB DEVELOPER DASHBOARD ==================== -->
+        <section id="view-webdev-dashboard" class="dashboard-view">
+          <h3>Web Development Desk</h3>
+          <p class="subtitle">View and manage your assigned web development tasks. Update status and submit completed work.</p>
+          <div class="panel-card">
+            <div class="table-responsive">
+              <table class="data-table" id="webdev-tasks-table">
+                <thead>
+                  <tr>
+                    <th>Task Title</th>
+                    <th>Description</th>
+                    <th>Assigned By</th>
+                    <th>Deadline</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="7" class="text-center">No web development tasks assigned.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== WEB DEVELOPER TASK MANAGER ==================== -->
+        <section id="view-webdev-tasks" class="dashboard-view">
+          <h3>Web Developer Task Manager</h3>
+          <p class="subtitle">Submit completed work with notes and links.</p>
+          <div class="panel-card">
+            <form id="webdev-submit-form" onsubmit="handleWebDevSubmit(event)">
+              <div class="form-group">
+                <label>Task ID</label>
+                <input type="text" id="webdev-submit-task-id" required placeholder="Task ID from your workboard">
+              </div>
+              <div class="form-group">
+                <label>Submission Notes</label>
+                <textarea id="webdev-submit-notes" required placeholder="Describe what you completed..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Submission URL (if applicable)</label>
+                <input type="url" id="webdev-submit-url" placeholder="https://github.com/...">
+              </div>
+              <button type="submit" class="btn-primary">Submit Work</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ==================== ADMIN MEETING TASKS ==================== -->
+        <section id="view-admin-meeting-tasks" class="dashboard-view">
+          <h3>Meeting Task Approvals</h3>
+          <p class="subtitle">Review and approve/reject meeting tasks submitted by Business Owners.</p>
+          <div class="panel-card">
+            <div class="table-responsive">
+              <table class="data-table" id="admin-meeting-tasks-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Task Title</th>
+                    <th>Description</th>
+                    <th>Participants</th>
+                    <th>Submitted By</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="7" class="text-center">No pending meeting tasks.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== OWNER MEETING TASKS ==================== -->
+        <section id="view-owner-meeting-tasks" class="dashboard-view">
+          <h3>Submit Task for Admin Approval</h3>
+          <p class="subtitle">Create a task that will be reviewed by admin before a meeting is scheduled.</p>
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>Create Meeting Task</h4>
+              <form id="owner-meeting-task-form" onsubmit="handleOwnerMeetingTask(event)">
+                <div class="form-group">
+                  <label for="mt-title">Task Title</label>
+                  <input type="text" id="mt-title" required placeholder="e.g. Website Redesign Discussion">
+                </div>
+                <div class="form-group">
+                  <label for="mt-description">Description</label>
+                  <textarea id="mt-description" placeholder="Describe what needs to be discussed or decided..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Select Participants (who should attend)</label>
+                  <div id="mt-participants-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+                    <!-- Filled dynamically -->
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary">Submit for Admin Approval</button>
+              </form>
+            </div>
+            <div class="panel-card">
+              <h4>My Submitted Tasks</h4>
+              <div class="timeline" id="owner-meeting-tasks-timeline">
+                <p style="color:var(--text-muted);">No tasks submitted yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- ==================== T15. ADMIN AUDIT & STRATEGY VIEW ==================== -->
         <section id="view-admin-audit" class="dashboard-view">
           <h3>Strategic Portfolio Audit Desk</h3>
@@ -2781,6 +2972,31 @@
   </div>
 
   <!-- ==================== MODALS & DIALOGS ==================== -->
+
+  <!-- Create Group Chat Modal -->
+  <div id="create-group-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Create Group Chat</h4>
+        <button class="modal-close" onclick="closeCreateGroupModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="create-group-form" onsubmit="handleCreateGroup(event)">
+          <div class="form-group">
+            <label>Group Name <span class="required">*</span></label>
+            <input type="text" id="group-name-input" required placeholder="e.g. Development Team">
+          </div>
+          <div class="form-group">
+            <label>Select Members (minimum 2 others = 3 total with you)</label>
+            <div id="group-members-checkboxes" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+              <!-- Filled dynamically -->
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%;">Create Group</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <!-- Invoice Creator Dialog -->
   <div id="invoice-modal" class="modal hidden">

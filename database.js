@@ -55,7 +55,11 @@ const defaultDB = {
   mentorship_requests: [],
   notifications: [],
   activity_logs: [],
-  orders: []
+  orders: [],
+  developer_tasks: [],
+  chat_groups: [],
+  chat_group_messages: [],
+  meeting_tasks: []
 };
 
 function readDB() {

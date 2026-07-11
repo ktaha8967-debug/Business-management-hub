@@ -6,5 +6,10 @@
   "server": {
     "url": "https://taha.mayfairmarketing.online",
     "cleartext": true
+  },
+  "plugins": {
+    "Camera": {
+      "androidPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
+    }
   }
 }

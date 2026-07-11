@@ -145,6 +145,8 @@ function initCommandShell() {
   document.querySelector('.editor-links').classList.add('hidden');
   document.querySelector('.smm-links').classList.add('hidden');
   document.querySelector('.mentee-links').classList.add('hidden');
+  document.querySelector('.fsdev-links').classList.add('hidden');
+  document.querySelector('.webdev-links').classList.add('hidden');
 
   if (['Super Admin', 'Admin Team'].includes(currentUser.role)) {
     document.querySelector('.admin-links').classList.remove('hidden');
@@ -160,6 +162,10 @@ function initCommandShell() {
     document.querySelector('.smm-links').classList.remove('hidden');
   } else if (currentUser.role === 'Mentorship Members') {
     document.querySelector('.mentee-links').classList.remove('hidden');
+  } else if (currentUser.role === 'Full Stack Developers') {
+    document.querySelector('.fsdev-links').classList.remove('hidden');
+  } else if (currentUser.role === 'Web Developers') {
+    document.querySelector('.webdev-links').classList.remove('hidden');
   }
 
   // Set visibility of the AI Voice Assistant Card based on authorization
@@ -251,7 +257,13 @@ function switchMainTab(tabId) {
     'editor-dashboard': 'Video Production Desk',
     'smm-dashboard': 'Social Channels Dispatcher',
     'mentee-workspace': 'Mentorship Advisement Desk',
-    'meeting-room': 'Virtual Sync & Operations Room'
+    'meeting-room': 'Virtual Sync & Operations Room',
+    'fsdev-dashboard': 'Full Stack Development Desk',
+    'fsdev-tasks': 'Full Stack Task Manager',
+    'webdev-dashboard': 'Web Development Desk',
+    'webdev-tasks': 'Web Developer Task Manager',
+    'admin-meeting-tasks': 'Meeting Task Approvals',
+    'owner-meeting-tasks': 'Submit Task for Approval'
   };
   document.getElementById('header-view-title').innerText = titleMap[tabId] || 'Platform Dashboard';
 
@@ -426,6 +438,19 @@ async function fetchTabData(tabId) {
     loadBossAuditLogs();
   } else if (tabId === 'team-chat') {
     loadChatContacts();
+  } else if (tabId === 'fsdev-dashboard') {
+    loadFsDevDashboard();
+  } else if (tabId === 'fsdev-tasks') {
+    // Task manager is a form, no dynamic loading needed
+  } else if (tabId === 'webdev-dashboard') {
+    loadWebDevDashboard();
+  } else if (tabId === 'webdev-tasks') {
+    // Task manager is a form, no dynamic loading needed
+  } else if (tabId === 'admin-meeting-tasks') {
+    loadAdminMeetingTasks();
+  } else if (tabId === 'owner-meeting-tasks') {
+    loadOwnerMeetingTasks();
+    loadOwnerMeetingParticipants();
   }
 }
 
@@ -3250,14 +3275,17 @@ function renderChatContacts(users) {
   }
   
   listContainer.innerHTML = users.map(user => {
-    const activeClass = activeChatPartnerId === user.id ? 'active' : '';
-    const initial = user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U';
+    const activeClass = (activeChatPartnerId === user.id || activeChatGroupId === user.id) ? 'active' : '';
+    const isGroup = user.type === 'group';
+    const initial = isGroup ? '👥' : (user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U');
+    const roleText = isGroup ? `${user.role} - ${user.member_names ? user.member_names.join(', ') : ''}` : user.role;
+    const clickHandler = isGroup ? `selectChatGroup('${user.id}')` : `selectChatContact('${user.id}')`;
     return `
-      <div class="chat-contact-item ${activeClass}" onclick="selectChatContact('${user.id}')" data-id="${user.id}">
-        <div class="chat-contact-avatar">${initial}</div>
+      <div class="chat-contact-item ${activeClass}" onclick="${clickHandler}" data-id="${user.id}">
+        <div class="chat-contact-avatar" style="${isGroup ? 'background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));' : ''}">${initial}</div>
         <div class="chat-contact-info">
           <div class="chat-contact-name">${user.full_name}</div>
-          <div class="chat-contact-role">${user.role}</div>
+          <div class="chat-contact-role">${roleText}</div>
         </div>
       </div>
     `;
@@ -3274,6 +3302,7 @@ function filterChatContacts() {
 
 function selectChatContact(partnerId) {
   activeChatPartnerId = partnerId;
+  activeChatGroupId = null;
   
   document.querySelectorAll('.chat-contact-item').forEach(item => {
     item.classList.remove('active');
@@ -3292,6 +3321,9 @@ function selectChatContact(partnerId) {
   document.getElementById('chat-message-input').removeAttribute('disabled');
   document.getElementById('chat-send-btn').removeAttribute('disabled');
   document.getElementById('chat-message-input').focus();
+  
+  // Reset form handler to individual chat
+  document.getElementById('chat-input-form').onsubmit = handleSendChatMessage;
   
   loadChatHistory(partnerId);
   
@@ -3544,6 +3576,435 @@ function togglePasswordVisibility(inputId, iconEl) {
       input.type = 'password';
       iconEl.innerText = '👁️';
     }
+  }
+}
+
+// --- FULL STACK DEVELOPER DASHBOARD ---
+async function loadFsDevDashboard() {
+  try {
+    const res = await fetch(`${API_URL}/api/developer-tasks`, { headers: getHeaders() });
+    const list = await res.json();
+    if (!res.ok) throw new Error(list.error);
+
+    const tbody = document.querySelector('#fsdev-tasks-table tbody');
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No development tasks assigned.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(task => `
+      <tr>
+        <td><strong>${task.title}</strong></td>
+        <td>${(task.description || '').slice(0, 60)}${task.description && task.description.length > 60 ? '...' : ''}</td>
+        <td>${task.assigned_by_name}</td>
+        <td>${task.deadline || 'N/A'}</td>
+        <td><span class="badge ${task.priority === 'high' ? 'badge-pending' : task.priority === 'urgent' ? 'badge-rejected' : 'badge-active'}">${task.priority}</span></td>
+        <td><span class="badge ${task.status === 'completed' ? 'badge-success' : 'badge-pending'}">${task.status}</span></td>
+        <td>
+          ${task.status === 'pending' || task.status === 'in_progress'
+            ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateDevTaskStatus('${task.id}', 'in_progress')">Start</button>`
+            : task.status === 'in_progress'
+              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="updateDevTaskStatus('${task.id}', 'completed')">Complete</button>`
+              : '<span style="color:green; font-size:11px;">Done</span>'}
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function updateDevTaskStatus(id, status) {
+  try {
+    const res = await fetch(`${API_URL}/api/developer-tasks/${id}/status`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error('Status update failed');
+    showToast('success', `Task status updated to ${status}`);
+    loadFsDevDashboard();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function handleFsDevSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('fsdev-submit-task-id').value;
+  const submission_notes = document.getElementById('fsdev-submit-notes').value;
+  const submission_url = document.getElementById('fsdev-submit-url').value;
+
+  try {
+    const res = await fetch(`${API_URL}/api/developer-tasks/${id}/submit`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ submission_notes, submission_url })
+    });
+    if (!res.ok) throw new Error('Submission failed');
+    showToast('success', 'Work submitted successfully');
+    document.getElementById('fsdev-submit-form').reset();
+    loadFsDevDashboard();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+// --- WEB DEVELOPER DASHBOARD ---
+async function loadWebDevDashboard() {
+  try {
+    const res = await fetch(`${API_URL}/api/developer-tasks`, { headers: getHeaders() });
+    const list = await res.json();
+    if (!res.ok) throw new Error(list.error);
+
+    const filtered = currentUser.role === 'Web Developers'
+      ? list.filter(t => t.task_type === 'web' || t.task_type === 'general')
+      : list;
+
+    const tbody = document.querySelector('#webdev-tasks-table tbody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No web development tasks assigned.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(task => `
+      <tr>
+        <td><strong>${task.title}</strong></td>
+        <td>${(task.description || '').slice(0, 60)}${task.description && task.description.length > 60 ? '...' : ''}</td>
+        <td>${task.assigned_by_name}</td>
+        <td>${task.deadline || 'N/A'}</td>
+        <td><span class="badge ${task.priority === 'high' ? 'badge-pending' : task.priority === 'urgent' ? 'badge-rejected' : 'badge-active'}">${task.priority}</span></td>
+        <td><span class="badge ${task.status === 'completed' ? 'badge-success' : 'badge-pending'}">${task.status}</span></td>
+        <td>
+          ${task.status === 'pending' || task.status === 'in_progress'
+            ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateDevTaskStatus('${task.id}', 'in_progress')">Start</button>`
+            : task.status === 'in_progress'
+              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="updateDevTaskStatus('${task.id}', 'completed')">Complete</button>`
+              : '<span style="color:green; font-size:11px;">Done</span>'}
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function handleWebDevSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('webdev-submit-task-id').value;
+  const submission_notes = document.getElementById('webdev-submit-notes').value;
+  const submission_url = document.getElementById('webdev-submit-url').value;
+
+  try {
+    const res = await fetch(`${API_URL}/api/developer-tasks/${id}/submit`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ submission_notes, submission_url })
+    });
+    if (!res.ok) throw new Error('Submission failed');
+    showToast('success', 'Work submitted successfully');
+    document.getElementById('webdev-submit-form').reset();
+    loadWebDevDashboard();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+// --- ADMIN MEETING TASKS ---
+async function loadAdminMeetingTasks() {
+  try {
+    const res = await fetch(`${API_URL}/api/meetings/tasks`, { headers: getHeaders() });
+    const list = await res.json();
+    if (!res.ok) throw new Error(list.error);
+
+    const tbody = document.querySelector('#admin-meeting-tasks-table tbody');
+    const pending = list.filter(t => t.status === 'pending_admin_review');
+
+    if (pending.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No pending meeting tasks.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = pending.map(task => `
+      <tr>
+        <td><strong>${task.business_name}</strong></td>
+        <td>${task.title}</td>
+        <td>${(task.description || '').slice(0, 40)}</td>
+        <td>${task.participant_names.join(', ') || 'None selected'}</td>
+        <td>${task.created_by_name}</td>
+        <td><span class="badge badge-pending">${task.status.replace(/_/g, ' ')}</span></td>
+        <td>
+          <div style="display:flex; gap:4px;">
+            <button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="approveMeetingTask('${task.id}')">Approve</button>
+            <button class="btn-secondary" style="padding:4px 8px; font-size:11px; border-color:red; color:red;" onclick="rejectMeetingTask('${task.id}')">Reject</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function approveMeetingTask(id) {
+  const date_time = prompt('Enter meeting date/time (YYYY-MM-DDTHH:MM):');
+  if (!date_time) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/meetings/tasks/${id}/approve`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ date_time })
+    });
+    if (!res.ok) throw new Error('Approval failed');
+    showToast('success', 'Task approved and meeting created');
+    loadAdminMeetingTasks();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function rejectMeetingTask(id) {
+  const admin_notes = prompt('Reason for rejection:');
+  if (admin_notes === null) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/meetings/tasks/${id}/reject`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ admin_notes })
+    });
+    if (!res.ok) throw new Error('Rejection failed');
+    showToast('success', 'Task rejected');
+    loadAdminMeetingTasks();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+// --- OWNER MEETING TASKS ---
+async function loadOwnerMeetingTasks() {
+  try {
+    const res = await fetch(`${API_URL}/api/meetings/tasks`, { headers: getHeaders() });
+    const list = await res.json();
+    if (!res.ok) throw new Error(list.error);
+
+    const timeline = document.getElementById('owner-meeting-tasks-timeline');
+    if (list.length === 0) {
+      timeline.innerHTML = '<p style="color:var(--text-muted);">No tasks submitted yet.</p>';
+      return;
+    }
+
+    timeline.innerHTML = list.map(task => `
+      <div class="timeline-node">
+        <div class="timeline-node-content">
+          <strong>${task.title}</strong>
+          <div style="font-size:12px; margin-top:4px;">Status: <span class="badge ${task.status === 'approved' ? 'badge-success' : task.status === 'rejected' ? 'badge-rejected' : 'badge-pending'}">${task.status.replace(/_/g, ' ')}</span></div>
+          <div style="font-size:12px; margin-top:4px;">Participants: ${task.participant_names.join(', ') || 'None'}</div>
+          ${task.admin_notes ? `<div style="font-size:12px; margin-top:4px; color:var(--text-secondary);">Admin Notes: ${task.admin_notes}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function loadOwnerMeetingParticipants() {
+  try {
+    const res = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
+    const users = await res.json();
+
+    const container = document.getElementById('mt-participants-list');
+    container.innerHTML = users.map(u => `
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <input type="checkbox" class="mt-participant-check" value="${u.id}" id="mt-p-${u.id}">
+        <label for="mt-p-${u.id}" style="font-size:13px;">${u.full_name} (${u.role})</label>
+      </div>
+    `).join('');
+  } catch (err) {
+    showToast('error', 'Error loading users');
+  }
+}
+
+async function handleOwnerMeetingTask(e) {
+  e.preventDefault();
+  const title = document.getElementById('mt-title').value;
+  const description = document.getElementById('mt-description').value;
+  const participants = [];
+  document.querySelectorAll('.mt-participant-check:checked').forEach(cb => participants.push(cb.value));
+
+  try {
+    const res = await fetch(`${API_URL}/api/meetings/tasks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ title, description, participants })
+    });
+    if (!res.ok) throw new Error('Submission failed');
+    showToast('success', 'Task submitted for admin approval');
+    document.getElementById('owner-meeting-task-form').reset();
+    loadOwnerMeetingTasks();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+// --- GROUP CHAT ---
+let activeChatGroupId = null;
+
+function openCreateGroupModal() {
+  document.getElementById('create-group-modal').classList.remove('hidden');
+  loadGroupMembersList();
+}
+
+function closeCreateGroupModal() {
+  document.getElementById('create-group-modal').classList.add('hidden');
+}
+
+async function loadGroupMembersList() {
+  try {
+    const res = await fetch(`${API_URL}/api/chat/users`, { headers: getHeaders() });
+    const users = await res.json();
+    const individualUsers = users.filter(u => u.type === 'user');
+
+    const container = document.getElementById('group-members-checkboxes');
+    container.innerHTML = individualUsers.map(u => `
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <input type="checkbox" class="group-member-check" value="${u.id}" id="gm-${u.id}">
+        <label for="gm-${u.id}" style="font-size:13px;">${u.full_name} (${u.role})</label>
+      </div>
+    `).join('');
+  } catch (err) {
+    showToast('error', 'Error loading members');
+  }
+}
+
+async function handleCreateGroup(e) {
+  e.preventDefault();
+  const name = document.getElementById('group-name-input').value;
+  const member_ids = [];
+  document.querySelectorAll('.group-member-check:checked').forEach(cb => member_ids.push(cb.value));
+
+  if (member_ids.length < 2) {
+    return showToast('error', 'Select at least 2 other members (3 total with you)');
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/create`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ name, member_ids })
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to create group');
+    }
+    showToast('success', 'Group created successfully');
+    closeCreateGroupModal();
+    document.getElementById('create-group-form').reset();
+    loadChatContacts();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function selectChatGroup(groupId) {
+  activeChatGroupId = groupId;
+  activeChatPartnerId = null;
+
+  document.querySelectorAll('.chat-contact-item').forEach(item => item.classList.remove('active'));
+  const selectedEl = document.querySelector(`.chat-contact-item[data-id="${groupId}"]`);
+  if (selectedEl) selectedEl.classList.add('active');
+
+  // Get group info
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups`, { headers: getHeaders() });
+    const groups = await res.json();
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+
+    document.getElementById('chat-active-partner-name').innerText = `👥 ${group.name}`;
+    document.getElementById('chat-active-partner-role').innerText = `${group.members.length} members: ${group.member_names.join(', ')}`;
+    document.getElementById('chat-status-dot').style.background = '#704df4';
+    document.getElementById('chat-status-text').innerText = 'group';
+
+    document.getElementById('chat-message-input').removeAttribute('disabled');
+    document.getElementById('chat-send-btn').removeAttribute('disabled');
+    document.getElementById('chat-message-input').focus();
+
+    // Update form handler for group
+    document.getElementById('chat-input-form').onsubmit = handleSendGroupChatMessage;
+
+    loadGroupChatHistory(groupId);
+
+    if (chatPollInterval) clearInterval(chatPollInterval);
+    chatPollInterval = setInterval(() => {
+      if (activeChatGroupId === groupId) loadGroupChatHistory(groupId);
+    }, 3000);
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function loadGroupChatHistory(groupId) {
+  const messagesContainer = document.getElementById('chat-messages-container');
+  if (!messagesContainer) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/history`, { headers: getHeaders() });
+    const messages = await res.json();
+
+    if (messages.length === 0) {
+      messagesContainer.innerHTML = `
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); flex-direction:column; gap:10px; text-align:center;">
+          <span style="font-size:30px;">👥</span>
+          <span style="font-size:13px;">No messages yet. Say hello to the group!</span>
+        </div>`;
+      return;
+    }
+
+    const atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
+
+    messagesContainer.innerHTML = messages.map(msg => {
+      const typeClass = msg.sender_id === currentUser.id ? 'sent' : 'received';
+      const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="chat-bubble ${typeClass}">
+          ${msg.sender_id !== currentUser.id ? `<div style="font-size:11px; font-weight:600; color:var(--accent-cyan); margin-bottom:3px;">${msg.sender_name}</div>` : ''}
+          <div>${msg.message}</div>
+          <div class="chat-bubble-time">${timeStr}</div>
+        </div>`;
+    }).join('');
+
+    if (atBottom) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  } catch (err) {
+    console.warn('Error loading group chat history:', err);
+  }
+}
+
+async function handleSendGroupChatMessage(e) {
+  e.preventDefault();
+  if (!activeChatGroupId) return;
+
+  const inputEl = document.getElementById('chat-message-input');
+  const messageText = inputEl.value.trim();
+  if (!messageText) return;
+  inputEl.value = '';
+
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${activeChatGroupId}/send`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ message: messageText })
+    });
+    if (res.ok) {
+      loadGroupChatHistory(activeChatGroupId);
+    } else {
+      const err = await res.json();
+      showToast('error', err.error || 'Failed to send message');
+    }
+  } catch (err) {
+    showToast('error', 'Error sending message: ' + err.message);
   }
 }
 

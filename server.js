@@ -819,6 +819,11 @@ app.post('/api/meetings', authenticateToken, (req, res) => {
       date_time,
       status,
       attendance: [],
+      participants: req.body.participants || [],
+      participant_names: (req.body.participants || []).map(id => {
+        const u = db.findOne('users', usr => usr.id === id);
+        return u ? u.full_name : 'Unknown';
+      }),
       notes: '',
       follow_ups: ''
     });
@@ -910,7 +915,7 @@ app.get('/api/meetings', authenticateToken, (req, res) => {
       res.json(allMeetings.filter(m => m.business_id === bus.id));
     } else {
       // General users / Editors / SMMs / Mentees should only see meetings if specifically assigned or scheduled for them
-      res.json(allMeetings.filter(m => m.user_id === req.user.id || (m.attendance && m.attendance.includes(req.user.id)) || (m.attendance && m.attendance.includes(req.user.email))));
+      res.json(allMeetings.filter(m => m.user_id === req.user.id || (m.attendance && m.attendance.includes(req.user.id)) || (m.attendance && m.attendance.includes(req.user.email)) || (m.participants && m.participants.includes(req.user.id))));
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -967,12 +972,366 @@ app.post('/api/meetings/signal/clear', authenticateToken, (req, res) => {
   res.json({ success: true });
 });
 
+// --- DEVELOPER TASK MANAGEMENT ROUTES ---
+
+// Create Developer Task (Admin / Business Owner)
+app.post('/api/developer-tasks', authenticateToken, authorizeRoles('Super Admin', 'Admin Team', 'Business Owners'), (req, res) => {
+  try {
+    const { title, description, assigned_to, deadline, priority, task_type } = req.body;
+    if (!title || !assigned_to) {
+      return res.status(400).json({ error: 'Title and assigned developer are required' });
+    }
+
+    const assignee = db.findOne('users', u => u.id === assigned_to);
+    if (!assignee) return res.status(404).json({ error: 'Assigned user not found' });
+
+    let business_id = null;
+    let business_name = 'Platform';
+    if (req.user.role === 'Business Owners') {
+      const bus = db.findOne('businesses', b => b.owner_id === req.user.id);
+      if (bus) { business_id = bus.id; business_name = bus.business_name; }
+    }
+
+    const task = db.insert('developer_tasks', {
+      title,
+      description: description || '',
+      assigned_to,
+      assigned_to_name: assignee.full_name,
+      assigned_by: req.user.id,
+      assigned_by_name: req.user.full_name,
+      business_id,
+      business_name,
+      deadline: deadline || '',
+      priority: priority || 'medium',
+      task_type: task_type || 'general',
+      status: 'pending',
+      submission_notes: '',
+      submission_url: '',
+      history: [{ status: 'pending', user: req.user.full_name, timestamp: new Date().toISOString(), notes: `Task created and assigned to ${assignee.full_name}` }]
+    });
+
+    db.sendNotification(assigned_to, 'New Development Task', `You have been assigned a new task: ${title}`);
+    db.logActivity(req.user.id, 'create_dev_task', `Created task "${title}" for ${assignee.full_name}`);
+
+    res.status(201).json(task);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Developer Tasks
+app.get('/api/developer-tasks', authenticateToken, (req, res) => {
+  try {
+    const allTasks = db.getCollection('developer_tasks');
+    if (['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      res.json(allTasks);
+    } else if (req.user.role === 'Business Owners') {
+      const bus = db.findOne('businesses', b => b.owner_id === req.user.id);
+      res.json(allTasks.filter(t => t.business_id === bus?.id));
+    } else {
+      // Developers see their own assigned tasks
+      res.json(allTasks.filter(t => t.assigned_to === req.user.id));
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Developer Task Status
+app.patch('/api/developer-tasks/:id/status', authenticateToken, (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    const task = db.findOne('developer_tasks', t => t.id === req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    const history = [...task.history, { status, user: req.user.full_name, timestamp: new Date().toISOString(), notes: notes || `Status updated to ${status}` }];
+    const updated = db.update('developer_tasks', task.id, { status, history });
+
+    if (status === 'completed') {
+      db.sendNotification(task.assigned_by, 'Task Completed', `Task "${task.title}" has been completed by ${req.user.full_name}`);
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Developer submits work
+app.post('/api/developer-tasks/:id/submit', authenticateToken, (req, res) => {
+  try {
+    const { submission_notes, submission_url } = req.body;
+    const task = db.findOne('developer_tasks', t => t.id === req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    const history = [...task.history, { status: 'submitted', user: req.user.full_name, timestamp: new Date().toISOString(), notes: submission_notes || 'Work submitted' }];
+    const updated = db.update('developer_tasks', task.id, {
+      status: 'submitted',
+      submission_notes,
+      submission_url,
+      history
+    });
+
+    db.sendNotification(task.assigned_by, 'Task Submission', `${req.user.full_name} submitted work for task "${task.title}"`);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- GROUP CHAT ROUTES ---
+
+// Create Group (Admin / Boss / Business Owner only)
+app.post('/api/chat/groups/create', authenticateToken, authorizeRoles('Super Admin', 'Admin Team', 'Business Owners'), (req, res) => {
+  try {
+    const { name, member_ids } = req.body;
+    if (!name || !member_ids || member_ids.length < 2) {
+      return res.status(400).json({ error: 'Group name and at least 2 other members are required (3 total minimum)' });
+    }
+
+    // Ensure creator is included
+    const allMembers = [...new Set([req.user.id, ...member_ids])];
+    if (allMembers.length < 3) {
+      return res.status(400).json({ error: 'Group must have at least 3 members including the creator' });
+    }
+
+    const group = db.insert('chat_groups', {
+      name,
+      creator_id: req.user.id,
+      creator_name: req.user.full_name,
+      members: allMembers,
+      member_names: allMembers.map(id => {
+        const u = db.findOne('users', usr => usr.id === id);
+        return u ? u.full_name : 'Unknown';
+      })
+    });
+
+    db.logActivity(req.user.id, 'create_chat_group', `Created group "${name}" with ${allMembers.length} members`);
+    res.status(201).json(group);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get User's Groups
+app.get('/api/chat/groups', authenticateToken, (req, res) => {
+  try {
+    const groups = db.find('chat_groups', g => g.members.includes(req.user.id));
+    res.json(groups);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Send Group Message
+app.post('/api/chat/groups/:id/send', authenticateToken, (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    const group = db.findOne('chat_groups', g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+    if (!group.members.includes(req.user.id)) {
+      return res.status(403).json({ error: 'You are not a member of this group' });
+    }
+
+    const newMsg = {
+      group_id: req.params.id,
+      sender_id: req.user.id,
+      sender_name: req.user.full_name,
+      message,
+      timestamp: new Date().toISOString()
+    };
+
+    db.insert('chat_group_messages', newMsg);
+    res.json(newMsg);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Group Chat History
+app.get('/api/chat/groups/:id/history', authenticateToken, (req, res) => {
+  try {
+    const group = db.findOne('chat_groups', g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+    if (!group.members.includes(req.user.id)) {
+      return res.status(403).json({ error: 'You are not a member of this group' });
+    }
+
+    const messages = db.find('chat_group_messages', m => m.group_id === req.params.id);
+    messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Group Members (Admin/Boss only)
+app.patch('/api/chat/groups/:id/members', authenticateToken, authorizeRoles('Super Admin', 'Admin Team', 'Business Owners'), (req, res) => {
+  try {
+    const { member_ids } = req.body;
+    const group = db.findOne('chat_groups', g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    const updatedMembers = [...new Set([group.creator_id, ...member_ids])];
+    if (updatedMembers.length < 3) {
+      return res.status(400).json({ error: 'Group must have at least 3 members' });
+    }
+
+    const updated = db.update('chat_groups', group.id, {
+      members: updatedMembers,
+      member_names: updatedMembers.map(id => {
+        const u = db.findOne('users', usr => usr.id === id);
+        return u ? u.full_name : 'Unknown';
+      })
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Group
+app.delete('/api/chat/groups/:id', authenticateToken, authorizeRoles('Super Admin', 'Admin Team', 'Business Owners'), (req, res) => {
+  try {
+    const group = db.findOne('chat_groups', g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    // Delete group messages
+    db.find('chat_group_messages', m => m.group_id === req.params.id).forEach(m => {
+      db.delete('chat_group_messages', m.id);
+    });
+    db.delete('chat_groups', req.params.id);
+
+    res.json({ message: 'Group deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- MEETING TASK ROUTES (Business Owner -> Admin approval) ---
+
+// Create Meeting Task (Business Owner)
+app.post('/api/meetings/tasks', authenticateToken, authorizeRoles('Business Owners'), (req, res) => {
+  try {
+    const { title, description, participants } = req.body;
+    if (!title) return res.status(400).json({ error: 'Task title is required' });
+
+    const bus = db.findOne('businesses', b => b.owner_id === req.user.id);
+    if (!bus) return res.status(404).json({ error: 'Business profile not found' });
+
+    const participantNames = (participants || []).map(id => {
+      const u = db.findOne('users', usr => usr.id === id);
+      return u ? u.full_name : 'Unknown';
+    });
+
+    const task = db.insert('meeting_tasks', {
+      title,
+      description: description || '',
+      business_id: bus.id,
+      business_name: bus.business_name,
+      created_by: req.user.id,
+      created_by_name: req.user.full_name,
+      participants: participants || [],
+      participant_names: participantNames,
+      status: 'pending_admin_review',
+      admin_notes: '',
+      history: [{ status: 'pending_admin_review', user: req.user.full_name, timestamp: new Date().toISOString(), notes: 'Task submitted for admin review' }]
+    });
+
+    // Notify admins
+    db.find('users', u => ['Super Admin', 'Admin Team'].includes(u.role)).forEach(admin => {
+      db.sendNotification(admin.id, 'Meeting Task Request', `Business partner "${bus.business_name}" submitted a task: ${title}`);
+    });
+
+    db.logActivity(req.user.id, 'create_meeting_task', `Created meeting task: ${title}`);
+    res.status(201).json(task);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Meeting Tasks
+app.get('/api/meetings/tasks', authenticateToken, (req, res) => {
+  try {
+    const allTasks = db.getCollection('meeting_tasks');
+    if (['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      res.json(allTasks);
+    } else if (req.user.role === 'Business Owners') {
+      res.json(allTasks.filter(t => t.created_by === req.user.id));
+    } else {
+      // Other roles see tasks where they are participants
+      res.json(allTasks.filter(t => t.participants.includes(req.user.id)));
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve Meeting Task (Admin)
+app.patch('/api/meetings/tasks/:id/approve', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), (req, res) => {
+  try {
+    const { date_time, admin_notes } = req.body;
+    const task = db.findOne('meeting_tasks', t => t.id === req.params.id);
+    if (!task) return res.status(404).json({ error: 'Meeting task not found' });
+
+    // Create the meeting
+    const meeting = db.insert('meetings', {
+      business_id: task.business_id,
+      business_name: task.business_name,
+      title: task.title,
+      date_time: date_time || new Date().toISOString(),
+      status: 'scheduled',
+      attendance: task.participants,
+      participants: task.participants,
+      participant_names: task.participant_names,
+      notes: task.description,
+      follow_ups: admin_notes || ''
+    });
+
+    // Notify all participants
+    task.participants.forEach(pid => {
+      db.sendNotification(pid, 'Meeting Scheduled', `A meeting "${task.title}" has been scheduled. ${date_time ? 'Date: ' + date_time : ''}`);
+    });
+    db.sendNotification(task.created_by, 'Task Approved & Meeting Created', `Your task "${task.title}" has been approved and a meeting has been scheduled.`);
+
+    const history = [...task.history, { status: 'approved', user: req.user.full_name, timestamp: new Date().toISOString(), notes: admin_notes || 'Task approved and meeting created' }];
+    const updated = db.update('meeting_tasks', task.id, { status: 'approved', admin_notes, history });
+
+    db.logActivity(req.user.id, 'approve_meeting_task', `Approved meeting task: ${task.title}`);
+    res.json({ task: updated, meeting });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reject Meeting Task (Admin)
+app.patch('/api/meetings/tasks/:id/reject', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), (req, res) => {
+  try {
+    const { admin_notes } = req.body;
+    const task = db.findOne('meeting_tasks', t => t.id === req.params.id);
+    if (!task) return res.status(404).json({ error: 'Meeting task not found' });
+
+    const history = [...task.history, { status: 'rejected', user: req.user.full_name, timestamp: new Date().toISOString(), notes: admin_notes || 'Task rejected by admin' }];
+    const updated = db.update('meeting_tasks', task.id, { status: 'rejected', admin_notes, history });
+
+    db.sendNotification(task.created_by, 'Task Rejected', `Your task "${task.title}" has been rejected. Reason: ${admin_notes || 'No reason provided'}`);
+
+    db.logActivity(req.user.id, 'reject_meeting_task', `Rejected meeting task: ${task.title}`);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- ROLE-BASED CHAT API ---
 app.get('/api/chat/users', authenticateToken, (req, res) => {
   try {
     const allUsers = db.getCollection('users') || [];
     const isPowerUser = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
-    
+
     const filtered = allUsers.filter(u => {
       if (u.id === req.user.id) return false; // Don't list self
       if (isPowerUser) {
@@ -985,10 +1344,21 @@ app.get('/api/chat/users', authenticateToken, (req, res) => {
       id: u.id,
       full_name: u.full_name,
       email: u.email,
-      role: u.role
+      role: u.role,
+      type: 'user'
     }));
-    
-    res.json(filtered);
+
+    // Also include groups the user belongs to
+    const groups = db.find('chat_groups', g => g.members.includes(req.user.id)).map(g => ({
+      id: g.id,
+      full_name: g.name,
+      role: `${g.members.length} members`,
+      type: 'group',
+      members: g.members,
+      member_names: g.member_names
+    }));
+
+    res.json([...groups, ...filtered]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1054,7 +1424,12 @@ app.put('/api/meetings/:id', authenticateToken, (req, res) => {
       notes,
       follow_ups,
       attendance,
-      status
+      status,
+      participants: req.body.participants || meeting.participants,
+      participant_names: (req.body.participants || meeting.participants || []).map(id => {
+        const u = db.findOne('users', usr => usr.id === id);
+        return u ? u.full_name : 'Unknown';
+      })
     });
 
     db.logActivity(req.user.id, 'update_meeting', `Updated meeting details for ${meeting.title}`);
@@ -1243,7 +1618,7 @@ app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('Super Admin',
     const stats = {
       total_businesses: businesses.length,
       pending_approvals: businesses.filter(b => b.status === 'pending').length,
-      total_team_members: users.filter(u => ['Video Editors', 'Social Media Managers', 'Admin Team'].includes(u.role)).length,
+      total_team_members: users.filter(u => ['Video Editors', 'Social Media Managers', 'Admin Team', 'Full Stack Developers', 'Web Developers'].includes(u.role)).length,
       pending_mentorship: mentorship.filter(m => m.status === 'pending').length,
       workflow_active_tasks: contents.filter(c => c.status !== 'published').length,
       total_billing: invoices.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.total, 0),
@@ -1253,14 +1628,15 @@ app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('Super Admin',
     res.json({
       stats,
       businesses,
-      team_performance: users.filter(u => ['Video Editors', 'Social Media Managers'].includes(u.role)).map(u => {
+      team_performance: users.filter(u => ['Video Editors', 'Social Media Managers', 'Full Stack Developers', 'Web Developers'].includes(u.role)).map(u => {
         const tasks = contents.filter(c => c.assigned_editor_id === u.id || c.assigned_sm_manager_id === u.id);
+        const devTasks = db.getCollection('developer_tasks').filter(t => t.assigned_to === u.id);
         return {
           id: u.id,
           name: u.full_name,
           role: u.role,
-          total_tasks: tasks.length,
-          completed: tasks.filter(t => t.status === 'published').length
+          total_tasks: tasks.length + devTasks.length,
+          completed: tasks.filter(t => t.status === 'published').length + devTasks.filter(t => t.status === 'completed').length
         };
       }),
       content_workflows: contents,
@@ -1377,6 +1753,7 @@ app.post('/api/admin/voice-agent', authenticateToken, authorizeRoles('Super Admi
     const dailyReports = db.getCollection('daily_reports');
     const orders = db.getCollection('orders');
     const invoices = db.getCollection('invoices');
+    const developerTasks = db.getCollection('developer_tasks');
 
     // Compile comprehensive system context for the AI
     const systemContext = {
@@ -1443,6 +1820,15 @@ app.post('/api/admin/voice-agent', authenticateToken, authorizeRoles('Super Admi
         total: i.total,
         status: i.status,
         due_date: i.due_date
+      })),
+      developer_tasks: developerTasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        assigned_to_name: t.assigned_to_name,
+        status: t.status,
+        task_type: t.task_type,
+        deadline: t.deadline,
+        business_name: t.business_name
       }))
     };
 
