@@ -1526,8 +1526,8 @@ app.put('/api/mentorship/requests/:id/session', authenticateToken, authorizeRole
 });
 
 // --- ADMIN / TEAM MEMBERS VIEW USERS ---
-app.get('/api/users', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), (req, res) => {
-  const users = db.getCollection('users').map(u => ({
+app.get('/api/users', authenticateToken, (req, res) => {
+  const users = db.getCollection('users').filter(u => u.status === 'approved').map(u => ({
     id: u.id,
     full_name: u.full_name,
     email: u.email,

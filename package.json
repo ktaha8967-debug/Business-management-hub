@@ -41,8 +41,7 @@
         "nsis",
         "portable"
       ],
-      "icon": "public/ascentra_logo.png",
-      "publisherName": "Ascentra Operations Team"
+      "icon": "public/ascentra_logo.png"
     },
     "nsis": {
       "oneClick": true,

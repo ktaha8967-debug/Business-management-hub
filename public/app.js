@@ -616,7 +616,8 @@ async function loadAdminContentPipeline() {
 
     // Filter team users for assign selections
     const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-    const users = await usersRes.json();
+    const usersData = await usersRes.json();
+    const users = Array.isArray(usersData) ? usersData : [];
     const editors = users.filter(u => u.role === 'Video Editors');
     const smms = users.filter(u => u.role === 'Social Media Managers');
 
@@ -849,7 +850,8 @@ async function selectMeetingForAdminUpdate(id) {
 
     // Fetch related users to check attendance
     const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-    const allUsers = await usersRes.json();
+    const allUsersData = await usersRes.json();
+    const allUsers = Array.isArray(allUsersData) ? allUsersData : [];
     
     const container = document.getElementById('update-meeting-attendance-list');
     container.innerHTML = allUsers.map(user => `
@@ -904,7 +906,8 @@ async function openScheduleMeetingModal() {
 
   // Fill participants checkboxes
   const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-  const users = await usersRes.json();
+  const usersData = await usersRes.json();
+  const users = Array.isArray(usersData) ? usersData : [];
   const container = document.getElementById('meet-participants-checkboxes');
   container.innerHTML = users.map(u => `
     <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -1557,7 +1560,8 @@ async function loadOwnerMeetings() {
 
     // Load participants for the owner meeting form
     const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-    const users = await usersRes.json();
+    const usersData = await usersRes.json();
+    const users = Array.isArray(usersData) ? usersData : [];
     const pContainer = document.getElementById('owner-meet-participants');
     if (pContainer) {
       pContainer.innerHTML = users.map(u => `
@@ -2172,8 +2176,9 @@ async function loadAdminAuditDesk() {
 async function loadAdminUserManagement() {
   try {
     const res = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-    const users = await res.json();
-    if (!res.ok) throw new Error(users.error);
+    const usersData = await res.json();
+    if (!res.ok) throw new Error(usersData.error);
+    const users = Array.isArray(usersData) ? usersData : [];
 
     const tbody = document.querySelector('#admin-user-management-table tbody');
     tbody.innerHTML = users.map(u => `
@@ -3901,7 +3906,8 @@ async function loadOwnerMeetingTasks() {
 async function loadOwnerMeetingParticipants() {
   try {
     const res = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-    const users = await res.json();
+    const usersData = await res.json();
+    const users = Array.isArray(usersData) ? usersData : [];
 
     const container = document.getElementById('mt-participants-list');
     container.innerHTML = users.map(u => `
