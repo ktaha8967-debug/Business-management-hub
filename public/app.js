@@ -3352,25 +3352,29 @@ function renderChatContacts(users) {
   if (!listContainer) return;
   
   if (users.length === 0) {
-    listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; margin-top: 20px; font-size: 13px;">No contacts found</div>';
+    listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; margin-top: 40px; font-size: 13px;">No contacts found</div>';
     return;
   }
   
   listContainer.innerHTML = users.map(user => {
-    const activeClass = (activeChatPartnerId === user.id || activeChatGroupId === user.id) ? 'active' : '';
+    const isActive = (activeChatPartnerId === user.id || activeChatGroupId === user.id);
     const isGroup = user.type === 'group';
     const initial = isGroup ? '👥' : (user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U');
-    const roleText = isGroup ? `${user.role} - ${user.member_names ? user.member_names.join(', ') : ''}` : user.role;
+    const roleText = isGroup ? `${user.members ? user.members.length : 0} members` : user.role;
     const clickHandler = isGroup ? `selectChatGroup('${user.id}')` : `selectChatContact('${user.id}')`;
+    const statusColor = isGroup ? '#704df4' : '#2ed573';
+    
     return `
-      <div class="chat-contact-item ${activeClass}" onclick="${clickHandler}" data-id="${user.id}">
-        <div class="chat-contact-avatar" style="${isGroup ? 'background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));' : ''}">${initial}</div>
-        <div class="chat-contact-info">
-          <div class="chat-contact-name">${user.full_name}</div>
-          <div class="chat-contact-role">${roleText}</div>
+      <div onclick="${clickHandler}" data-id="${user.id}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; cursor: pointer; transition: all 0.15s; ${isActive ? 'background: rgba(112, 77, 244, 0.15); border: 1px solid rgba(112, 77, 244, 0.3);' : 'border: 1px solid transparent;'}" onmouseover="if(!this.style.background.includes('112')) this.style.background='rgba(255,255,255,0.04)'" onmouseout="if(!(${isActive})) this.style.background=''">
+        <div style="position: relative; flex-shrink: 0;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: ${isGroup ? 'linear-gradient(135deg, #704df4, #00d2ff)' : 'linear-gradient(135deg, rgba(112,77,244,0.3), rgba(0,210,255,0.3))'}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: ${isGroup ? '20px' : '16px'}; color: #fff;">${initial}</div>
+          <div style="position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; background: ${statusColor}; border: 2px solid rgba(8,10,18,0.9);"></div>
         </div>
-      </div>
-    `;
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.full_name}</div>
+          <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${roleText}</div>
+        </div>
+      </div>`;
   }).join('');
 }
 
@@ -3386,12 +3390,6 @@ function selectChatContact(partnerId) {
   activeChatPartnerId = partnerId;
   activeChatGroupId = null;
   
-  document.querySelectorAll('.chat-contact-item').forEach(item => {
-    item.classList.remove('active');
-  });
-  const selectedEl = document.querySelector(`.chat-contact-item[data-id="${partnerId}"]`);
-  if (selectedEl) selectedEl.classList.add('active');
-  
   const partner = allChatUsers.find(u => u.id === partnerId);
   if (!partner) return;
   
@@ -3399,6 +3397,11 @@ function selectChatContact(partnerId) {
   document.getElementById('chat-active-partner-role').innerText = partner.role;
   document.getElementById('chat-status-dot').style.background = '#2ed573';
   document.getElementById('chat-status-text').innerText = 'online';
+  
+  // Update avatar
+  const initial = partner.full_name ? partner.full_name.charAt(0).toUpperCase() : '?';
+  document.getElementById('chat-partner-avatar').innerText = initial;
+  document.getElementById('chat-partner-avatar').style.background = 'linear-gradient(135deg, rgba(112,77,244,0.4), rgba(0,210,255,0.4))';
   
   document.getElementById('chat-message-input').removeAttribute('disabled');
   document.getElementById('chat-send-btn').removeAttribute('disabled');
@@ -3408,6 +3411,7 @@ function selectChatContact(partnerId) {
   document.getElementById('chat-input-form').onsubmit = handleSendChatMessage;
   
   loadChatHistory(partnerId);
+  renderChatContacts(allChatUsers);
   
   if (chatPollInterval) clearInterval(chatPollInterval);
   chatPollInterval = setInterval(() => {
@@ -3438,14 +3442,15 @@ async function loadChatHistory(partnerId) {
     const atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
     
     messagesContainer.innerHTML = messages.map(msg => {
-      const typeClass = msg.sender_id === currentUser.id ? 'sent' : 'received';
+      const isMine = msg.sender_id === currentUser.id;
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       return `
-        <div class="chat-bubble ${typeClass}">
-          <div>${msg.message}</div>
-          <div class="chat-bubble-time">${timeStr}</div>
-        </div>
-      `;
+        <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;">
+          <div style="max-width: 70%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}</div>
+            <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
+          </div>
+        </div>`;
     }).join('');
     
     if (atBottom || messagesContainer.innerHTML.includes('beginning of your chat')) {
@@ -4113,21 +4118,20 @@ async function selectChatGroup(groupId) {
   activeChatGroupId = groupId;
   activeChatPartnerId = null;
 
-  document.querySelectorAll('.chat-contact-item').forEach(item => item.classList.remove('active'));
-  const selectedEl = document.querySelector(`.chat-contact-item[data-id="${groupId}"]`);
-  if (selectedEl) selectedEl.classList.add('active');
-
-  // Get group info
   try {
     const res = await fetch(`${API_URL}/api/chat/groups`, { headers: getHeaders() });
     const groups = await res.json();
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
 
-    document.getElementById('chat-active-partner-name').innerText = `👥 ${group.name}`;
-    document.getElementById('chat-active-partner-role').innerText = `${group.members.length} members: ${group.member_names.join(', ')}`;
+    document.getElementById('chat-active-partner-name').innerText = group.name;
+    document.getElementById('chat-active-partner-role').innerText = `${group.members.length} members`;
     document.getElementById('chat-status-dot').style.background = '#704df4';
     document.getElementById('chat-status-text').innerText = 'group';
+    
+    // Update avatar
+    document.getElementById('chat-partner-avatar').innerText = '👥';
+    document.getElementById('chat-partner-avatar').style.background = 'linear-gradient(135deg, #704df4, #00d2ff)';
 
     document.getElementById('chat-message-input').removeAttribute('disabled');
     document.getElementById('chat-send-btn').removeAttribute('disabled');
@@ -4137,6 +4141,7 @@ async function selectChatGroup(groupId) {
     document.getElementById('chat-input-form').onsubmit = handleSendGroupChatMessage;
 
     loadGroupChatHistory(groupId);
+    renderChatContacts(allChatUsers);
 
     if (chatPollInterval) clearInterval(chatPollInterval);
     chatPollInterval = setInterval(() => {
@@ -4167,13 +4172,15 @@ async function loadGroupChatHistory(groupId) {
     const atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
 
     messagesContainer.innerHTML = messages.map(msg => {
-      const typeClass = msg.sender_id === currentUser.id ? 'sent' : 'received';
+      const isMine = msg.sender_id === currentUser.id;
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       return `
-        <div class="chat-bubble ${typeClass}">
-          ${msg.sender_id !== currentUser.id ? `<div style="font-size:11px; font-weight:600; color:var(--accent-cyan); margin-bottom:3px;">${msg.sender_name}</div>` : ''}
-          <div>${msg.message}</div>
-          <div class="chat-bubble-time">${timeStr}</div>
+        <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;">
+          <div style="max-width: 70%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+            ${!isMine ? `<div style="font-size: 11px; font-weight: 600; color: var(--accent-cyan); margin-bottom: 3px;">${msg.sender_name}</div>` : ''}
+            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}</div>
+            <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
+          </div>
         </div>`;
     }).join('');
 

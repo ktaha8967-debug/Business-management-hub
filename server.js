@@ -1338,11 +1338,17 @@ app.patch('/api/meetings/tasks/:id/reject', authenticateToken, authorizeRoles('S
 app.get('/api/chat/users', authenticateToken, (req, res) => {
   try {
     const allUsers = db.getCollection('users') || [];
+    const isPowerUser = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
 
     const filtered = allUsers.filter(u => {
       if (u.id === req.user.id) return false; // Don't list self
-      // All approved users can see each other for messaging
-      return u.status === 'approved';
+      if (u.status !== 'approved') return false; // Only approved users
+      if (isPowerUser) {
+        return true; // Boss/Admin/Owner sees everyone
+      } else {
+        // Employees only see Boss/Admin - NOT other employees or business owners
+        return ['Super Admin', 'Admin Team'].includes(u.role);
+      }
     }).map(u => ({
       id: u.id,
       full_name: u.full_name,
@@ -1379,9 +1385,16 @@ app.post('/api/chat/send', authenticateToken, (req, res) => {
       return res.status(404).json({ error: 'Recipient not found' });
     }
 
-    // All approved users can message each other
     if (recipient.status !== 'approved') {
       return res.status(403).json({ error: 'Cannot message unapproved users' });
+    }
+
+    // Enforce chat rules: employees can only message admin/boss
+    const senderIsPower = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
+    const recipientIsPower = ['Super Admin', 'Admin Team'].includes(recipient.role);
+    
+    if (!senderIsPower && !recipientIsPower) {
+      return res.status(403).json({ error: 'Permission denied: You can only message Admin or Boss' });
     }
     
     const newMsg = {
