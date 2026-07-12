@@ -54,6 +54,30 @@ let currentBusiness = null; // Stored if user is a Business Owner
 let activeTab = 'dashboard';
 let chartsInstance = null; // Holds the business analytics Chart.js instance
 
+// Safe JSON parser - prevents "Unexpected token" crash when server returns HTML
+async function safeJson(res) {
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    throw new Error('Server returned non-JSON response. Please restart the server.');
+  }
+  return res.json();
+}
+
+// Global fix: override Response.json to be safe everywhere
+const _origFetch = window.fetch;
+window.fetch = async function(...args) {
+  const res = await _origFetch.apply(this, args);
+  const origJson = res.json.bind(res);
+  res.json = async function() {
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      throw new Error('Server returned non-JSON response. Please restart the server.');
+    }
+    return origJson();
+  };
+  return res;
+};
+
 let allVoices = [];
 function loadVoices() {
   if ('speechSynthesis' in window) {
@@ -3374,7 +3398,7 @@ async function loadChatContacts() {
       throw new Error('Server returned non-JSON response (likely an HTML page).');
     }
     
-    allChatUsers = await res.json();
+    allChatUsers = await safeJson(res);
     renderChatContacts(allChatUsers);
   } catch (err) {
     listContainer.innerHTML = `<div style="color: #ff4757; text-align: center; margin-top: 20px; font-size: 13px;">Failed to load contacts: ${err.message}</div>`;
@@ -3461,7 +3485,7 @@ async function loadChatHistory(partnerId) {
   
   try {
     const res = await fetch(`${API_URL}/api/chat/history/${partnerId}`, { headers: getHeaders() });
-    const messages = await res.json();
+    const messages = await safeJson(res);
     
     if (messages.length === 0) {
       messagesContainer.innerHTML = `
@@ -4610,7 +4634,7 @@ async function selectChatGroup(groupId) {
 
   try {
     const res = await fetch(`${API_URL}/api/chat/groups`, { headers: getHeaders() });
-    const groups = await res.json();
+    const groups = await safeJson(res);
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
 
@@ -4648,7 +4672,7 @@ async function loadGroupChatHistory(groupId) {
 
   try {
     const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/history`, { headers: getHeaders() });
-    const messages = await res.json();
+    const messages = await safeJson(res);
 
     if (messages.length === 0) {
       messagesContainer.innerHTML = `
@@ -4773,7 +4797,7 @@ async function deleteChatMsg(msgId) {
 async function showGroupMembers(groupId) {
   try {
     const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/members`, { headers: getHeaders() });
-    const members = await res.json();
+    const members = await safeJson(res);
     const names = members.map(m => `${m.full_name} (${m.role})`).join('\n');
     alert(`Group Members (${members.length}):\n\n${names}`);
   } catch (err) { showToast('error', err.message); }

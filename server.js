@@ -2663,6 +2663,13 @@ app.post('/api/voice-agent/transcribe', authenticateToken, upload.single('file')
 
 // Serve frontend SPA index file
 app.use(express.static(path.join(__dirname, 'public')));
+
+// API routes return JSON error for unmatched paths, not HTML
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
+});
+
+// SPA catch-all for frontend routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
