@@ -464,15 +464,22 @@ input[type="file"] {
   min-height: 0;
 }
 
-/* Chat view fills entire available space */
+/* Chat view fills entire available space — disable parent scroll */
+.dashboard-views-container.chat-active {
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
 #view-team-chat {
   display: none;
-  height: 100%;
 }
 
 #view-team-chat.active {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   padding: 0 !important;
 }
 
@@ -481,6 +488,7 @@ input[type="file"] {
   min-height: 0;
   height: auto !important;
   margin: 16px;
+  grid-template-rows: 1fr !important;
 }
 
 .main-header {

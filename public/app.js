@@ -296,6 +296,12 @@ function switchMainTab(tabId) {
   const activeView = document.getElementById(`view-${tabId}`);
   if (activeView) activeView.classList.add('active');
 
+  // Toggle chat-active class on container to disable parent scrolling when chat is open
+  const viewsContainer = document.querySelector('.dashboard-views-container');
+  if (viewsContainer) {
+    viewsContainer.classList.toggle('chat-active', tabId === 'team-chat');
+  }
+
   // Fetch relevant tab data
   fetchTabData(tabId);
 }
