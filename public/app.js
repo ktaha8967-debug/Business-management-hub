@@ -38,7 +38,7 @@ if (typeof window !== 'undefined') {
 
 // Live hosted website URL
 // Jab aap isko push karein ge, to mobile APK automatic live website ke database se connect ho jaye ga.
-const LIVE_BACKEND_URL = 'https://taha.mayfairmarketing.online';
+const LIVE_BACKEND_URL = 'https://business-management-hub.britsync.co.uk';
 
 const isMobileApp = window.Capacitor || 
                     window.location.protocol.startsWith('capacitor');
