@@ -94,11 +94,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Resize handler for chat layout
-  window.addEventListener('resize', () => {
-    if (activeTab === 'team-chat') sizeChatLayout();
-  });
-
   const savedToken = localStorage.getItem('token');
   const savedUser = localStorage.getItem('user');
   const savedBusiness = localStorage.getItem('business');
@@ -228,16 +223,7 @@ function switchAuthTab(tab) {
 
 // Force chat layout to exact pixel sizes so flex/grid children can scroll
 function sizeChatLayout() {
-  const viewsContainer = document.querySelector('.dashboard-views-container');
-  const grid = document.querySelector('.chat-layout-grid');
-  const contactsPanel = document.querySelector('.chat-contacts-panel');
-  const msgPanel = document.querySelector('.chat-message-panel');
-  if (!viewsContainer || !grid || !contactsPanel || !msgPanel) return;
-
-  const h = viewsContainer.clientHeight;
-  grid.style.height = h + 'px';
-  contactsPanel.style.height = h + 'px';
-  msgPanel.style.height = h + 'px';
+  // CSS handles layout via position:absolute — no JS sizing needed
 }
 
 function switchMainTab(tabId) {
