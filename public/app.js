@@ -158,6 +158,7 @@ function initCommandShell() {
   document.querySelector('.mentee-links').classList.add('hidden');
   document.querySelector('.fsdev-links').classList.add('hidden');
   document.querySelector('.webdev-links').classList.add('hidden');
+  document.querySelector('.aieng-links').classList.add('hidden');
 
   if (['Super Admin', 'Admin Team'].includes(currentUser.role)) {
     document.querySelector('.admin-links').classList.remove('hidden');
@@ -177,6 +178,8 @@ function initCommandShell() {
     document.querySelector('.fsdev-links').classList.remove('hidden');
   } else if (currentUser.role === 'Web Developers') {
     document.querySelector('.webdev-links').classList.remove('hidden');
+  } else if (currentUser.role === 'AI Engineers') {
+    document.querySelector('.aieng-links').classList.remove('hidden');
   }
 
   // Set visibility of the AI Voice Assistant Card based on authorization
@@ -273,6 +276,8 @@ function switchMainTab(tabId) {
     'fsdev-tasks': 'Full Stack Task Manager',
     'webdev-dashboard': 'Web Development Desk',
     'webdev-tasks': 'Web Developer Task Manager',
+    'aieng-dashboard': 'AI Development Desk',
+    'aieng-tasks': 'AI Engineer Task Manager',
     'admin-meeting-tasks': 'Meeting Task Approvals',
     'owner-meeting-tasks': 'Submit Task for Approval',
     'editor-meetings': 'Editor Meetings',
@@ -462,6 +467,10 @@ async function fetchTabData(tabId) {
   } else if (tabId === 'webdev-dashboard') {
     loadWebDevDashboard();
   } else if (tabId === 'webdev-tasks') {
+    // Task manager is a form, no dynamic loading needed
+  } else if (tabId === 'aieng-dashboard') {
+    loadAiEngDashboard();
+  } else if (tabId === 'aieng-tasks') {
     // Task manager is a form, no dynamic loading needed
   } else if (tabId === 'admin-meeting-tasks') {
     loadAdminMeetingTasks();
@@ -3860,6 +3869,91 @@ async function handleWebDevSubmit(e) {
   }
 }
 
+// 15. AI Engineer Dashboard
+async function loadAiEngDashboard() {
+  try {
+    const res = await fetch(`${API_URL}/api/developer-tasks`, { headers: getHeaders() });
+    const list = await res.json();
+    if (!res.ok) throw new Error(list.error);
+
+    const filtered = list.filter(t => t.task_type === 'ai' || t.task_type === 'general');
+
+    const tbody = document.querySelector('#aieng-tasks-table tbody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">No AI engineering tasks assigned.</td></tr>';
+    } else {
+      tbody.innerHTML = filtered.map(task => `
+        <tr>
+          <td><strong>${task.title}</strong></td>
+          <td>${(task.description || '').slice(0, 60)}${task.description && task.description.length > 60 ? '...' : ''}</td>
+          <td>${task.assigned_by_name}</td>
+          <td>${task.deadline || 'N/A'}</td>
+          <td><span class="badge ${task.priority === 'high' ? 'badge-pending' : task.priority === 'urgent' ? 'badge-rejected' : 'badge-active'}">${task.priority}</span></td>
+          <td><span class="badge ${task.status === 'completed' ? 'badge-success' : 'badge-pending'}">${task.status}</span></td>
+          <td>
+            ${task.status === 'pending' || task.status === 'in_progress'
+              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateDevTaskStatus('${task.id}', 'in_progress')">Start</button>`
+              : task.status === 'in_progress'
+                ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="updateDevTaskStatus('${task.id}', 'completed')">Complete</button>`
+                : '<span style="color:green; font-size:11px;">Done</span>'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Update stats
+    document.getElementById('aieng-total-tasks').innerText = filtered.length;
+    document.getElementById('aieng-completed-tasks').innerText = filtered.filter(t => t.status === 'completed').length;
+    document.getElementById('aieng-pending-tasks').innerText = filtered.filter(t => t.status === 'in_progress').length;
+
+    // Load meetings
+    const meetRes = await fetch(`${API_URL}/api/meetings`, { headers: getHeaders() });
+    const meetings = await meetRes.json();
+    const myMeetings = meetings.filter(m => m.participants && m.participants.includes(currentUser.id));
+    const meetTimeline = document.getElementById('aieng-meetings-timeline');
+    if (myMeetings.length === 0) {
+      meetTimeline.innerHTML = '<p style="color:var(--text-muted);">No meetings assigned.</p>';
+    } else {
+      meetTimeline.innerHTML = myMeetings.slice(0, 5).map(m => `
+        <div class="timeline-item" style="padding:10px; margin-bottom:8px; background:rgba(255,255,255,0.02); border-radius:8px; border-left:3px solid var(--accent-cyan);">
+          <div style="font-weight:600; font-size:13px;">${m.title}</div>
+          <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">${new Date(m.date_time).toLocaleString()} | ${m.status}</div>
+          ${m.status === 'scheduled' ? `<button class="btn-primary" style="margin-top:6px; padding:4px 10px; font-size:11px;" onclick="joinMeetingRoom('${m.id}')">🎥 Join</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // Load groups count
+    const groupRes = await fetch(`${API_URL}/api/chat/groups`, { headers: getHeaders() });
+    const groups = await groupRes.json();
+    document.getElementById('aieng-group-count').innerText = groups.length;
+
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function handleAiEngSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('aieng-submit-task-id').value;
+  const submission_notes = document.getElementById('aieng-submit-notes').value;
+  const submission_url = document.getElementById('aieng-submit-url').value;
+
+  try {
+    const res = await fetch(`${API_URL}/api/developer-tasks/${id}/submit`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ submission_notes, submission_url })
+    });
+    if (!res.ok) throw new Error('Submission failed');
+    showToast('success', 'AI/ML work submitted successfully');
+    document.getElementById('aieng-submit-form').reset();
+    loadAiEngDashboard();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
 // --- PROJECT ASSIGNMENT FUNCTIONS ---
 
 async function handleCreateProject(e) {
@@ -4526,6 +4620,13 @@ const tourData = {
     { icon: '🚀', title: 'My Projects', subtitle: 'Assigned Projects', content: 'View projects assigned to you by admin. Update status and submit completed work.', features: ['View assigned projects', 'Update project status', 'Submit completed work', 'Track deadlines'], tab: 'assigned-projects', highlight: '#assigned-projects-table' },
     { icon: '📅', title: 'My Meetings', subtitle: 'Team Sync', content: 'View meetings you have been invited to and join scheduled video calls with the team.', features: ['View invited meetings', 'Join Jitsi calls', 'View meeting notes', 'Track follow-ups'], tab: 'webdev-dashboard', highlight: null },
     { icon: '🎯', title: "You're All Set!", subtitle: 'Start Building', content: 'Check your assigned tasks, start development, and submit your amazing web work!', features: ['Review assigned tasks', 'Start development', 'Submit your work', 'Track progress'], tab: 'webdev-dashboard', highlight: null }
+  ],
+  'AI Engineers': [
+    { icon: '🤖', title: 'Welcome, AI Engineer!', subtitle: 'AI Development Desk', content: 'You build intelligent AI/ML features — model pipelines, prompt engineering, data processing, and automation across the platform.', features: ['View assigned AI tasks', 'Submit completed models', 'Track pipeline status', 'Join team meetings'], tab: 'aieng-dashboard', highlight: '#aieng-tasks-table' },
+    { icon: '📋', title: 'Task Manager', subtitle: 'Your Assignments', content: 'View your assigned AI engineering tasks with priorities, deadlines, and descriptions.', features: ['View task list', 'Update task status', 'Submit work with URLs', 'Track completion'], tab: 'aieng-tasks', highlight: '#aieng-submit-form' },
+    { icon: '🚀', title: 'My Projects', subtitle: 'Assigned Projects', content: 'View projects assigned to you by admin. Update status and submit completed work.', features: ['View assigned projects', 'Update project status', 'Submit completed work', 'Track deadlines'], tab: 'assigned-projects', highlight: '#assigned-projects-table' },
+    { icon: '📅', title: 'My Meetings', subtitle: 'Team Sync', content: 'View meetings you have been invited to and join scheduled video calls with the team.', features: ['View invited meetings', 'Join Jitsi calls', 'View meeting notes', 'Track follow-ups'], tab: 'aieng-dashboard', highlight: null },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Building AI', content: 'Check your assigned tasks, build AI models, and submit your amazing work!', features: ['Review assigned tasks', 'Build AI models', 'Submit your work', 'Track progress'], tab: 'aieng-dashboard', highlight: null }
   ]
 };
 

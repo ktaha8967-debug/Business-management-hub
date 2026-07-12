@@ -1806,7 +1806,7 @@ app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('Super Admin',
     const stats = {
       total_businesses: businesses.length,
       pending_approvals: businesses.filter(b => b.status === 'pending').length,
-      total_team_members: users.filter(u => ['Video Editors', 'Social Media Managers', 'Admin Team', 'Full Stack Developers', 'Web Developers'].includes(u.role)).length,
+      total_team_members: users.filter(u => ['Video Editors', 'Social Media Managers', 'Admin Team', 'Full Stack Developers', 'Web Developers', 'AI Engineers'].includes(u.role)).length,
       pending_mentorship: mentorship.filter(m => m.status === 'pending').length,
       workflow_active_tasks: contents.filter(c => c.status !== 'published').length,
       total_billing: invoices.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.total, 0),
@@ -1816,7 +1816,7 @@ app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('Super Admin',
     res.json({
       stats,
       businesses,
-      team_performance: users.filter(u => ['Video Editors', 'Social Media Managers', 'Full Stack Developers', 'Web Developers'].includes(u.role)).map(u => {
+      team_performance: users.filter(u => ['Video Editors', 'Social Media Managers', 'Full Stack Developers', 'Web Developers', 'AI Engineers'].includes(u.role)).map(u => {
         const tasks = contents.filter(c => c.assigned_editor_id === u.id || c.assigned_sm_manager_id === u.id);
         const devTasks = db.getCollection('developer_tasks').filter(t => t.assigned_to === u.id);
         return {
