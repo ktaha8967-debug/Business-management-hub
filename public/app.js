@@ -94,6 +94,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Resize handler for chat layout
+  window.addEventListener('resize', () => {
+    if (activeTab === 'team-chat') sizeChatLayout();
+  });
+
   const savedToken = localStorage.getItem('token');
   const savedUser = localStorage.getItem('user');
   const savedBusiness = localStorage.getItem('business');
@@ -221,6 +226,20 @@ function switchAuthTab(tab) {
   }
 }
 
+// Force chat layout to exact pixel sizes so flex/grid children can scroll
+function sizeChatLayout() {
+  const viewsContainer = document.querySelector('.dashboard-views-container');
+  const grid = document.querySelector('.chat-layout-grid');
+  const contactsPanel = document.querySelector('.chat-contacts-panel');
+  const msgPanel = document.querySelector('.chat-message-panel');
+  if (!viewsContainer || !grid || !contactsPanel || !msgPanel) return;
+
+  const h = viewsContainer.clientHeight;
+  grid.style.height = h + 'px';
+  contactsPanel.style.height = h + 'px';
+  msgPanel.style.height = h + 'px';
+}
+
 function switchMainTab(tabId) {
   activeTab = tabId;
   
@@ -300,6 +319,11 @@ function switchMainTab(tabId) {
   const viewsContainer = document.querySelector('.dashboard-views-container');
   if (viewsContainer) {
     viewsContainer.classList.toggle('chat-active', tabId === 'team-chat');
+  }
+
+  // Force chat layout sizing after DOM update
+  if (tabId === 'team-chat') {
+    requestAnimationFrame(() => sizeChatLayout());
   }
 
   // Fetch relevant tab data
