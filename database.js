@@ -1,43 +1,45 @@
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const DB_PATH = path.join(__dirname, 'db.json');
 
 // Initialize database with default seed data
+// Default password for all seed accounts: admin123
 const defaultDB = {
   users: [
     {
       id: 'admin-1',
-      full_name: 'Owner Boss',
+      full_name: 'Super Admin',
       email: 'boss@ascentra.com',
-      password_hash: '$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu', // Password123!
+      password_hash: bcrypt.hashSync('admin123', bcrypt.genSaltSync(10)),
       role: 'Super Admin',
       status: 'approved',
       created_at: new Date().toISOString()
     },
     {
       id: 'admin-2',
-      full_name: 'Admin Assistant',
+      full_name: 'Admin Team',
       email: 'admin@ascentra.com',
-      password_hash: '$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu', // Password123!
+      password_hash: bcrypt.hashSync('admin123', bcrypt.genSaltSync(10)),
       role: 'Admin Team',
       status: 'approved',
       created_at: new Date().toISOString()
     },
     {
       id: 'editor-1',
-      full_name: 'David Editor',
+      full_name: 'Video Editor',
       email: 'editor@ascentra.com',
-      password_hash: '$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu', // Password123!
+      password_hash: bcrypt.hashSync('admin123', bcrypt.genSaltSync(10)),
       role: 'Video Editors',
       status: 'approved',
       created_at: new Date().toISOString()
     },
     {
       id: 'sm-1',
-      full_name: 'Sarah Manager',
+      full_name: 'Social Media Manager',
       email: 'sm@ascentra.com',
-      password_hash: '$2a$10$EA/Hr5Pz21o2/xoAIQP8dus8xPGmjLJ1I5whiA.YzZc6frjh2F0Qu', // Password123!
+      password_hash: bcrypt.hashSync('admin123', bcrypt.genSaltSync(10)),
       role: 'Social Media Managers',
       status: 'approved',
       created_at: new Date().toISOString()

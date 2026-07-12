@@ -26,6 +26,41 @@ webpush.setVapidDetails(
   vapidKeys.privateKey
 );
 
+// --- SEED & FIX DEFAULT USERS ---
+const salt = bcrypt.genSaltSync(10);
+const defaultHash = bcrypt.hashSync('admin123', salt);
+
+const defaultAccounts = [
+  { id: 'admin-1', email: 'boss@ascentra.com', full_name: 'Super Admin', role: 'Super Admin' },
+  { id: 'admin-2', email: 'admin@ascentra.com', full_name: 'Admin Team', role: 'Admin Team' },
+  { id: 'editor-1', email: 'editor@ascentra.com', full_name: 'Video Editor', role: 'Video Editors' },
+  { id: 'sm-1', email: 'sm@ascentra.com', full_name: 'Social Media Manager', role: 'Social Media Managers' }
+];
+
+let seedCount = 0;
+for (const acct of defaultAccounts) {
+  const existing = db.findOne('users', u => u.email === acct.email);
+  if (!existing) {
+    db.insert('users', {
+      id: acct.id,
+      full_name: acct.full_name,
+      email: acct.email,
+      password_hash: defaultHash,
+      role: acct.role,
+      status: 'approved'
+    });
+    seedCount++;
+  } else if (!bcrypt.compareSync('admin123', existing.password_hash)) {
+    // Password hash doesn't match 'admin123' — fix it
+    db.update('users', existing.id, { password_hash: defaultHash });
+    seedCount++;
+  }
+}
+
+if (seedCount > 0) {
+  console.log(`[SEED] ${seedCount} user(s) created/updated. Login: boss@ascentra.com / admin123`);
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = 'ascentra_super_secret_key_2026';
