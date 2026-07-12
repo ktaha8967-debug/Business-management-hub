@@ -1724,6 +1724,9 @@
 
       <!-- Sidebar Footer User Profile -->
       <div class="sidebar-footer">
+        <button onclick="startRoleTour()" style="width: 100%; padding: 8px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(112,77,244,0.15), rgba(0,210,255,0.15)); border: 1px solid rgba(112,77,244,0.3); border-radius: 10px; color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, rgba(112,77,244,0.25), rgba(0,210,255,0.25))'" onmouseout="this.style.background='linear-gradient(135deg, rgba(112,77,244,0.15), rgba(0,210,255,0.15))'">
+          <span>🎯</span> Take a Tour
+        </button>
         <div class="user-profile-summary">
           <div class="user-avatar" id="avatar-letters">US</div>
           <div class="user-text">
@@ -3118,6 +3121,35 @@
   </div>
 
   <!-- ==================== MODALS & DIALOGS ==================== -->
+
+  <!-- Take a Tour Modal -->
+  <div id="tour-modal" class="modal hidden" style="z-index: 10000;">
+    <div class="modal-content" style="max-width: 600px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(112,77,244,0.3);">
+      <div id="tour-header" style="background: linear-gradient(135deg, #704df4, #00d2ff); padding: 30px; text-align: center; position: relative;">
+        <button onclick="closeTour()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+        <div id="tour-step-icon" style="font-size: 50px; margin-bottom: 10px;">🎯</div>
+        <h3 id="tour-step-title" style="margin: 0; color: #fff; font-size: 22px; font-weight: 700;">Welcome to Ascentra</h3>
+        <p id="tour-step-subtitle" style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-size: 14px;">Your role-specific guide</p>
+      </div>
+      <div style="padding: 25px 30px;">
+        <div id="tour-step-content" style="font-size: 14px; line-height: 1.7; color: var(--text-secondary); min-height: 100px;">
+          <!-- Filled dynamically -->
+        </div>
+        <div id="tour-step-features" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+          <!-- Feature list filled dynamically -->
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+          <div id="tour-progress" style="display: flex; gap: 6px;">
+            <!-- Progress dots filled dynamically -->
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button id="tour-prev-btn" onclick="tourPrev()" style="padding: 8px 20px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; font-size: 13px; cursor: pointer; display: none;">← Previous</button>
+            <button id="tour-next-btn" onclick="tourNext()" style="padding: 8px 20px; background: linear-gradient(135deg, #704df4, #5a3fc0); border: none; border-radius: 10px; color: #fff; font-size: 13px; cursor: pointer; font-weight: 600;">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Create Group Chat Modal -->
   <div id="create-group-modal" class="modal hidden">

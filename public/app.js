@@ -4216,3 +4216,141 @@ async function handleSendGroupChatMessage(e) {
   }
 }
 
+// --- TAKE A TOUR (ROLE-BASED) ---
+let currentTourStep = 0;
+let tourSteps = [];
+
+const tourData = {
+  'Super Admin': [
+    { icon: '👑', title: 'Welcome, Boss!', subtitle: 'Super Admin Dashboard', content: 'You are the top-level administrator with full control over the platform, all users, and all business operations.', features: ['Full platform access', 'Manage all users and roles', 'Approve/reject businesses', 'View executive audit logs'] },
+    { icon: '🏢', title: 'Business Portfolios', subtitle: 'Manage Partner Businesses', content: 'Review and approve business partner registrations. View their contracts, employees, and revenue insights.', features: ['Approve pending businesses', 'View business analytics', 'Download contract documents', 'Monitor employee rosters'] },
+    { icon: '🎬', title: 'Content Workflow', subtitle: 'Manage Content Pipeline', content: 'Oversee the entire content creation pipeline from raw uploads to social media publishing.', features: ['Assign tasks to editors', 'Review edited deliverables', 'Approve content for publishing', 'Track workflow status'] },
+    { icon: '📅', title: 'Meetings & Tasks', subtitle: 'Schedule & Approve', content: 'Schedule multi-participant meetings. Approve meeting tasks submitted by business owners.', features: ['Multi-participant meetings', 'Approve/reject meeting tasks', 'Reschedule meetings', 'View meeting history'] },
+    { icon: '✉️', title: 'Invitations', subtitle: 'Onboard New Members', content: 'Generate invitation codes and emails for new team members and business partners.', features: ['Generate invite codes', 'Send email invitations', 'Assign roles via invitations', 'Track invitation status'] },
+    { icon: '🛡️', title: 'Executive Controls', subtitle: 'Audit & Security', content: 'View comprehensive audit logs, manage user statuses, and monitor all platform activity.', features: ['Executive audit logs', 'User status management', 'Activity monitoring', 'Platform security'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Managing', content: 'Explore your dashboard, check pending approvals, and use the AI Voice Assistant for quick insights.', features: ['Explore the dashboard', 'Check pending approvals', 'Review content workflow', 'Use the AI Voice Assistant'] }
+  ],
+  'Admin Team': [
+    { icon: '🔧', title: 'Welcome, Admin!', subtitle: 'Admin Team Dashboard', content: 'You help manage platform operations - business approvals, content workflow, and team coordination.', features: ['Manage business portfolios', 'Handle content pipeline', 'Schedule meetings', 'Manage team invitations'] },
+    { icon: '🏢', title: 'Business Management', subtitle: 'Partner Portfolios', content: 'Review and approve business partner registrations. Monitor their progress and manage accounts.', features: ['Approve businesses', 'View business details', 'Manage contracts', 'Track employee rosters'] },
+    { icon: '🎬', title: 'Content Pipeline', subtitle: 'Workflow Management', content: 'Assign content tasks to editors, review submissions, and coordinate social media publishing.', features: ['Assign to video editors', 'Review deliverables', 'Approve/reject content', 'Assign to SMM'] },
+    { icon: '📅', title: 'Meeting Management', subtitle: 'Schedule & Coordinate', content: 'Schedule meetings with multiple participants. Approve meeting requests from business owners.', features: ['Schedule meetings', 'Approve/reject requests', 'Add participants', 'View meeting history'] },
+    { icon: '✉️', title: 'Team Invitations', subtitle: 'Onboard Members', content: 'Generate invitations for new team members. Assign roles and send welcome emails.', features: ['Generate invite codes', 'Send email invitations', 'Track invitation status', 'Manage pending approvals'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Working', content: 'Check pending approvals, review the content pipeline, and coordinate team activities.', features: ['Check pending approvals', 'Review content workflow', 'Manage team members', 'Coordinate meetings'] }
+  ],
+  'Business Owners': [
+    { icon: '💼', title: 'Welcome, Partner!', subtitle: 'Business Owner Dashboard', content: 'You are a business partner on Ascentra. Manage your business, submit content, and collaborate with the team.', features: ['Manage business profile', 'Submit content for editing', 'Create invoices', 'Request meetings'] },
+    { icon: '🏢', title: 'My Business Profile', subtitle: 'Your Business Identity', content: 'View and update your business details, industry, location, and employee information.', features: ['Update business details', 'Manage employees', 'View revenue analytics', 'Download contracts'] },
+    { icon: '🎥', title: 'Content Submission', subtitle: 'Submit Raw Content', content: 'Upload raw videos and content ideas for the team to edit and publish on social media.', features: ['Upload raw videos', 'Add content ideas', 'Track content status', 'View published results'] },
+    { icon: '📝', title: 'Daily Reports', subtitle: 'Track Progress', content: 'Submit daily progress reports with activities, challenges, goals, and team updates.', features: ['Submit daily reports', 'Track team progress', 'Log challenges & goals', 'View report history'] },
+    { icon: '📅', title: 'Meetings & Tasks', subtitle: 'Collaborate', content: 'Request meetings with the team. Submit tasks for admin approval before scheduling.', features: ['Request meetings', 'Select participants', 'Submit meeting tasks', 'Track approval status'] },
+    { icon: '🧾', title: 'Invoicing', subtitle: 'Client Billing', content: 'Create professional invoices for your clients with custom branding and item details.', features: ['Create invoices', 'Custom branding', 'Track payment status', 'Print/PDF export'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Growing', content: 'Update your profile, submit content, create invoices, and request meetings to get started.', features: ['Update business profile', 'Submit content', 'Create invoices', 'Request meetings'] }
+  ],
+  'Video Editors': [
+    { icon: '✂️', title: 'Welcome, Editor!', subtitle: 'Video Production Desk', content: 'You create amazing video content. Access raw footage, follow editor notes, and submit finished videos.', features: ['Access raw video files', 'Download all assets', 'Submit edited work', 'Track task status'] },
+    { icon: '🎬', title: 'Your Tasks', subtitle: 'Editing Workboard', content: 'View your assigned editing tasks with business details, deadlines, and raw video links.', features: ['View assigned tasks', 'Download raw videos', 'Track deadlines', 'Submit deliverables'] },
+    { icon: '📦', title: 'Asset Library', subtitle: 'Stock Resources', content: 'Access shared assets including music packs, sound effects, overlays, and logo files.', features: ['Cinematic music packs', 'Transition SFX', 'Graphics overlays', 'Logo files'] },
+    { icon: '📏', title: 'Output Guidelines', subtitle: 'Quality Standards', content: 'Follow styling guidelines for dimensions (1080x1920), subtitles, pacing, and branding.', features: ['1080x1920 vertical format', 'Dynamic subtitles', 'High-impact pacing', 'Brand watermark'] },
+    { icon: '📅', title: 'My Meetings', subtitle: 'Stay Connected', content: 'View meetings you have been invited to and join scheduled video calls.', features: ['View invited meetings', 'Join Jitsi calls', 'View meeting notes', 'Track follow-ups'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Creating', content: 'Check your assigned tasks, download raw footage, and start producing amazing content!', features: ['Review assigned tasks', 'Download raw footage', 'Submit your work', 'Track completion'] }
+  ],
+  'Social Media Managers': [
+    { icon: '📱', title: 'Welcome, SMM!', subtitle: 'Publishing Panel', content: 'You manage social media publishing. Receive approved videos and publish across all platforms.', features: ['Publish to TikTok', 'Post to Instagram', 'Upload to YouTube Shorts', 'Share on Facebook'] },
+    { icon: '🎬', title: 'Assigned Content', subtitle: 'Publishing Queue', content: 'View approved videos ready for publishing. Submit live post URLs after publishing.', features: ['View approved videos', 'Access video links', 'Submit post URLs', 'Track publish status'] },
+    { icon: '📅', title: 'Posting Calendar', subtitle: 'Optimal Timing', content: 'Follow the optimal posting schedule for maximum engagement across all platforms.', features: ['Morning peak: 8-10 AM', 'Afternoon peak: 1-3 PM', 'Night rush: 7-9:30 PM', 'High CTR windows'] },
+    { icon: '🔗', title: 'Connected Channels', subtitle: 'Platform Accounts', content: 'Manage your connected social media accounts for seamless publishing.', features: ['TikTok profile', 'Instagram account', 'YouTube channel', 'Facebook page'] },
+    { icon: '📅', title: 'My Meetings', subtitle: 'Stay Connected', content: 'View meetings you have been invited to and join scheduled video calls.', features: ['View invited meetings', 'Join Jitsi calls', 'View meeting notes', 'Track follow-ups'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Publishing', content: 'Check your assigned assets, publish to platforms, and submit post URLs!', features: ['Review assigned content', 'Publish to platforms', 'Submit post URLs', 'Track engagement'] }
+  ],
+  'Mentorship Members': [
+    { icon: '🌱', title: 'Welcome, Mentee!', subtitle: 'Growth Center', content: 'You are on a mentorship journey. Submit requests for expert sessions and track your growth.', features: ['Request mentorship sessions', 'View advisor notes', 'Track action plans', 'Monitor progress'] },
+    { icon: '📝', title: 'Session Requests', subtitle: 'Get Expert Help', content: 'Submit requests for mentorship sessions with your challenges, topics, and preferred dates.', features: ['Describe challenges', 'Select discussion topics', 'Propose meeting dates', 'Track request status'] },
+    { icon: '📚', title: 'Advisor Sessions', subtitle: 'Learn & Grow', content: 'View your mentorship session history with advisor notes, recommendations, and action plans.', features: ['View session notes', 'Read recommendations', 'Follow action plans', 'Track progress'] },
+    { icon: '📅', title: 'My Meetings', subtitle: 'Stay Connected', content: 'View meetings you have been invited to and join scheduled video calls.', features: ['View invited meetings', 'Join Jitsi calls', 'View meeting notes', 'Track follow-ups'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Learning', content: 'Submit your first mentorship request and start your growth journey!', features: ['Submit session request', 'Describe your challenges', 'Track advisor feedback', 'Follow action plans'] }
+  ],
+  'Full Stack Developers': [
+    { icon: '⚙️', title: 'Welcome, Developer!', subtitle: 'Full Stack Desk', content: 'You build and maintain the platform. Manage development tasks, submit work, and collaborate with the team.', features: ['View assigned tasks', 'Submit completed work', 'Track task status', 'Join team meetings'] },
+    { icon: '📋', title: 'Task Manager', subtitle: 'Your Assignments', content: 'View your assigned development tasks with priorities, deadlines, and descriptions.', features: ['View task list', 'Update task status', 'Submit work with URLs', 'Track completion'] },
+    { icon: '📊', title: 'Activity Stats', subtitle: 'Performance Overview', content: 'Monitor your task completion stats, group memberships, and overall activity.', features: ['Total tasks assigned', 'Completed tasks', 'In progress count', 'Group count'] },
+    { icon: '📅', title: 'My Meetings', subtitle: 'Team Sync', content: 'View meetings you have been invited to and join scheduled video calls with the team.', features: ['View invited meetings', 'Join Jitsi calls', 'View meeting notes', 'Track follow-ups'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Building', content: 'Check your assigned tasks, start development, and submit your amazing work!', features: ['Review assigned tasks', 'Start development', 'Submit your work', 'Track progress'] }
+  ],
+  'Web Developers': [
+    { icon: '🌐', title: 'Welcome, Web Dev!', subtitle: 'Web Development Desk', content: 'You build beautiful web interfaces. Manage your web development tasks and submit completed work.', features: ['View assigned tasks', 'Submit completed work', 'Track task status', 'Join team meetings'] },
+    { icon: '📋', title: 'Task Manager', subtitle: 'Your Assignments', content: 'View your assigned web development tasks with priorities, deadlines, and descriptions.', features: ['View task list', 'Update task status', 'Submit work with URLs', 'Track completion'] },
+    { icon: '📊', title: 'Activity Stats', subtitle: 'Performance Overview', content: 'Monitor your task completion stats, group memberships, and overall activity.', features: ['Total tasks assigned', 'Completed tasks', 'In progress count', 'Group count'] },
+    { icon: '📅', title: 'My Meetings', subtitle: 'Team Sync', content: 'View meetings you have been invited to and join scheduled video calls with the team.', features: ['View invited meetings', 'Join Jitsi calls', 'View meeting notes', 'Track follow-ups'] },
+    { icon: '🎯', title: "You're All Set!", subtitle: 'Start Building', content: 'Check your assigned tasks, start development, and submit your amazing web work!', features: ['Review assigned tasks', 'Start development', 'Submit your work', 'Track progress'] }
+  ]
+};
+
+function startRoleTour() {
+  const role = currentUser.role;
+  tourSteps = tourData[role] || tourData['Admin Team'];
+  currentTourStep = 0;
+  document.getElementById('tour-modal').classList.remove('hidden');
+  renderTourStep();
+}
+
+function closeTour() {
+  document.getElementById('tour-modal').classList.add('hidden');
+  currentTourStep = 0;
+}
+
+function renderTourStep() {
+  const step = tourSteps[currentTourStep];
+  const total = tourSteps.length;
+  const isFirst = currentTourStep === 0;
+  const isLast = currentTourStep === total - 1;
+
+  document.getElementById('tour-step-icon').innerText = step.icon;
+  document.getElementById('tour-step-title').innerText = step.title;
+  document.getElementById('tour-step-subtitle').innerText = step.subtitle;
+  document.getElementById('tour-step-content').innerText = step.content;
+
+  const featuresHtml = step.features.map(f => `
+    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(112,77,244,0.08); border-radius: 8px; border-left: 3px solid var(--accent-purple);">
+      <span style="color: #2ed573; font-size: 14px;">✓</span>
+      <span style="font-size: 13px; color: var(--text-secondary);">${f}</span>
+    </div>
+  `).join('');
+  document.getElementById('tour-step-features').innerHTML = featuresHtml;
+
+  let dotsHtml = '';
+  for (let i = 0; i < total; i++) {
+    const isActive = i === currentTourStep;
+    const isDone = i < currentTourStep;
+    dotsHtml += `<div style="width: ${isActive ? '24px' : '8px'}; height: 8px; border-radius: 4px; background: ${isActive ? 'var(--accent-purple)' : isDone ? '#2ed573' : 'rgba(255,255,255,0.15)'}; transition: all 0.3s;"></div>`;
+  }
+  document.getElementById('tour-progress').innerHTML = dotsHtml;
+
+  document.getElementById('tour-prev-btn').style.display = isFirst ? 'none' : 'block';
+  const nextBtn = document.getElementById('tour-next-btn');
+  if (isLast) {
+    nextBtn.innerText = 'Finish 🎉';
+    nextBtn.style.background = 'linear-gradient(135deg, #2ed573, #17a557)';
+  } else {
+    nextBtn.innerText = 'Next →';
+    nextBtn.style.background = 'linear-gradient(135deg, #704df4, #5a3fc0)';
+  }
+}
+
+function tourNext() {
+  if (currentTourStep < tourSteps.length - 1) {
+    currentTourStep++;
+    renderTourStep();
+  } else {
+    closeTour();
+    showToast('success', 'Tour completed! Explore your dashboard.');
+  }
+}
+
+function tourPrev() {
+  if (currentTourStep > 0) {
+    currentTourStep--;
+    renderTourStep();
+  }
+}
+
