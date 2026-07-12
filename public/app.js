@@ -277,7 +277,9 @@ function switchMainTab(tabId) {
     'owner-meeting-tasks': 'Submit Task for Approval',
     'editor-meetings': 'Editor Meetings',
     'smm-meetings': 'SMM Meetings',
-    'mentee-meetings': 'Mentee Meetings'
+    'mentee-meetings': 'Mentee Meetings',
+    'owner-projects': 'Assign Projects',
+    'assigned-projects': 'My Assigned Projects'
   };
   document.getElementById('header-view-title').innerText = titleMap[tabId] || 'Platform Dashboard';
 
@@ -471,6 +473,11 @@ async function fetchTabData(tabId) {
     loadEmployeeMeetings('smm-my-meetings-list');
   } else if (tabId === 'mentee-meetings') {
     loadEmployeeMeetings('mentee-my-meetings-list');
+  } else if (tabId === 'owner-projects') {
+    loadOwnerProjects();
+    loadProjectAssignees();
+  } else if (tabId === 'assigned-projects') {
+    loadAssignedProjects();
   }
 }
 
@@ -3851,7 +3858,154 @@ async function handleWebDevSubmit(e) {
   }
 }
 
-// --- EMPLOYEE MEETINGS LOADER ---
+// --- PROJECT ASSIGNMENT FUNCTIONS ---
+
+async function loadProjectAssignees() {
+  try {
+    const res = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
+    const usersData = await res.json();
+    const users = Array.isArray(usersData) ? usersData : [];
+
+    const select = document.getElementById('proj-assigned-to');
+    if (select) {
+      select.innerHTML = '<option value="">Select team member...</option>' +
+        users.map(u => `<option value="${u.id}">${u.full_name} (${u.role})</option>`).join('');
+    }
+  } catch (err) {
+    console.warn('Error loading assignees:', err);
+  }
+}
+
+async function handleCreateProject(e) {
+  e.preventDefault();
+  const title = document.getElementById('proj-title').value;
+  const description = document.getElementById('proj-description').value;
+  const category = document.getElementById('proj-category').value;
+  const assigned_to = document.getElementById('proj-assigned-to').value;
+  const deadline = document.getElementById('proj-deadline').value;
+  const priority = document.getElementById('proj-priority').value;
+
+  try {
+    const res = await fetch(`${API_URL}/api/projects`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ title, description, category, assigned_to, deadline, priority })
+    });
+    if (!res.ok) throw new Error('Failed to create project');
+    showToast('success', 'Project created and assigned successfully');
+    document.getElementById('owner-project-form').reset();
+    loadOwnerProjects();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function loadOwnerProjects() {
+  try {
+    const res = await fetch(`${API_URL}/api/projects`, { headers: getHeaders() });
+    const projects = await res.json();
+    if (!res.ok) throw new Error(projects.error);
+
+    const container = document.getElementById('owner-projects-list');
+    if (projects.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-muted);">No projects created yet.</p>';
+      return;
+    }
+
+    container.innerHTML = projects.map(p => {
+      let statusBadge = '';
+      if (p.status === 'pending') statusBadge = '<span class="badge badge-pending">Pending</span>';
+      else if (p.status === 'in_progress') statusBadge = '<span class="badge badge-active">In Progress</span>';
+      else if (p.status === 'submitted') statusBadge = '<span class="badge badge-approved">Submitted</span>';
+      else if (p.status === 'completed') statusBadge = '<span class="badge badge-success">Completed</span>';
+
+      const priorityColors = { low: '#2ed573', medium: '#ff9f43', high: '#ff6b6b', urgent: '#ff4757' };
+
+      return `
+        <div style="padding: 14px; margin-bottom: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; border-left: 3px solid ${priorityColors[p.priority] || '#704df4'};">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 14px; color: #fff;">${p.title}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Assigned to: <strong>${p.assigned_to_name}</strong> | Category: ${p.category}</div>
+              <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5;">${(p.description || '').slice(0, 120)}${p.description && p.description.length > 120 ? '...' : ''}</div>
+              ${p.deadline ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Deadline: ${p.deadline} | Priority: <span style="color: ${priorityColors[p.priority]}">${p.priority.toUpperCase()}</span></div>` : ''}
+            </div>
+            <div>${statusBadge}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function loadAssignedProjects() {
+  try {
+    const res = await fetch(`${API_URL}/api/projects`, { headers: getHeaders() });
+    const projects = await res.json();
+    if (!res.ok) throw new Error(projects.error);
+
+    const tbody = document.querySelector('#assigned-projects-table tbody');
+    if (projects.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center">No projects assigned.</td></tr>';
+      return;
+    }
+
+    const priorityColors = { low: '#2ed573', medium: '#ff9f43', high: '#ff6b6b', urgent: '#ff4757' };
+
+    tbody.innerHTML = projects.map(p => `
+      <tr>
+        <td><strong>${p.title}</strong></td>
+        <td>${p.assigned_by_name}</td>
+        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${(p.description || '').slice(0, 80)}</td>
+        <td><span class="badge badge-active">${p.category}</span></td>
+        <td>${p.deadline || 'N/A'}</td>
+        <td><span style="color: ${priorityColors[p.priority]}; font-weight: 600;">${p.priority}</span></td>
+        <td><span class="badge ${p.status === 'completed' ? 'badge-success' : p.status === 'submitted' ? 'badge-approved' : 'badge-pending'}">${p.status}</span></td>
+        <td>
+          ${p.status === 'pending' || p.status === 'in_progress'
+            ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="updateProjectStatus('${p.id}', 'in_progress')">Start</button>`
+            : p.status === 'in_progress'
+              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:#2ed573;" onclick="openProjectSubmitModal('${p.id}')">Submit</button>`
+              : '<span style="color:#2ed573; font-size:11px;">Done</span>'}
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function updateProjectStatus(id, status) {
+  try {
+    const res = await fetch(`${API_URL}/api/projects/${id}/status`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error('Status update failed');
+    showToast('success', `Project status updated to ${status}`);
+    loadAssignedProjects();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+function openProjectSubmitModal(id) {
+  const notes = prompt('Describe what you completed:');
+  if (!notes) return;
+  const url = prompt('Submission URL (optional):') || '';
+
+  fetch(`${API_URL}/api/projects/${id}/submit`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ submission_notes: notes, submission_url: url })
+  }).then(res => {
+    if (!res.ok) throw new Error('Submission failed');
+    showToast('success', 'Project work submitted successfully');
+    loadAssignedProjects();
+  }).catch(err => showToast('error', err.message));
+}
 async function loadEmployeeMeetings(containerId) {
   try {
     const res = await fetch(`${API_URL}/api/meetings`, { headers: getHeaders() });

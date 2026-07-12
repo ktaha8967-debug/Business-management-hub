@@ -1334,6 +1334,123 @@ app.patch('/api/meetings/tasks/:id/reject', authenticateToken, authorizeRoles('S
   }
 });
 
+// --- PROJECT ASSIGNMENT ROUTES (Business Owner assigns projects to team) ---
+
+// Create Project (Business Owner)
+app.post('/api/projects', authenticateToken, authorizeRoles('Business Owners', 'Super Admin', 'Admin Team'), (req, res) => {
+  try {
+    const { title, description, assigned_to, deadline, priority, category } = req.body;
+    if (!title) return res.status(400).json({ error: 'Project title is required' });
+
+    const bus = req.user.role === 'Business Owners' ? db.findOne('businesses', b => b.owner_id === req.user.id) : null;
+
+    let assignedToName = 'Unassigned';
+    if (assigned_to) {
+      const assignee = db.findOne('users', u => u.id === assigned_to);
+      if (assignee) assignedToName = assignee.full_name;
+    }
+
+    const project = db.insert('projects', {
+      title,
+      description: description || '',
+      business_id: bus ? bus.id : null,
+      business_name: bus ? bus.business_name : 'Platform',
+      assigned_to: assigned_to || null,
+      assigned_to_name: assignedToName,
+      assigned_by: req.user.id,
+      assigned_by_name: req.user.full_name,
+      deadline: deadline || '',
+      priority: priority || 'medium',
+      category: category || 'general',
+      status: 'pending',
+      submission_notes: '',
+      submission_url: '',
+      history: [{ status: 'pending', user: req.user.full_name, timestamp: new Date().toISOString(), notes: `Project created by ${req.user.full_name}` }]
+    });
+
+    if (assigned_to) {
+      db.sendNotification(assigned_to, 'New Project Assigned', `You have been assigned a new project: ${title}`);
+    }
+
+    db.logActivity(req.user.id, 'create_project', `Created project "${title}"`);
+    res.status(201).json(project);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Projects
+app.get('/api/projects', authenticateToken, (req, res) => {
+  try {
+    const allProjects = db.getCollection('projects');
+    if (['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      res.json(allProjects);
+    } else if (req.user.role === 'Business Owners') {
+      const bus = db.findOne('businesses', b => b.owner_id === req.user.id);
+      res.json(allProjects.filter(p => p.business_id === bus?.id || p.assigned_by === req.user.id));
+    } else {
+      // Assigned users see their projects
+      res.json(allProjects.filter(p => p.assigned_to === req.user.id));
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Project Status
+app.patch('/api/projects/:id/status', authenticateToken, (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    const project = db.findOne('projects', p => p.id === req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const history = [...project.history, { status, user: req.user.full_name, timestamp: new Date().toISOString(), notes: notes || `Status updated to ${status}` }];
+    const updated = db.update('projects', project.id, { status, history });
+
+    if (status === 'completed') {
+      db.sendNotification(project.assigned_by, 'Project Completed', `Project "${project.title}" has been completed by ${req.user.full_name}`);
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Developer submits project work
+app.post('/api/projects/:id/submit', authenticateToken, (req, res) => {
+  try {
+    const { submission_notes, submission_url } = req.body;
+    const project = db.findOne('projects', p => p.id === req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const history = [...project.history, { status: 'submitted', user: req.user.full_name, timestamp: new Date().toISOString(), notes: submission_notes || 'Work submitted' }];
+    const updated = db.update('projects', project.id, {
+      status: 'submitted',
+      submission_notes,
+      submission_url,
+      history
+    });
+
+    db.sendNotification(project.assigned_by, 'Project Submission', `${req.user.full_name} submitted work for project "${project.title}"`);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Project
+app.delete('/api/projects/:id', authenticateToken, authorizeRoles('Business Owners', 'Super Admin', 'Admin Team'), (req, res) => {
+  try {
+    const project = db.findOne('projects', p => p.id === req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    db.delete('projects', req.params.id);
+    res.json({ message: 'Project deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- ROLE-BASED CHAT API ---
 app.get('/api/chat/users', authenticateToken, (req, res) => {
   try {

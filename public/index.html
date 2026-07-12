@@ -1664,6 +1664,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('owner-meeting-tasks')">
             <span class="nav-icon">📋</span> Submit Meeting Task
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('owner-projects')">
+            <span class="nav-icon">🚀</span> Assign Projects
+          </a>
         </div>
 
         <!-- Video Editors links -->
@@ -1674,6 +1677,9 @@
           </a>
           <a href="#" class="nav-item" onclick="switchMainTab('editor-meetings')">
             <span class="nav-icon">📅</span> My Meetings
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('assigned-projects')">
+            <span class="nav-icon">🚀</span> My Projects
           </a>
         </div>
 
@@ -1686,6 +1692,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('smm-meetings')">
             <span class="nav-icon">📅</span> My Meetings
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('assigned-projects')">
+            <span class="nav-icon">🚀</span> My Projects
+          </a>
         </div>
 
         <!-- Full Stack Developer links -->
@@ -1696,6 +1705,9 @@
           </a>
           <a href="#" class="nav-item" onclick="switchMainTab('fsdev-tasks')">
             <span class="nav-icon">📋</span> Task Manager
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('assigned-projects')">
+            <span class="nav-icon">🚀</span> My Projects
           </a>
         </div>
 
@@ -1708,6 +1720,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('webdev-tasks')">
             <span class="nav-icon">📋</span> Task Manager
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('assigned-projects')">
+            <span class="nav-icon">🚀</span> My Projects
+          </a>
         </div>
 
         <!-- Mentorship Members links -->
@@ -1718,6 +1733,9 @@
           </a>
           <a href="#" class="nav-item" onclick="switchMainTab('mentee-meetings')">
             <span class="nav-icon">📅</span> My Meetings
+          </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('assigned-projects')">
+            <span class="nav-icon">🚀</span> My Projects
           </a>
         </div>
       </nav>
@@ -2347,6 +2365,93 @@
                 </div>
                 <button type="submit" class="btn-primary">Submit Schedule Proposal</button>
               </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== OWNER ASSIGN PROJECTS ==================== -->
+        <section id="view-owner-projects" class="dashboard-view">
+          <h3>Assign Projects</h3>
+          <p class="subtitle">Create and assign projects to team members. Describe the project in brief and track progress.</p>
+          <div class="grid-2col">
+            <div class="panel-card">
+              <h4>📋 Create New Project</h4>
+              <form id="owner-project-form" onsubmit="handleCreateProject(event)">
+                <div class="form-group">
+                  <label for="proj-title">Project Title</label>
+                  <input type="text" id="proj-title" required placeholder="e.g. Website Redesign, Brand Video">
+                </div>
+                <div class="form-group">
+                  <label for="proj-description">Describe Project in Brief</label>
+                  <textarea id="proj-description" rows="4" required placeholder="Describe what needs to be done, goals, requirements, and any specific instructions..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="proj-category">Category</label>
+                  <select id="proj-category">
+                    <option value="general">General</option>
+                    <option value="development">Development</option>
+                    <option value="design">Design</option>
+                    <option value="content">Content Creation</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Assign To</label>
+                  <select id="proj-assigned-to" required>
+                    <option value="">Select team member...</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <div class="form-group" style="flex:1;">
+                    <label for="proj-deadline">Deadline</label>
+                    <input type="date" id="proj-deadline">
+                  </div>
+                  <div class="form-group" style="flex:1;">
+                    <label for="proj-priority">Priority</label>
+                    <select id="proj-priority">
+                      <option value="low">Low</option>
+                      <option value="medium" selected>Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Create & Assign Project</button>
+              </form>
+            </div>
+            <div class="panel-card">
+              <h4>📂 My Projects</h4>
+              <div id="owner-projects-list" class="timeline" style="max-height: 600px; overflow-y: auto;">
+                <p style="color:var(--text-muted);">No projects created yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== ASSIGNED PROJECTS VIEW (for employees) ==================== -->
+        <section id="view-assigned-projects" class="dashboard-view">
+          <h3>Assigned Projects</h3>
+          <p class="subtitle">View projects assigned to you by business owners. Update status and submit completed work.</p>
+          <div class="panel-card">
+            <div class="table-responsive">
+              <table class="data-table" id="assigned-projects-table">
+                <thead>
+                  <tr>
+                    <th>Project</th>
+                    <th>From</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Deadline</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="8" class="text-center">No projects assigned.</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
