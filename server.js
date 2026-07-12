@@ -1254,6 +1254,93 @@ app.delete('/api/chat/groups/:id', authenticateToken, authorizeRoles('Super Admi
   }
 });
 
+// Edit Group Message
+app.put('/api/chat/groups/:groupId/messages/:msgId', authenticateToken, (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    const msg = db.findOne('chat_group_messages', m => m.id === req.params.msgId && m.group_id === req.params.groupId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    if (msg.sender_id !== req.user.id) return res.status(403).json({ error: 'You can only edit your own messages' });
+
+    const updated = db.update('chat_group_messages', msg.id, { message, edited: true, edited_at: new Date().toISOString() });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Group Message
+app.delete('/api/chat/groups/:groupId/messages/:msgId', authenticateToken, (req, res) => {
+  try {
+    const msg = db.findOne('chat_group_messages', m => m.id === req.params.msgId && m.group_id === req.params.groupId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+
+    // Sender or group creator or admin can delete
+    const group = db.findOne('chat_groups', g => g.id === req.params.groupId);
+    const isAdmin = ['Super Admin', 'Admin Team'].includes(req.user.role);
+    const isCreator = group && group.creator_id === req.user.id;
+    if (msg.sender_id !== req.user.id && !isAdmin && !isCreator) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    db.delete('chat_group_messages', msg.id);
+    res.json({ message: 'Message deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Group Members Info
+app.get('/api/chat/groups/:id/members', authenticateToken, (req, res) => {
+  try {
+    const group = db.findOne('chat_groups', g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+    if (!group.members.includes(req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const members = group.members.map(id => {
+      const u = db.findOne('users', usr => usr.id === id);
+      return u ? { id: u.id, full_name: u.full_name, role: u.role, email: u.email } : { id, full_name: 'Unknown', role: '' };
+    });
+    res.json(members);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Edit Individual Chat Message
+app.put('/api/chat/messages/:msgId', authenticateToken, (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    const msg = db.findOne('chat_messages', m => m.id === req.params.msgId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    if (msg.sender_id !== req.user.id) return res.status(403).json({ error: 'You can only edit your own messages' });
+
+    const updated = db.update('chat_messages', msg.id, { message, edited: true, edited_at: new Date().toISOString() });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Individual Chat Message
+app.delete('/api/chat/messages/:msgId', authenticateToken, (req, res) => {
+  try {
+    const msg = db.findOne('chat_messages', m => m.id === req.params.msgId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    if (msg.sender_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    db.delete('chat_messages', msg.id);
+    res.json({ message: 'Message deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- MEETING TASK ROUTES (Business Owner -> Admin approval) ---
 
 // Create Meeting Task (Business Owner)

@@ -3479,12 +3479,19 @@ async function loadChatHistory(partnerId) {
       const isMine = msg.sender_id === currentUser.id;
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const attachmentHtml = msg.attachment ? renderChatAttachment(msg.attachment, isMine) : '';
+      const editedTag = msg.edited ? ' <span style="font-style:italic; opacity:0.6;">(edited)</span>' : '';
+      const actionsHtml = isMine ? `
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          <button onclick="editChatMsg('${msg.id}')" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:10px; cursor:pointer; padding:0;">✏️</button>
+          <button onclick="deleteChatMsg('${msg.id}')" style="background:none; border:none; color:rgba(255,71,87,0.5); font-size:10px; cursor:pointer; padding:0;">🗑️</button>
+        </div>` : '';
       return `
         <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;">
           <div style="max-width: 70%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
             ${attachmentHtml}
-            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}</div>
+            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}${editedTag}</div>
             <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
+            ${actionsHtml}
           </div>
         </div>`;
     }).join('');
@@ -4608,7 +4615,7 @@ async function selectChatGroup(groupId) {
     if (!group) return;
 
     document.getElementById('chat-active-partner-name').innerText = group.name;
-    document.getElementById('chat-active-partner-role').innerText = `${group.members.length} members`;
+    document.getElementById('chat-active-partner-role').innerHTML = `<span style="cursor:pointer; text-decoration:underline;" onclick="showGroupMembers('${groupId}')">${group.members.length} members — tap to view</span>`;
     document.getElementById('chat-status-dot').style.background = '#704df4';
     document.getElementById('chat-status-text').innerText = 'group';
     
@@ -4657,12 +4664,21 @@ async function loadGroupChatHistory(groupId) {
     messagesContainer.innerHTML = messages.map(msg => {
       const isMine = msg.sender_id === currentUser.id;
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const editedTag = msg.edited ? ' <span style="font-style:italic; opacity:0.6;">(edited)</span>' : '';
+      const senderInitial = msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : 'U';
+      const actionsHtml = isMine ? `
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          <button onclick="editGroupMsg('${msg.group_id}','${msg.id}')" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:10px; cursor:pointer; padding:0;">✏️</button>
+          <button onclick="deleteGroupMsg('${msg.group_id}','${msg.id}')" style="background:none; border:none; color:rgba(255,71,87,0.5); font-size:10px; cursor:pointer; padding:0;">🗑️</button>
+        </div>` : '';
       return `
-        <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;">
-          <div style="max-width: 70%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px; gap: 8px; align-items: flex-end;">
+          ${!isMine ? `<div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0;">${senderInitial}</div>` : ''}
+          <div style="max-width: 65%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
             ${!isMine ? `<div style="font-size: 11px; font-weight: 600; color: var(--accent-cyan); margin-bottom: 3px;">${msg.sender_name}</div>` : ''}
-            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}</div>
+            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}${editedTag}</div>
             <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
+            ${actionsHtml}
           </div>
         </div>`;
     }).join('');
@@ -4697,6 +4713,70 @@ async function handleSendGroupChatMessage(e) {
   } catch (err) {
     showToast('error', 'Error sending message: ' + err.message);
   }
+}
+
+// --- GROUP CHAT EDIT/DELETE ---
+async function editGroupMsg(groupId, msgId) {
+  const newMsg = prompt('Edit your message:');
+  if (!newMsg || !newMsg.trim()) return;
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/messages/${msgId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ message: newMsg.trim() })
+    });
+    if (res.ok) loadGroupChatHistory(groupId);
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function deleteGroupMsg(groupId, msgId) {
+  if (!confirm('Delete this message?')) return;
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/messages/${msgId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (res.ok) loadGroupChatHistory(groupId);
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+// --- INDIVIDUAL CHAT EDIT/DELETE ---
+async function editChatMsg(msgId) {
+  const newMsg = prompt('Edit your message:');
+  if (!newMsg || !newMsg.trim()) return;
+  try {
+    const res = await fetch(`${API_URL}/api/chat/messages/${msgId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ message: newMsg.trim() })
+    });
+    if (res.ok && activeChatPartnerId) loadChatHistory(activeChatPartnerId);
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function deleteChatMsg(msgId) {
+  if (!confirm('Delete this message?')) return;
+  try {
+    const res = await fetch(`${API_URL}/api/chat/messages/${msgId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (res.ok && activeChatPartnerId) loadChatHistory(activeChatPartnerId);
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+// --- SHOW GROUP MEMBERS ---
+async function showGroupMembers(groupId) {
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/members`, { headers: getHeaders() });
+    const members = await res.json();
+    const names = members.map(m => `${m.full_name} (${m.role})`).join('\n');
+    alert(`Group Members (${members.length}):\n\n${names}`);
+  } catch (err) { showToast('error', err.message); }
 }
 
 // --- TAKE A TOUR (ROLE-BASED INTERACTIVE) ---
