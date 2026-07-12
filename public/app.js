@@ -4685,24 +4685,39 @@ async function loadGroupChatHistory(groupId) {
 
     const atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
 
-    messagesContainer.innerHTML = messages.map(msg => {
+    messagesContainer.innerHTML = messages.map((msg, idx) => {
       const isMine = msg.sender_id === currentUser.id;
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const editedTag = msg.edited ? ' <span style="font-style:italic; opacity:0.6;">(edited)</span>' : '';
-      const senderInitial = msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : 'U';
+      const senderName = msg.sender_name || 'Unknown';
+      const senderInitial = senderName.charAt(0).toUpperCase();
+
+      // Show avatar+name only if previous message was from different person (grouping)
+      const prevMsg = idx > 0 ? messages[idx - 1] : null;
+      const showSender = !prevMsg || prevMsg.sender_id !== msg.sender_id;
+
       const actionsHtml = isMine ? `
         <div style="display:flex; gap:4px; margin-top:4px;">
           <button onclick="editGroupMsg('${msg.group_id}','${msg.id}')" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:10px; cursor:pointer; padding:0;">✏️</button>
           <button onclick="deleteGroupMsg('${msg.group_id}','${msg.id}')" style="background:none; border:none; color:rgba(255,71,87,0.5); font-size:10px; cursor:pointer; padding:0;">🗑️</button>
         </div>` : '';
-      return `
-        <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px; gap: 8px; align-items: flex-end;">
+
+      const senderHeader = showSender ? `
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; ${isMine ? 'justify-content: flex-end;' : ''}">
           ${!isMine ? `<div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0;">${senderInitial}</div>` : ''}
-          <div style="max-width: 65%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-            ${!isMine ? `<div style="font-size: 11px; font-weight: 600; color: var(--accent-cyan); margin-bottom: 3px;">${msg.sender_name}</div>` : ''}
-            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}${editedTag}</div>
-            <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
-            ${actionsHtml}
+          <span style="font-size: 12px; font-weight: 600; color: ${isMine ? 'rgba(255,255,255,0.5)' : 'var(--accent-cyan)'};">${isMine ? 'You' : senderName}</span>
+          ${isMine ? `<div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg, #5a3fc0, #704df4); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0;">${senderInitial}</div>` : ''}
+        </div>` : '';
+
+      return `
+        <div style="margin-bottom: ${showSender ? '8px' : '2px'};">
+          ${senderHeader}
+          <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'};">
+            <div style="max-width: 65%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+              <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}${editedTag}</div>
+              <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
+              ${actionsHtml}
+            </div>
           </div>
         </div>`;
     }).join('');
