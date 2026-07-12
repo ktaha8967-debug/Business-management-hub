@@ -47,7 +47,7 @@ const isApp = isMobileApp || isDesktopApp || window.location.protocol === 'file:
 
 const API_URL = (window.location.origin.includes('localhost') || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:5000'
-  : (isApp ? LIVE_BACKEND_URL : window.location.origin);
+  : LIVE_BACKEND_URL;
 let currentUser = null;
 let currentToken = null;
 let currentBusiness = null; // Stored if user is a Business Owner
