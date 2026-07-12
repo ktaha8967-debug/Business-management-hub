@@ -455,7 +455,32 @@ input[type="file"] {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow: hidden;
+}
+
+.main-content > .dashboard-views-container {
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Chat view fills entire available space */
+#view-team-chat {
+  display: none;
+  height: 100%;
+}
+
+#view-team-chat.active {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+#view-team-chat .chat-layout-grid {
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
+  margin: 16px;
 }
 
 .main-header {
