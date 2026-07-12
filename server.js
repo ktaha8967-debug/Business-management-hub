@@ -1336,43 +1336,39 @@ app.patch('/api/meetings/tasks/:id/reject', authenticateToken, authorizeRoles('S
 
 // --- PROJECT ASSIGNMENT ROUTES (Business Owner assigns projects to team) ---
 
-// Create Project (Business Owner)
+// Create Project (Business Owner submits for admin approval)
 app.post('/api/projects', authenticateToken, authorizeRoles('Business Owners', 'Super Admin', 'Admin Team'), (req, res) => {
   try {
-    const { title, description, assigned_to, deadline, priority, category } = req.body;
+    const { title, description, deadline, priority, category } = req.body;
     if (!title) return res.status(400).json({ error: 'Project title is required' });
 
     const bus = req.user.role === 'Business Owners' ? db.findOne('businesses', b => b.owner_id === req.user.id) : null;
-
-    let assignedToName = 'Unassigned';
-    if (assigned_to) {
-      const assignee = db.findOne('users', u => u.id === assigned_to);
-      if (assignee) assignedToName = assignee.full_name;
-    }
 
     const project = db.insert('projects', {
       title,
       description: description || '',
       business_id: bus ? bus.id : null,
       business_name: bus ? bus.business_name : 'Platform',
-      assigned_to: assigned_to || null,
-      assigned_to_name: assignedToName,
+      assigned_to: null,
+      assigned_to_name: 'Pending Admin Assignment',
       assigned_by: req.user.id,
       assigned_by_name: req.user.full_name,
       deadline: deadline || '',
       priority: priority || 'medium',
       category: category || 'general',
-      status: 'pending',
+      status: 'pending_admin_review',
       submission_notes: '',
       submission_url: '',
-      history: [{ status: 'pending', user: req.user.full_name, timestamp: new Date().toISOString(), notes: `Project created by ${req.user.full_name}` }]
+      admin_notes: '',
+      history: [{ status: 'pending_admin_review', user: req.user.full_name, timestamp: new Date().toISOString(), notes: `Project submitted for admin review` }]
     });
 
-    if (assigned_to) {
-      db.sendNotification(assigned_to, 'New Project Assigned', `You have been assigned a new project: ${title}`);
-    }
+    // Notify admins
+    db.find('users', u => ['Super Admin', 'Admin Team'].includes(u.role)).forEach(admin => {
+      db.sendNotification(admin.id, 'New Project Request', `Business partner "${bus ? bus.business_name : 'Platform'}" submitted a project: ${title}`);
+    });
 
-    db.logActivity(req.user.id, 'create_project', `Created project "${title}"`);
+    db.logActivity(req.user.id, 'create_project', `Created project "${title}" for admin review`);
     res.status(201).json(project);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1384,14 +1380,71 @@ app.get('/api/projects', authenticateToken, (req, res) => {
   try {
     const allProjects = db.getCollection('projects');
     if (['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      // Admin sees ALL projects
       res.json(allProjects);
     } else if (req.user.role === 'Business Owners') {
-      const bus = db.findOne('businesses', b => b.owner_id === req.user.id);
-      res.json(allProjects.filter(p => p.business_id === bus?.id || p.assigned_by === req.user.id));
+      // Owner sees their own projects
+      res.json(allProjects.filter(p => p.assigned_by === req.user.id));
     } else {
-      // Assigned users see their projects
-      res.json(allProjects.filter(p => p.assigned_to === req.user.id));
+      // Employees only see APPROVED projects assigned to them
+      res.json(allProjects.filter(p => p.assigned_to === req.user.id && p.status !== 'pending_admin_review'));
     }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin Approve Project & Assign
+app.patch('/api/projects/:id/approve', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), (req, res) => {
+  try {
+    const { assigned_to, admin_notes, deadline } = req.body;
+    const project = db.findOne('projects', p => p.id === req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    let assignedToName = 'Unassigned';
+    if (assigned_to) {
+      const assignee = db.findOne('users', u => u.id === assigned_to);
+      if (assignee) assignedToName = assignee.full_name;
+    }
+
+    const history = [...project.history, { status: 'approved', user: req.user.full_name, timestamp: new Date().toISOString(), notes: admin_notes || `Approved and assigned to ${assignedToName}` }];
+    const updated = db.update('projects', project.id, {
+      status: 'approved',
+      assigned_to: assigned_to || null,
+      assigned_to_name: assignedToName,
+      admin_notes: admin_notes || '',
+      deadline: deadline || project.deadline,
+      history
+    });
+
+    // Notify assigned person
+    if (assigned_to) {
+      db.sendNotification(assigned_to, 'Project Assigned', `You have been assigned a project: ${project.title}. Admin Notes: ${admin_notes || 'None'}`);
+    }
+    // Notify business owner
+    db.sendNotification(project.assigned_by, 'Project Approved', `Your project "${project.title}" has been approved and assigned to ${assignedToName}`);
+
+    db.logActivity(req.user.id, 'approve_project', `Approved project "${project.title}" and assigned to ${assignedToName}`);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin Reject Project
+app.patch('/api/projects/:id/reject', authenticateToken, authorizeRoles('Super Admin', 'Admin Team'), (req, res) => {
+  try {
+    const { admin_notes } = req.body;
+    const project = db.findOne('projects', p => p.id === req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const history = [...project.history, { status: 'rejected', user: req.user.full_name, timestamp: new Date().toISOString(), notes: admin_notes || 'Project rejected by admin' }];
+    const updated = db.update('projects', project.id, { status: 'rejected', admin_notes, history });
+
+    db.sendNotification(project.assigned_by, 'Project Rejected', `Your project "${project.title}" has been rejected. Reason: ${admin_notes || 'No reason provided'}`);
+
+    db.logActivity(req.user.id, 'reject_project', `Rejected project "${project.title}"`);
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1630,6 +1630,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('admin-meeting-tasks')">
             <span class="nav-icon">📝</span> Meeting Task Approvals
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-projects')">
+            <span class="nav-icon">🚀</span> Project Approvals
+          </a>
         </div>
 
         <!-- Super Admin (Boss) only links -->
@@ -2371,11 +2374,11 @@
 
         <!-- ==================== OWNER ASSIGN PROJECTS ==================== -->
         <section id="view-owner-projects" class="dashboard-view">
-          <h3>Assign Projects</h3>
-          <p class="subtitle">Create and assign projects to team members. Describe the project in brief and track progress.</p>
+          <h3>Submit Project Request</h3>
+          <p class="subtitle">Submit your project idea. Admin will review, approve, and assign it to the right team member.</p>
           <div class="grid-2col">
             <div class="panel-card">
-              <h4>📋 Create New Project</h4>
+              <h4>📋 Submit New Project</h4>
               <form id="owner-project-form" onsubmit="handleCreateProject(event)">
                 <div class="form-group">
                   <label for="proj-title">Project Title</label>
@@ -2396,15 +2399,9 @@
                     <option value="other">Other</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label>Assign To</label>
-                  <select id="proj-assigned-to" required>
-                    <option value="">Select team member...</option>
-                  </select>
-                </div>
                 <div class="form-row">
                   <div class="form-group" style="flex:1;">
-                    <label for="proj-deadline">Deadline</label>
+                    <label for="proj-deadline">Preferred Deadline</label>
                     <input type="date" id="proj-deadline">
                   </div>
                   <div class="form-group" style="flex:1;">
@@ -2417,14 +2414,44 @@
                     </select>
                   </div>
                 </div>
-                <button type="submit" class="btn-primary" style="width: 100%;">Create & Assign Project</button>
+                <div style="padding: 12px; background: rgba(112,77,244,0.08); border-radius: 8px; border-left: 3px solid var(--accent-purple); margin-bottom: 15px;">
+                  <div style="font-size: 12px; color: var(--text-secondary);">ℹ️ Your project will be sent to Admin for review. Admin will approve and assign it to the right team member.</div>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Submit for Admin Review</button>
               </form>
             </div>
             <div class="panel-card">
               <h4>📂 My Projects</h4>
               <div id="owner-projects-list" class="timeline" style="max-height: 600px; overflow-y: auto;">
-                <p style="color:var(--text-muted);">No projects created yet.</p>
+                <p style="color:var(--text-muted);">No projects submitted yet.</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== ADMIN PROJECT APPROVAL ==================== -->
+        <section id="view-admin-projects" class="dashboard-view">
+          <h3>Project Approvals</h3>
+          <p class="subtitle">Review project requests from Business Owners. Approve, assign to team members, and set deadlines.</p>
+          <div class="panel-card">
+            <div class="table-responsive">
+              <table class="data-table" id="admin-projects-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Project</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Submitted By</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="8" class="text-center">No pending projects.</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>

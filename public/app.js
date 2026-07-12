@@ -278,8 +278,9 @@ function switchMainTab(tabId) {
     'editor-meetings': 'Editor Meetings',
     'smm-meetings': 'SMM Meetings',
     'mentee-meetings': 'Mentee Meetings',
-    'owner-projects': 'Assign Projects',
-    'assigned-projects': 'My Assigned Projects'
+    'owner-projects': 'Submit Project Request',
+    'assigned-projects': 'My Assigned Projects',
+    'admin-projects': 'Project Approvals'
   };
   document.getElementById('header-view-title').innerText = titleMap[tabId] || 'Platform Dashboard';
 
@@ -475,9 +476,10 @@ async function fetchTabData(tabId) {
     loadEmployeeMeetings('mentee-my-meetings-list');
   } else if (tabId === 'owner-projects') {
     loadOwnerProjects();
-    loadProjectAssignees();
   } else if (tabId === 'assigned-projects') {
     loadAssignedProjects();
+  } else if (tabId === 'admin-projects') {
+    loadAdminProjects();
   }
 }
 
@@ -3860,28 +3862,11 @@ async function handleWebDevSubmit(e) {
 
 // --- PROJECT ASSIGNMENT FUNCTIONS ---
 
-async function loadProjectAssignees() {
-  try {
-    const res = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-    const usersData = await res.json();
-    const users = Array.isArray(usersData) ? usersData : [];
-
-    const select = document.getElementById('proj-assigned-to');
-    if (select) {
-      select.innerHTML = '<option value="">Select team member...</option>' +
-        users.map(u => `<option value="${u.id}">${u.full_name} (${u.role})</option>`).join('');
-    }
-  } catch (err) {
-    console.warn('Error loading assignees:', err);
-  }
-}
-
 async function handleCreateProject(e) {
   e.preventDefault();
   const title = document.getElementById('proj-title').value;
   const description = document.getElementById('proj-description').value;
   const category = document.getElementById('proj-category').value;
-  const assigned_to = document.getElementById('proj-assigned-to').value;
   const deadline = document.getElementById('proj-deadline').value;
   const priority = document.getElementById('proj-priority').value;
 
@@ -3889,10 +3874,10 @@ async function handleCreateProject(e) {
     const res = await fetch(`${API_URL}/api/projects`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ title, description, category, assigned_to, deadline, priority })
+      body: JSON.stringify({ title, description, category, deadline, priority })
     });
     if (!res.ok) throw new Error('Failed to create project');
-    showToast('success', 'Project created and assigned successfully');
+    showToast('success', 'Project submitted for admin review');
     document.getElementById('owner-project-form').reset();
     loadOwnerProjects();
   } catch (err) {
@@ -3908,13 +3893,15 @@ async function loadOwnerProjects() {
 
     const container = document.getElementById('owner-projects-list');
     if (projects.length === 0) {
-      container.innerHTML = '<p style="color:var(--text-muted);">No projects created yet.</p>';
+      container.innerHTML = '<p style="color:var(--text-muted);">No projects submitted yet.</p>';
       return;
     }
 
     container.innerHTML = projects.map(p => {
       let statusBadge = '';
-      if (p.status === 'pending') statusBadge = '<span class="badge badge-pending">Pending</span>';
+      if (p.status === 'pending_admin_review') statusBadge = '<span class="badge badge-pending">Pending Review</span>';
+      else if (p.status === 'approved') statusBadge = '<span class="badge badge-success">Approved</span>';
+      else if (p.status === 'rejected') statusBadge = '<span class="badge badge-rejected">Rejected</span>';
       else if (p.status === 'in_progress') statusBadge = '<span class="badge badge-active">In Progress</span>';
       else if (p.status === 'submitted') statusBadge = '<span class="badge badge-approved">Submitted</span>';
       else if (p.status === 'completed') statusBadge = '<span class="badge badge-success">Completed</span>';
@@ -3926,9 +3913,10 @@ async function loadOwnerProjects() {
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div style="flex: 1;">
               <div style="font-weight: 600; font-size: 14px; color: #fff;">${p.title}</div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Assigned to: <strong>${p.assigned_to_name}</strong> | Category: ${p.category}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Category: ${p.category} | Assigned to: <strong>${p.assigned_to_name}</strong></div>
               <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5;">${(p.description || '').slice(0, 120)}${p.description && p.description.length > 120 ? '...' : ''}</div>
-              ${p.deadline ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Deadline: ${p.deadline} | Priority: <span style="color: ${priorityColors[p.priority]}">${p.priority.toUpperCase()}</span></div>` : ''}
+              ${p.admin_notes ? `<div style="font-size: 11px; color: var(--accent-cyan); margin-top: 6px;">Admin: ${p.admin_notes}</div>` : ''}
+              ${p.deadline ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Deadline: ${p.deadline} | Priority: <span style="color: ${priorityColors[p.priority]}">${p.priority.toUpperCase()}</span></div>` : ''}
             </div>
             <div>${statusBadge}</div>
           </div>
@@ -3937,6 +3925,106 @@ async function loadOwnerProjects() {
   } catch (err) {
     showToast('error', err.message);
   }
+}
+
+// Admin loads all projects for approval
+async function loadAdminProjects() {
+  try {
+    const res = await fetch(`${API_URL}/api/projects`, { headers: getHeaders() });
+    const projects = await res.json();
+    if (!res.ok) throw new Error(projects.error);
+
+    const tbody = document.querySelector('#admin-projects-table tbody');
+    if (projects.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center">No projects found.</td></tr>';
+      return;
+    }
+
+    const priorityColors = { low: '#2ed573', medium: '#ff9f43', high: '#ff6b6b', urgent: '#ff4757' };
+
+    tbody.innerHTML = projects.map(p => {
+      let statusBadge = '';
+      if (p.status === 'pending_admin_review') statusBadge = '<span class="badge badge-pending">Pending Review</span>';
+      else if (p.status === 'approved') statusBadge = '<span class="badge badge-success">Approved</span>';
+      else if (p.status === 'rejected') statusBadge = '<span class="badge badge-rejected">Rejected</span>';
+      else if (p.status === 'in_progress') statusBadge = '<span class="badge badge-active">In Progress</span>';
+      else if (p.status === 'submitted') statusBadge = '<span class="badge badge-approved">Submitted</span>';
+      else if (p.status === 'completed') statusBadge = '<span class="badge badge-success">Completed</span>';
+
+      return `
+        <tr>
+          <td><strong>${p.business_name}</strong></td>
+          <td>${p.title}</td>
+          <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${(p.description || '').slice(0, 60)}</td>
+          <td><span class="badge badge-active">${p.category}</span></td>
+          <td><span style="color: ${priorityColors[p.priority]}; font-weight: 600;">${p.priority}</span></td>
+          <td>${p.assigned_by_name}</td>
+          <td>${statusBadge}</td>
+          <td>
+            ${p.status === 'pending_admin_review'
+              ? `<button class="btn-primary" style="padding:4px 8px; font-size:11px; background:green;" onclick="openProjectApproveModal('${p.id}')">Approve</button>
+                 <button class="btn-secondary" style="padding:4px 8px; font-size:11px; border-color:red; color:red;" onclick="rejectProject('${p.id}')">Reject</button>`
+              : `<button class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="viewProjectDetails('${p.id}')">View</button>`}
+          </td>
+        </tr>`;
+    }).join('');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function openProjectApproveModal(projectId) {
+  // Fetch available team members
+  const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
+  const usersData = await usersRes.json();
+  const users = Array.isArray(usersData) ? usersData : [];
+
+  const assignTo = prompt(`Assign this project to someone. Enter their name:\n\nAvailable members:\n${users.map(u => `- ${u.full_name} (${u.role})`).join('\n')}`);
+
+  if (!assignTo) return;
+
+  const selectedUser = users.find(u => u.full_name.toLowerCase().includes(assignTo.toLowerCase()));
+  if (!selectedUser) {
+    return showToast('error', 'User not found. Please enter exact name.');
+  }
+
+  const admin_notes = prompt('Admin notes (optional):') || '';
+  const deadline = prompt('Deadline (YYYY-MM-DD, optional):') || '';
+
+  try {
+    const res = await fetch(`${API_URL}/api/projects/${projectId}/approve`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ assigned_to: selectedUser.id, admin_notes, deadline })
+    });
+    if (!res.ok) throw new Error('Approval failed');
+    showToast('success', `Project approved and assigned to ${selectedUser.full_name}`);
+    loadAdminProjects();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+async function rejectProject(projectId) {
+  const admin_notes = prompt('Reason for rejection:');
+  if (admin_notes === null) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/projects/${projectId}/reject`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ admin_notes })
+    });
+    if (!res.ok) throw new Error('Rejection failed');
+    showToast('success', 'Project rejected');
+    loadAdminProjects();
+  } catch (err) {
+    showToast('error', err.message);
+  }
+}
+
+function viewProjectDetails(projectId) {
+  showToast('info', 'Project details view coming soon');
 }
 
 async function loadAssignedProjects() {
