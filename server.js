@@ -1545,11 +1545,11 @@ app.get('/api/chat/users', authenticateToken, (req, res) => {
 
 app.post('/api/chat/send', authenticateToken, (req, res) => {
   try {
-    const { recipient_id, message } = req.body;
-    if (!recipient_id || !message) {
-      return res.status(400).json({ error: 'recipient_id and message are required' });
+    const { recipient_id, message, attachment } = req.body;
+    if (!recipient_id || (!message && !attachment)) {
+      return res.status(400).json({ error: 'recipient_id and message or attachment required' });
     }
-    
+
     const recipient = db.findOne('users', u => u.id === recipient_id);
     if (!recipient) {
       return res.status(404).json({ error: 'Recipient not found' });
@@ -1562,25 +1562,59 @@ app.post('/api/chat/send', authenticateToken, (req, res) => {
     // Enforce chat rules: employees can only message admin/boss
     const senderIsPower = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
     const recipientIsPower = ['Super Admin', 'Admin Team'].includes(recipient.role);
-    
+
     if (!senderIsPower && !recipientIsPower) {
       return res.status(403).json({ error: 'Permission denied: You can only message Admin or Boss' });
     }
-    
+
     const newMsg = {
       id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
       sender_id: req.user.id,
       recipient_id: recipient_id,
-      message: message,
+      message: message || '',
       timestamp: new Date().toISOString()
     };
-    
+
+    if (attachment) {
+      newMsg.attachment = attachment;
+    }
+
     db.insert('chat_messages', newMsg);
 
     // Send notification to recipient
-    db.sendNotification(recipient_id, `New message from ${req.user.full_name}`, message.substring(0, 100));
+    const notifMsg = attachment
+      ? `${req.user.full_name} sent a file: ${attachment.name || 'attachment'}`
+      : `New message from ${req.user.full_name}: ${(message || '').substring(0, 100)}`;
+    db.sendNotification(recipient_id, `New message from ${req.user.full_name}`, notifMsg);
 
     res.json(newMsg);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Chat file upload
+app.post('/api/chat/upload', authenticateToken, upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    const isImage = req.file.mimetype.startsWith('image/');
+    const isVideo = req.file.mimetype.startsWith('video/');
+    const isAudio = req.file.mimetype.startsWith('audio/');
+    let fileType = 'file';
+    if (isImage) fileType = 'image';
+    else if (isVideo) fileType = 'video';
+    else if (isAudio) fileType = 'audio';
+
+    res.json({
+      url: fileUrl,
+      name: req.file.originalname,
+      size: req.file.size,
+      type: fileType,
+      mime: req.file.mimetype
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

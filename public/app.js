@@ -3468,9 +3468,11 @@ async function loadChatHistory(partnerId) {
     messagesContainer.innerHTML = messages.map(msg => {
       const isMine = msg.sender_id === currentUser.id;
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const attachmentHtml = msg.attachment ? renderChatAttachment(msg.attachment, isMine) : '';
       return `
         <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;">
           <div style="max-width: 70%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+            ${attachmentHtml}
             <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}</div>
             <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
           </div>
@@ -3488,32 +3490,161 @@ async function loadChatHistory(partnerId) {
 async function handleSendChatMessage(e) {
   e.preventDefault();
   if (!activeChatPartnerId) return;
-  
+
   const inputEl = document.getElementById('chat-message-input');
   const messageText = inputEl.value.trim();
-  if (!messageText) return;
-  
+  const fileInput = document.getElementById('chat-file-input');
+  const hasFile = fileInput.files.length > 0;
+
+  if (!messageText && !hasFile) return;
+
   inputEl.value = '';
-  
-  try {
-    const res = await fetch(`${API_URL}/api/chat/send`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({
-        recipient_id: activeChatPartnerId,
-        message: messageText
-      })
-    });
-    
-    if (res.ok) {
-      loadChatHistory(activeChatPartnerId);
-    } else {
-      const err = await res.json();
-      showToast('error', err.error || 'Failed to send message');
+
+  // If there's a file, upload it first then send message with file info
+  if (hasFile) {
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+      const uploadRes = await fetch(`${API_URL}/api/chat/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${currentToken}` },
+        body: formData
+      });
+
+      if (!uploadRes.ok) throw new Error('File upload failed');
+      const fileData = await uploadRes.json();
+
+      // Send message with file info
+      const finalMessage = messageText || `📎 ${fileData.name}`;
+      const res = await fetch(`${API_URL}/api/chat/send`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          recipient_id: activeChatPartnerId,
+          message: finalMessage,
+          attachment: fileData
+        })
+      });
+
+      if (res.ok) {
+        clearChatFile();
+        loadChatHistory(activeChatPartnerId);
+      } else {
+        const err = await res.json();
+        showToast('error', err.error || 'Failed to send message');
+      }
+    } catch (err) {
+      showToast('error', 'Error: ' + err.message);
     }
-  } catch (err) {
-    showToast('error', 'Error sending message: ' + err.message);
+  } else {
+    // Text-only message
+    try {
+      const res = await fetch(`${API_URL}/api/chat/send`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          recipient_id: activeChatPartnerId,
+          message: messageText
+        })
+      });
+
+      if (res.ok) {
+        loadChatHistory(activeChatPartnerId);
+      } else {
+        const err = await res.json();
+        showToast('error', err.error || 'Failed to send message');
+      }
+    } catch (err) {
+      showToast('error', 'Error sending message: ' + err.message);
+    }
   }
+}
+
+// --- CHAT FILE HANDLERS ---
+let pendingChatFile = null;
+
+function handleChatFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  pendingChatFile = file;
+  const preview = document.getElementById('chat-file-preview');
+  const content = document.getElementById('chat-file-preview-content');
+
+  const isImage = file.type.startsWith('image/');
+  const isVideo = file.type.startsWith('video/');
+  const isAudio = file.type.startsWith('audio/');
+  const sizeKB = (file.size / 1024).toFixed(1);
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+  const sizeStr = file.size > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+
+  let icon = '📄';
+  if (isImage) icon = '🖼️';
+  else if (isVideo) icon = '🎬';
+  else if (isAudio) icon = '🎵';
+  else if (file.type === 'application/pdf') icon = '📕';
+  else if (file.name.match(/\.(zip|rar)$/)) icon = '📦';
+
+  let previewHtml = '';
+
+  if (isImage) {
+    const url = URL.createObjectURL(file);
+    previewHtml = `<img src="${url}" style="width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">`;
+  } else {
+    previewHtml = `<div style="width: 48px; height: 48px; border-radius: 8px; background: rgba(112,77,244,0.15); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;">${icon}</div>`;
+  }
+
+  content.innerHTML = `
+    ${previewHtml}
+    <div style="flex: 1; min-width: 0;">
+      <div style="font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+      <div style="font-size: 11px; color: var(--text-muted);">${sizeStr}</div>
+    </div>
+  `;
+  preview.style.display = 'block';
+}
+
+function clearChatFile() {
+  pendingChatFile = null;
+  const fileInput = document.getElementById('chat-file-input');
+  if (fileInput) fileInput.value = '';
+  const preview = document.getElementById('chat-file-preview');
+  if (preview) preview.style.display = 'none';
+}
+
+function renderChatAttachment(attachment, isMine) {
+  if (!attachment) return '';
+  const { url, name, type, size } = attachment;
+  const sizeKB = (size / 1024).toFixed(1);
+  const sizeMB = (size / (1024 * 1024)).toFixed(1);
+  const sizeStr = size > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+
+  if (type === 'image') {
+    return `<a href="${API_URL}${url}" target="_blank" style="display: block; margin-top: 6px; border-radius: 10px; overflow: hidden;"><img src="${API_URL}${url}" style="max-width: 100%; max-height: 250px; border-radius: 10px; display: block;" alt="${name}"></a>`;
+  }
+  if (type === 'video') {
+    return `<video controls style="max-width: 100%; max-height: 250px; border-radius: 10px; margin-top: 6px; display: block;"><source src="${API_URL}${url}" type="${attachment.mime}"></video>`;
+  }
+  if (type === 'audio') {
+    return `<audio controls style="width: 100%; margin-top: 6px; height: 36px;"><source src="${API_URL}${url}" type="${attachment.mime}"></audio>`;
+  }
+
+  // Generic file
+  let icon = '📄';
+  if (name.match(/\.pdf$/)) icon = '📕';
+  else if (name.match(/\.(doc|docx)$/)) icon = '📝';
+  else if (name.match(/\.(zip|rar)$/)) icon = '📦';
+  else if (name.match(/\.(txt)$/)) icon = '📃';
+
+  return `<a href="${API_URL}${url}" target="_blank" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-top: 6px; background: rgba(255,255,255,0.06); border-radius: 10px; text-decoration: none; color: ${isMine ? '#fff' : 'var(--accent-cyan)'}; border: 1px solid rgba(255,255,255,0.08);">
+    <span style="font-size: 20px;">${icon}</span>
+    <div style="flex: 1; min-width: 0;">
+      <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</div>
+      <div style="font-size: 10px; opacity: 0.6;">${sizeStr}</div>
+    </div>
+    <span style="font-size: 14px;">⬇️</span>
+  </a>`;
 }
 
 // --- WEBRTC STANDALONE CALL ENGINE ---
