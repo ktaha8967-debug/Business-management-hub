@@ -4947,9 +4947,24 @@ async function deleteChatMsg(msgId) {
 // --- SHOW GROUP MEMBERS ---
 async function showGroupMembers(groupId) {
   try {
-    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/members`, { headers: getHeaders() });
-    const members = await safeJson(res);
-    // Show in a proper panel instead of alert
+    // Get group details
+    const grpRes = await fetch(`${API_URL}/api/chat/groups`, { headers: getHeaders() });
+    const groups = await safeJson(grpRes);
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+
+    // Get all users
+    const usersRes = await fetch(`${API_URL}/api/chat/users`, { headers: getHeaders() });
+    const allUsers = await safeJson(usersRes);
+    const individualUsers = allUsers.filter(u => u.type === 'user');
+
+    // Get current members
+    const membersRes = await fetch(`${API_URL}/api/chat/groups/${groupId}/members`, { headers: getHeaders() });
+    const members = await safeJson(membersRes);
+
+    const memberIds = members.map(m => m.id);
+    const nonMembers = individualUsers.filter(u => !memberIds.includes(u.id));
+
     let panel = document.getElementById('ws-right-panel');
     if (!panel) {
       panel = document.createElement('div');
@@ -4957,24 +4972,71 @@ async function showGroupMembers(groupId) {
       panel.style.cssText = 'position:fixed; top:0; right:0; bottom:0; width:320px; background:var(--bg-secondary); border-left:1px solid var(--border-color); z-index:5000; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); box-shadow:-4px 0 20px rgba(0,0,0,0.3);';
       document.body.appendChild(panel);
     }
+
     panel.style.transform = 'translateX(0)';
     panel.innerHTML = `
       <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-        <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;">👥 Group Members — ${members.length}</h4>
+        <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;">👥 ${group.name} — ${members.length} members</h4>
         <button onclick="document.getElementById('ws-right-panel').style.transform='translateX(100%)'" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
       </div>
       <div style="flex:1; overflow-y:auto; padding:12px;">
-        ${members.map(m => `
-          <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:4px;">
+        <!-- Current Members -->
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Members — ${members.length}</div>
+        ${members.map(m => {
+          const isCreator = m.id === group.creator_id;
+          const isMe = m.id === currentUser.id;
+          return `
+          <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:4px; background:rgba(255,255,255,0.02);">
             <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff;">${m.full_name.charAt(0)}</div>
-            <div>
-              <div style="font-size:13px; font-weight:600; color:#fff;">${m.full_name}</div>
+            <div style="flex:1;">
+              <div style="font-size:13px; font-weight:600; color:#fff;">${m.full_name} ${isCreator ? '<span style="font-size:9px; background:rgba(255,159,67,0.2); color:#ff9f43; padding:1px 6px; border-radius:4px;">CREATOR</span>' : ''}</div>
               <div style="font-size:11px; color:var(--text-muted);">${m.role}</div>
             </div>
+            ${!isCreator && !isMe ? `<button onclick="removeGroupMember('${groupId}','${m.id}')" style="background:rgba(255,71,87,0.15); border:1px solid rgba(255,71,87,0.3); border-radius:6px; padding:4px 8px; color:#ff4757; font-size:11px; cursor:pointer;">Remove</button>` : ''}
+          </div>`;
+        }).join('')}
+
+        <!-- Add Members -->
+        ${nonMembers.length > 0 ? `
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin:16px 0 8px; border-top:1px solid var(--border-color); padding-top:12px;">Add Members</div>
+        ${nonMembers.map(u => `
+          <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:4px; background:rgba(255,255,255,0.02);">
+            <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #00d2ff, #704df4); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff;">${u.full_name.charAt(0)}</div>
+            <div style="flex:1;">
+              <div style="font-size:13px; font-weight:600; color:#fff;">${u.full_name}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${u.role}</div>
+            </div>
+            <button onclick="addGroupMember('${groupId}','${u.id}')" style="background:rgba(46,213,115,0.15); border:1px solid rgba(46,213,115,0.3); border-radius:6px; padding:4px 8px; color:#2ed573; font-size:11px; cursor:pointer;">Add</button>
           </div>
-        `).join('')}
+        `).join('')}` : '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:20px;">All users are already in this group</div>'}
       </div>
     `;
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function addGroupMember(groupId, userId) {
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/members/add`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ user_id: userId })
+    });
+    if (res.ok) {
+      showToast('success', 'Member added!');
+      showGroupMembers(groupId);
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function removeGroupMember(groupId, userId) {
+  if (!confirm('Remove this member from the group?')) return;
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/members/${userId}`, {
+      method: 'DELETE', headers: getHeaders()
+    });
+    if (res.ok) {
+      showToast('success', 'Member removed!');
+      showGroupMembers(groupId);
+    } else { const e = await res.json(); showToast('error', e.error); }
   } catch (err) { showToast('error', err.message); }
 }
 

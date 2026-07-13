@@ -1258,6 +1258,75 @@ app.patch('/api/chat/groups/:id/members', authenticateToken, authorizeRoles('Sup
   }
 });
 
+// Add member to group
+app.post('/api/chat/groups/:id/members/add', authenticateToken, (req, res) => {
+  try {
+    const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+
+    const group = db.findOne('chat_groups', g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    // Only creator or admin can add members
+    const isAdmin = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
+    if (group.creator_id !== req.user.id && !isAdmin) {
+      return res.status(403).json({ error: 'Only group creator or admin can add members' });
+    }
+
+    if (group.members.includes(user_id)) {
+      return res.status(400).json({ error: 'User is already a member' });
+    }
+
+    const user = db.findOne('users', u => u.id === user_id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const updatedMembers = [...group.members, user_id];
+    const updatedNames = [...group.member_names, user.full_name];
+
+    const updated = db.update('chat_groups', group.id, {
+      members: updatedMembers,
+      member_names: updatedNames
+    });
+
+    db.sendNotification(user_id, `Added to group "${group.name}"`, `${req.user.full_name} added you to the group`);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove member from group
+app.delete('/api/chat/groups/:id/members/:userId', authenticateToken, (req, res) => {
+  try {
+    const group = db.findOne('chat_groups', g => g.id === req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    const isAdmin = ['Super Admin', 'Admin Team', 'Business Owners'].includes(req.user.role);
+    if (group.creator_id !== req.user.id && !isAdmin && req.params.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    if (req.params.userId === group.creator_id) {
+      return res.status(400).json({ error: 'Cannot remove the group creator' });
+    }
+
+    const userIdx = group.members.indexOf(req.params.userId);
+    if (userIdx === -1) return res.status(400).json({ error: 'User is not a member' });
+
+    const updatedMembers = group.members.filter(id => id !== req.params.userId);
+    const updatedNames = group.member_names.filter((_, i) => i !== userIdx);
+
+    const updated = db.update('chat_groups', group.id, {
+      members: updatedMembers,
+      member_names: updatedNames
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete Group
 app.delete('/api/chat/groups/:id', authenticateToken, authorizeRoles('Super Admin', 'Admin Team', 'Business Owners'), (req, res) => {
   try {
