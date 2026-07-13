@@ -562,10 +562,33 @@ input[type="file"] {
 }
 
 /* Workspace detail responsive */
+@media (max-width: 900px) {
+  #workspace-detail-layout {
+    grid-template-columns: 200px 1fr !important;
+  }
+}
 @media (max-width: 768px) {
   #workspace-detail-layout {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto 1fr !important;
+    height: calc(100vh - 120px) !important;
+  }
+  #workspace-detail-layout > div:first-child {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  /* Team chat responsive */
+  .chat-layout-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 200px 1fr !important;
+  }
+  .chat-contacts-panel {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+  }
+  /* Right sidebar panel */
+  #ws-right-panel {
+    width: 100% !important;
   }
 }
 
