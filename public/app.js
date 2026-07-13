@@ -4898,16 +4898,23 @@ async function loadWsChannels(wsId) {
       list.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px; font-size:12px;">No channels yet</div>';
       return;
     }
-    list.innerHTML = channels.map(ch => `
-      <div onclick="selectChannel('${ch.id}')" style="padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:8px; transition:all 0.2s; ${activeChannelId === ch.id ? 'background:rgba(112,77,244,0.15); border:1px solid rgba(112,77,244,0.3);' : 'border:1px solid transparent;'}" onmouseover="if('${activeChannelId}'!=='${ch.id}')this.style.background='rgba(255,255,255,0.04)'" onmouseout="if('${activeChannelId}'!=='${ch.id}')this.style.background='transparent'">
-        <span style="color:var(--accent-cyan); font-weight:700; font-size:14px;">#</span>
+    list.innerHTML = channels.map(ch => {
+      const isVoice = ch.channel_type === 'voice';
+      const icon = isVoice ? '🔊' : '#';
+      return `
+      <div onclick="${isVoice ? `joinVoiceChannel('${ch.id}')` : `selectChannel('${ch.id}')`}" style="padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:8px; transition:all 0.2s; ${activeChannelId === ch.id ? 'background:rgba(112,77,244,0.15); border:1px solid rgba(112,77,244,0.3);' : 'border:1px solid transparent;'}" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='${activeChannelId === ch.id ? 'rgba(112,77,244,0.15)' : 'transparent'}'">
+        <span style="color:${isVoice ? '#2ed573' : 'var(--accent-cyan)'}; font-weight:700; font-size:14px;">${icon}</span>
         <div style="flex:1; min-width:0;">
           <div style="font-size:13px; font-weight:600; color:#fff;">${ch.name}</div>
-          ${ch.last_message ? `<div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ch.last_message.sender}: ${ch.last_message.text}</div>` : ''}
+          ${ch.last_message && !isVoice ? `<div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ch.last_message.sender}: ${ch.last_message.text}</div>` : ''}
+          ${isVoice ? '<div style="font-size:10px; color:#2ed573;">Voice Channel</div>' : ''}
         </div>
-        ${ch.message_count ? `<span style="font-size:10px; color:var(--text-muted);">${ch.message_count}</span>` : ''}
-      </div>
-    `).join('');
+        ${ch.message_count && !isVoice ? `<span style="font-size:10px; color:var(--text-muted);">${ch.message_count}</span>` : ''}
+        <div style="display:flex; gap:2px;">
+          <button onclick="event.stopPropagation(); showChannelRoles('${ch.id}')" style="background:none; border:none; color:var(--text-muted); font-size:10px; cursor:pointer; padding:2px;" title="Channel roles">🔐</button>
+        </div>
+      </div>`;
+    }).join('');
   } catch (err) { showToast('error', err.message); }
 }
 
@@ -4995,7 +5002,8 @@ async function handleCreateChannel(e) {
       method: 'POST', headers: getHeaders(),
       body: JSON.stringify({
         name: document.getElementById('ch-name-input').value,
-        description: document.getElementById('ch-desc-input').value
+        description: document.getElementById('ch-desc-input').value,
+        channel_type: document.getElementById('ch-type-input').value
       })
     });
     if (res.ok) {
@@ -5064,6 +5072,302 @@ async function showWsAddMember() {
     if (addRes.ok) showToast('success', `${user.full_name} added!`);
     else { const e = await addRes.json(); showToast('error', e.error); }
   } catch (err) { showToast('error', err.message); }
+}
+
+// ==================== WORKSPACE ROLES ====================
+async function loadWsRoles() {
+  if (!activeWorkspaceId) return [];
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, { headers: getHeaders() });
+    return await safeJson(res);
+  } catch { return []; }
+}
+
+async function showWsRoles() {
+  if (!activeWorkspaceId) return;
+  const roles = await loadWsRoles();
+  const wsRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
+  const ws = await safeJson(wsRes);
+
+  let msg = 'Roles:\n';
+  roles.forEach(r => { msg += `\n${r.icon} ${r.display_name} (${r.color})`; });
+  if (roles.length === 0) msg += '\nNo roles created yet.';
+
+  const action = prompt(`${msg}\n\nOptions:\n1. Create new role\n2. Assign role to member\n\nType number or Cancel:`);
+  if (action === '1') {
+    const name = prompt('Role name:');
+    if (!name) return;
+    const color = prompt('Color hex (default #704df4):', '#704df4');
+    const icon = prompt('Icon emoji (default 🔵):', '🔵');
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ name, color, icon })
+    });
+    if (res.ok) showToast('success', 'Role created!');
+    else { const e = await res.json(); showToast('error', e.error); }
+  } else if (action === '2') {
+    if (roles.length === 0) { showToast('error', 'Create a role first'); return; }
+    const memberNames = ws.member_names.join(', ');
+    const memberName = prompt(`Members: ${memberNames}\n\nEnter member name:`);
+    if (!memberName) return;
+    const memberIdx = ws.member_names.findIndex(n => n.toLowerCase() === memberName.toLowerCase());
+    if (memberIdx === -1) { showToast('error', 'Member not found'); return; }
+    const memberId = ws.members[memberIdx];
+    const roleNames = roles.map((r, i) => `${i + 1}. ${r.display_name}`).join('\n');
+    const roleNum = prompt(`Roles:\n${roleNames}\n\nEnter role number:`);
+    if (!roleNum) return;
+    const role = roles[parseInt(roleNum) - 1];
+    if (!role) { showToast('error', 'Invalid role'); return; }
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/members/${memberId}/role`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ role_id: role.id })
+    });
+    if (res.ok) showToast('success', `Role "${role.display_name}" assigned to ${memberName}!`);
+    else { const e = await res.json(); showToast('error', e.error); }
+  }
+}
+
+// ==================== CHANNEL ROLE ACCESS ====================
+async function showChannelRoles(chId) {
+  if (!activeWorkspaceId) return;
+  const roles = await loadWsRoles();
+  if (roles.length === 0) { showToast('error', 'Create workspace roles first'); return; }
+
+  const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels`, { headers: getHeaders() });
+  const channels = await safeJson(res);
+  const ch = channels.find(c => c.id === chId);
+  if (!ch) return;
+
+  const currentRoles = ch.allowed_roles || [];
+  const msg = roles.map(r => `${currentRoles.includes(r.id) ? '✅' : '❌'} ${r.icon} ${r.display_name}`).join('\n');
+  const choice = prompt(`Channel: #${ch.name}\nCurrent access:\n${msg}\n\nToggle role (enter name):`);
+  if (!choice) return;
+  const role = roles.find(r => r.display_name.toLowerCase() === choice.toLowerCase());
+  if (!role) { showToast('error', 'Role not found'); return; }
+
+  let updated = [...currentRoles];
+  if (updated.includes(role.id)) {
+    updated = updated.filter(id => id !== role.id);
+  } else {
+    updated.push(role.id);
+  }
+
+  const updateRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels/${chId}/roles`, {
+    method: 'PUT', headers: getHeaders(),
+    body: JSON.stringify({ allowed_roles: updated })
+  });
+  if (updateRes.ok) showToast('success', 'Channel access updated!');
+  else { const e = await updateRes.json(); showToast('error', e.error); }
+}
+
+// ==================== VOICE/VIDEO CHANNEL (Pure WebRTC) ====================
+let vcLocalStream = null;
+let vcPeers = {}; // userId -> { pc, stream }
+let vcPollInterval = null;
+let activeVcChannelId = null;
+const VC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+
+async function joinVoiceChannel(chId) {
+  try {
+    vcLocalStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    activeVcChannelId = chId;
+
+    await fetch(`${API_URL}/api/workspaces/vc/join`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ channel_id: chId })
+    });
+
+    showToast('success', 'Joined voice channel');
+
+    // Show VC controls
+    showVcControls(chId);
+
+    // Poll for new users and signals
+    vcPollInterval = setInterval(() => pollVcUpdates(chId), 2000);
+  } catch (err) {
+    showToast('error', 'Microphone access denied: ' + err.message);
+  }
+}
+
+function showVcControls(chId) {
+  const header = document.getElementById('ws-channel-header');
+  if (!header) return;
+  let controls = document.getElementById('vc-controls');
+  if (!controls) {
+    controls = document.createElement('div');
+    controls.id = 'vc-controls';
+    controls.style.cssText = 'display:flex; gap:8px; margin-top:8px; align-items:center;';
+    header.appendChild(controls);
+  }
+  controls.innerHTML = `
+    <span style="font-size:12px; color:#2ed573; font-weight:600;">🟢 In Voice</span>
+    <button onclick="toggleVcMute()" id="vc-mute-btn" style="padding:6px 12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; font-size:12px; cursor:pointer;">🎤 Mute</button>
+    <button onclick="leaveVoiceChannel()" style="padding:6px 12px; background:rgba(255,71,87,0.2); border:1px solid rgba(255,71,87,0.3); border-radius:8px; color:#ff4757; font-size:12px; cursor:pointer;">📞 Leave</button>
+    <div id="vc-participants" style="font-size:11px; color:var(--text-muted); margin-left:auto;"></div>
+  `;
+}
+
+async function leaveVoiceChannel() {
+  if (vcLocalStream) {
+    vcLocalStream.getTracks().forEach(t => t.stop());
+    vcLocalStream = null;
+  }
+  Object.values(vcPeers).forEach(p => { if (p.pc) p.pc.close(); });
+  vcPeers = {};
+  if (vcPollInterval) clearInterval(vcPollInterval);
+  if (activeVcChannelId) {
+    await fetch(`${API_URL}/api/workspaces/vc/leave`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ channel_id: activeVcChannelId })
+    });
+  }
+  activeVcChannelId = null;
+  const controls = document.getElementById('vc-controls');
+  if (controls) controls.remove();
+  showToast('success', 'Left voice channel');
+}
+
+let vcMuted = false;
+function toggleVcMute() {
+  vcMuted = !vcMuted;
+  if (vcLocalStream) {
+    vcLocalStream.getAudioTracks().forEach(t => { t.enabled = !vcMuted; });
+  }
+  const btn = document.getElementById('vc-mute-btn');
+  if (btn) btn.innerText = vcMuted ? '🔇 Unmute' : '🎤 Mute';
+  fetch(`${API_URL}/api/workspaces/vc/toggle`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ channel_id: activeVcChannelId, mute: vcMuted })
+  });
+}
+
+async function pollVcUpdates(chId) {
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
+    const participants = await safeJson(res);
+
+    // Show participants
+    const pDiv = document.getElementById('vc-participants');
+    if (pDiv) pDiv.innerText = `${participants.length} in voice`;
+
+    // Connect to new users
+    for (const p of participants) {
+      if (p.user_id === currentUser.id) continue;
+      if (!vcPeers[p.user_id]) {
+        await createVcPeer(p.user_id, chId);
+      }
+    }
+
+    // Check for signals
+    const sigRes = await fetch(`${API_URL}/api/workspaces/vc/signals/${chId}`, { headers: getHeaders() });
+    const signals = await safeJson(sigRes);
+    for (const sig of signals) {
+      if (sig.signal_type === 'offer') {
+        await handleVcOffer(sig, chId);
+      } else if (sig.signal_type === 'answer') {
+        await handleVcAnswer(sig);
+      } else if (sig.signal_type === 'candidate') {
+        await handleVcCandidate(sig);
+      }
+    }
+  } catch (err) { /* silent poll */ }
+}
+
+async function createVcPeer(remoteUserId, chId) {
+  const pc = new RTCPeerConnection(VC_CONFIG);
+  vcPeers[remoteUserId] = { pc, stream: null };
+
+  // Add local tracks
+  if (vcLocalStream) {
+    vcLocalStream.getTracks().forEach(track => pc.addTrack(track, vcLocalStream));
+  }
+
+  // Handle remote stream
+  pc.ontrack = (e) => {
+    if (!vcPeers[remoteUserId].stream) {
+      vcPeers[remoteUserId].stream = e.streams[0];
+      playVcAudio(e.streams[0], remoteUserId);
+    }
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      fetch(`${API_URL}/api/workspaces/vc/signal`, {
+        method: 'POST', headers: getHeaders(),
+        body: JSON.stringify({ channel_id: chId, to_user_id: remoteUserId, signal_type: 'candidate', signal_data: e.candidate })
+      });
+    }
+  };
+
+  // Create offer
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  fetch(`${API_URL}/api/workspaces/vc/signal`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ channel_id: chId, to_user_id: remoteUserId, signal_type: 'offer', signal_data: offer })
+  });
+}
+
+async function handleVcOffer(sig, chId) {
+  let peerData = vcPeers[sig.from_user_id];
+  if (!peerData) {
+    const pc = new RTCPeerConnection(VC_CONFIG);
+    peerData = { pc, stream: null };
+    vcPeers[sig.from_user_id] = peerData;
+
+    if (vcLocalStream) {
+      vcLocalStream.getTracks().forEach(track => pc.addTrack(track, vcLocalStream));
+    }
+
+    pc.ontrack = (e) => {
+      if (!peerData.stream) {
+        peerData.stream = e.streams[0];
+        playVcAudio(e.streams[0], sig.from_user_id);
+      }
+    };
+
+    pc.onicecandidate = (e) => {
+      if (e.candidate) {
+        fetch(`${API_URL}/api/workspaces/vc/signal`, {
+          method: 'POST', headers: getHeaders(),
+          body: JSON.stringify({ channel_id: chId, to_user_id: sig.from_user_id, signal_type: 'candidate', signal_data: e.candidate })
+        });
+      }
+    };
+  }
+
+  await peerData.pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
+  const answer = await peerData.pc.createAnswer();
+  await peerData.pc.setLocalDescription(answer);
+  fetch(`${API_URL}/api/workspaces/vc/signal`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ channel_id: chId, to_user_id: sig.from_user_id, signal_type: 'answer', signal_data: answer })
+  });
+}
+
+async function handleVcAnswer(sig) {
+  const peerData = vcPeers[sig.from_user_id];
+  if (peerData) {
+    await peerData.pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
+  }
+}
+
+async function handleVcCandidate(sig) {
+  const peerData = vcPeers[sig.from_user_id];
+  if (peerData) {
+    await peerData.pc.addIceCandidate(new RTCIceCandidate(sig.signal_data));
+  }
+}
+
+function playVcAudio(stream, userId) {
+  let audio = document.getElementById(`vc-audio-${userId}`);
+  if (!audio) {
+    audio = document.createElement('audio');
+    audio.id = `vc-audio-${userId}`;
+    audio.autoplay = true;
+    document.body.appendChild(audio);
+  }
+  audio.srcObject = stream;
 }
 
 // --- TAKE A TOUR (ROLE-BASED INTERACTIVE) ---

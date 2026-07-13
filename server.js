@@ -2811,16 +2811,18 @@ app.post('/api/workspaces/:wsId/channels', authenticateToken, (req, res) => {
     if (!ws) return res.status(404).json({ error: 'Workspace not found' });
     if (!ws.members.includes(req.user.id)) return res.status(403).json({ error: 'Not a member' });
 
-    const { name, description } = req.body;
+    const { name, description, channel_type } = req.body;
     if (!name) return res.status(400).json({ error: 'Channel name is required' });
 
     const channel = db.insert('workspace_channels', {
       workspace_id: ws.id,
       name: name.toLowerCase().replace(/\s+/g, '-'),
       description: description || '',
+      channel_type: channel_type || 'text',
       created_by: req.user.id,
       created_by_name: req.user.full_name,
-      is_default: false
+      is_default: false,
+      allowed_roles: []
     });
     res.status(201).json(channel);
   } catch (error) {
@@ -2948,6 +2950,188 @@ app.delete('/api/workspaces/messages/:msgId', authenticateToken, (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// ==================== WORKSPACE ROLES ====================
+
+// Create role in workspace
+app.post('/api/workspaces/:wsId/roles', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.wsId);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    const { name, color, icon } = req.body;
+    if (!name) return res.status(400).json({ error: 'Role name required' });
+
+    const role = db.insert('workspace_roles', {
+      workspace_id: ws.id,
+      name: name.toLowerCase().trim(),
+      display_name: name,
+      color: color || '#704df4',
+      icon: icon || '🔵',
+      created_by: req.user.id
+    });
+    res.status(201).json(role);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Get roles in workspace
+app.get('/api/workspaces/:wsId/roles', authenticateToken, (req, res) => {
+  try {
+    const roles = db.find('workspace_roles', r => r.workspace_id === req.params.wsId);
+    res.json(roles);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Delete role
+app.delete('/api/workspaces/:wsId/roles/:roleId', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.wsId);
+    if (!ws || (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role))) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    db.delete('workspace_roles', req.params.roleId);
+    res.json({ message: 'Role deleted' });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Assign role to member
+app.post('/api/workspaces/:wsId/members/:userId/role', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.wsId);
+    if (!ws || (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role))) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    const { role_id } = req.body;
+    // Store role assignment in member data
+    const memberRoles = ws.member_roles || {};
+    memberRoles[req.params.userId] = role_id;
+    db.update('workspaces', ws.id, { member_roles: memberRoles });
+    res.json({ message: 'Role assigned' });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// ==================== CHANNEL ROLES (access control) ====================
+
+// Update channel allowed roles
+app.put('/api/workspaces/:wsId/channels/:chId/roles', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.wsId);
+    if (!ws || (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role))) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    const channel = db.findOne('workspace_channels', c => c.id === req.params.chId && c.workspace_id === ws.id);
+    if (!channel) return res.status(404).json({ error: 'Channel not found' });
+
+    const { allowed_roles } = req.body; // array of role IDs, empty = everyone
+    const updated = db.update('workspace_channels', channel.id, { allowed_roles: allowed_roles || [] });
+    res.json(updated);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Check if user can access channel
+function canAccessChannel(userId, userWsRole, channel) {
+  if (!channel.allowed_roles || channel.allowed_roles.length === 0) return true;
+  return channel.allowed_roles.includes(userWsRole);
+}
+
+// ==================== VOICE/VIDEO CHANNELS (Pure WebRTC) ====================
+
+// Update channel type (text/voice)
+app.put('/api/workspaces/:wsId/channels/:chId/type', authenticateToken, (req, res) => {
+  try {
+    const channel = db.findOne('workspace_channels', c => c.id === req.params.chId && c.workspace_id === req.params.wsId);
+    if (!channel) return res.status(404).json({ error: 'Channel not found' });
+    const updated = db.update('workspace_channels', channel.id, { channel_type: req.body.channel_type || 'text' });
+    res.json(updated);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Join voice channel
+app.post('/api/workspaces/vc/join', authenticateToken, (req, res) => {
+  try {
+    const { channel_id } = req.body;
+    if (!channel_id) return res.status(400).json({ error: 'channel_id required' });
+
+    const channel = db.findOne('workspace_channels', c => c.id === channel_id);
+    if (!channel) return res.status(404).json({ error: 'Channel not found' });
+
+    const existing = db.findOne('vc_sessions', s => s.channel_id === channel_id && s.user_id === req.user.id);
+    if (existing) return res.json(existing);
+
+    const session = db.insert('vc_sessions', {
+      channel_id,
+      workspace_id: channel.workspace_id,
+      user_id: req.user.id,
+      user_name: req.user.full_name,
+      is_muted: false,
+      is_video_off: false
+    });
+    res.json(session);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Leave voice channel
+app.post('/api/workspaces/vc/leave', authenticateToken, (req, res) => {
+  try {
+    const { channel_id } = req.body;
+    const sessions = db.find('vc_sessions', s => s.channel_id === channel_id && s.user_id === req.user.id);
+    sessions.forEach(s => db.delete('vc_sessions', s.id));
+    res.json({ message: 'Left VC' });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Get VC participants
+app.get('/api/workspaces/vc/:channelId', authenticateToken, (req, res) => {
+  try {
+    const sessions = db.find('vc_sessions', s => s.channel_id === req.params.channelId);
+    res.json(sessions);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Toggle mute/video
+app.post('/api/workspaces/vc/toggle', authenticateToken, (req, res) => {
+  try {
+    const { channel_id, mute, video_off } = req.body;
+    const session = db.findOne('vc_sessions', s => s.channel_id === channel_id && s.user_id === req.user.id);
+    if (!session) return res.status(404).json({ error: 'Not in VC' });
+    const updates = {};
+    if (mute !== undefined) updates.is_muted = mute;
+    if (video_off !== undefined) updates.is_video_off = video_off;
+    const updated = db.update('vc_sessions', session.id, updates);
+    res.json(updated);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// WebRTC signaling for VC (offer/answer/candidate)
+app.post('/api/workspaces/vc/signal', authenticateToken, (req, res) => {
+  try {
+    const { channel_id, to_user_id, signal_type, signal_data } = req.body;
+    db.insert('vc_signals', {
+      channel_id,
+      from_user_id: req.user.id,
+      from_user_name: req.user.full_name,
+      to_user_id,
+      signal_type,
+      signal_data,
+      timestamp: new Date().toISOString()
+    });
+    res.json({ ok: true });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Get signals for user in channel
+app.get('/api/workspaces/vc/signals/:channelId', authenticateToken, (req, res) => {
+  try {
+    const signals = db.find('vc_signals', s =>
+      s.channel_id === req.params.channelId && s.to_user_id === req.user.id
+    );
+    // Delete after reading
+    signals.forEach(s => db.delete('vc_signals', s.id));
+    res.json(signals);
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 // Serve frontend SPA index file

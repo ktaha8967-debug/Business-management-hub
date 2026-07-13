@@ -1960,6 +1960,7 @@
                 </div>
                 <div style="display:flex; gap:6px;">
                   <button onclick="openCreateChannelModal()" style="flex:1; padding:6px; background:rgba(112,77,244,0.15); border:1px solid rgba(112,77,244,0.3); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;"># + Channel</button>
+                  <button onclick="showWsRoles()" style="flex:1; padding:6px; background:rgba(112,77,244,0.1); border:1px solid rgba(112,77,244,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">🎭 Roles</button>
                   <button onclick="showWsMembers()" style="flex:1; padding:6px; background:rgba(0,210,255,0.1); border:1px solid rgba(0,210,255,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">👥 Members</button>
                   <button onclick="showWsAddMember()" style="padding:6px 10px; background:rgba(46,213,115,0.1); border:1px solid rgba(46,213,115,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer;">+</button>
                 </div>
@@ -2032,6 +2033,13 @@
                 <div class="form-group">
                   <label>Channel Name</label>
                   <input type="text" id="ch-name-input" required placeholder="e.g. design">
+                </div>
+                <div class="form-group">
+                  <label>Channel Type</label>
+                  <select id="ch-type-input">
+                    <option value="text">💬 Text Channel</option>
+                    <option value="voice">🔊 Voice Channel</option>
+                  </select>
                 </div>
                 <div class="form-group">
                   <label>Description</label>

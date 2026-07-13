@@ -65,7 +65,10 @@ const defaultDB = {
   projects: [],
   workspaces: [],
   workspace_channels: [],
-  workspace_messages: []
+  workspace_messages: [],
+  workspace_roles: [],
+  vc_sessions: [],
+  vc_signals: []
 };
 
 function readDB() {
