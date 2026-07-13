@@ -5854,26 +5854,29 @@ async function loadProfileData() {
   try {
     const res = await fetch(`${API_URL}/api/profile`, { headers: getHeaders() });
     const profile = await safeJson(res);
-    document.getElementById('profile-name').value = profile.full_name || '';
-    document.getElementById('profile-email').value = profile.email || '';
-    document.getElementById('profile-phone').value = profile.phone || '';
-    document.getElementById('profile-bio').value = profile.bio || '';
-    document.getElementById('profile-role').value = profile.role || '';
+    const nameEl = document.getElementById('profile-name');
+    const emailEl = document.getElementById('profile-email');
+    const phoneEl = document.getElementById('profile-phone');
+    const bioEl = document.getElementById('profile-bio');
+    const roleEl = document.getElementById('profile-role');
+    if (nameEl) nameEl.value = profile.full_name || '';
+    if (emailEl) emailEl.value = profile.email || '';
+    if (phoneEl) phoneEl.value = profile.phone || '';
+    if (bioEl) bioEl.value = profile.bio || '';
+    if (roleEl) roleEl.value = profile.role || '';
 
     // Avatar
     const img = document.getElementById('profile-avatar-img');
     const text = document.getElementById('profile-avatar-text');
     if (profile.avatar) {
-      img.src = API_URL + profile.avatar;
-      img.style.display = 'block';
-      text.style.display = 'none';
-      // Also update sidebar avatar
+      if (img) { img.src = API_URL + profile.avatar; img.style.display = 'block'; }
+      if (text) text.style.display = 'none';
       const sideImg = document.getElementById('sidebar-avatar-img');
       const sideText = document.getElementById('sidebar-avatar-text');
       if (sideImg) { sideImg.src = API_URL + profile.avatar; sideImg.style.display = 'block'; }
       if (sideText) sideText.style.display = 'none';
     } else {
-      text.innerText = (profile.full_name || 'U').charAt(0).toUpperCase();
+      if (text) text.innerText = (profile.full_name || 'U').charAt(0).toUpperCase();
     }
   } catch (err) { showToast('error', err.message); }
 }
