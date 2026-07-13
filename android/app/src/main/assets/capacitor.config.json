@@ -1,0 +1,10 @@
+{
+	"appId": "com.ascentra.command",
+	"appName": "Ascentra Command",
+	"webDir": "public",
+	"bundledWebRuntime": false,
+	"server": {
+		"url": "https://business-management-hub.britsync.co.uk",
+		"cleartext": true
+	}
+}
