@@ -315,6 +315,7 @@ function switchMainTab(tabId) {
     'owner-projects': 'Submit Project Request',
     'assigned-projects': 'My Assigned Projects',
     'admin-projects': 'Project Approvals',
+    'admin-users': 'User Management',
     'workspaces': 'Workspaces',
     'workspace-detail': 'Workspace Channel'
   };
@@ -480,6 +481,8 @@ async function fetchTabData(tabId) {
     loadAdminInvitations();
   } else if (tabId === 'admin-audit') {
     loadAdminAuditDesk();
+  } else if (tabId === 'admin-users') {
+    loadAdminUsers();
   } else if (tabId === 'owner-profile') {
     loadOwnerProfile();
   } else if (tabId === 'owner-reports') {
@@ -2260,6 +2263,135 @@ function downloadAllVideos(urls) {
   });
 }
 
+// 15.1 Admin User Management
+async function loadAdminUsers() {
+  try {
+    const res = await fetch(`${API_URL}/api/users/all`, { headers: getHeaders() });
+    const users = await res.json();
+    if (!Array.isArray(users)) { showToast('Failed to load users', 'error'); return; }
+
+    const tbody = document.querySelector('#admin-users-table tbody');
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td><strong>${u.full_name || 'N/A'}</strong></td>
+        <td>${u.email}</td>
+        <td>
+          <select class="role-select" data-user-id="${u.id}" onchange="changeUserRole('${u.id}', this.value)">
+            ${['Super Admin','Admin Team','Business Owners','Video Editors','Social Media Managers','Full Stack Developers','Web Developers','AI Engineers','Mentorship Members'].map(r =>
+              `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td>
+          <span class="status-badge status-${u.status === 'approved' ? 'approved' : u.status === 'suspended' ? 'rejected' : 'pending'}">
+            ${u.status}
+          </span>
+        </td>
+        <td class="action-buttons">
+          <button class="btn btn-sm btn-primary" onclick="resetUserPassword('${u.id}', '${u.full_name}')">🔑 Reset PW</button>
+          ${u.status === 'approved'
+            ? `<button class="btn btn-sm btn-warning" onclick="toggleUserStatus('${u.id}', 'suspended')">⛔ Suspend</button>`
+            : `<button class="btn btn-sm btn-success" onclick="toggleUserStatus('${u.id}', 'approved')">✅ Approve</button>`
+          }
+          <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}', '${u.full_name}')">🗑️</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('loadAdminUsers error:', err);
+    showToast('Error loading users', 'error');
+  }
+}
+
+async function changeUserRole(userId, newRole) {
+  try {
+    const res = await fetch(`${API_URL}/api/users/${userId}/role`, {
+      method: 'PATCH',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole })
+    });
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Failed', 'error'); return; }
+    showToast(`Role changed to ${newRole}`);
+  } catch (err) { showToast('Error changing role', 'error'); }
+}
+
+function resetUserPassword(userId, userName) {
+  const modal = document.getElementById('generic-confirm-modal');
+  modal.querySelector('.modal-title').textContent = `Reset Password — ${userName}`;
+  modal.querySelector('.modal-body').innerHTML = `
+    <p>Enter new password for <strong>${userName}</strong>:</p>
+    <input type="password" id="new-admin-password" class="form-input" placeholder="New password (min 6 chars)" style="width:100%;margin-top:8px;">
+    <input type="password" id="new-admin-password-confirm" class="form-input" placeholder="Confirm password" style="width:100%;margin-top:8px;">
+  `;
+  modal.querySelector('.modal-actions').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="confirmResetPassword('${userId}')">Reset</button>
+  `;
+  modal.classList.remove('hidden');
+}
+
+async function confirmResetPassword(userId) {
+  const pw = document.getElementById('new-admin-password').value;
+  const pw2 = document.getElementById('new-admin-password-confirm').value;
+  if (pw.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+  if (pw !== pw2) { showToast('Passwords do not match', 'error'); return; }
+  try {
+    const res = await fetch(`${API_URL}/api/users/${userId}/password`, {
+      method: 'PATCH',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_password: pw })
+    });
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Failed', 'error'); return; }
+    showToast('Password reset successfully');
+    closeGenericModal();
+  } catch (err) { showToast('Error resetting password', 'error'); }
+}
+
+async function toggleUserStatus(userId, newStatus) {
+  try {
+    const res = await fetch(`${API_URL}/api/users/${userId}/status`, {
+      method: 'PATCH',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Failed', 'error'); return; }
+    showToast(`User ${newStatus === 'approved' ? 'approved' : 'suspended'}`);
+    loadAdminUsers();
+  } catch (err) { showToast('Error updating status', 'error'); }
+}
+
+function deleteUser(userId, userName) {
+  const modal = document.getElementById('generic-confirm-modal');
+  modal.querySelector('.modal-title').textContent = `Delete User — ${userName}`;
+  modal.querySelector('.modal-body').innerHTML = `
+    <p>Are you sure you want to delete <strong>${userName}</strong>?</p>
+    <p style="color: var(--accent-red); font-size: 13px;">This action cannot be undone.</p>
+  `;
+  modal.querySelector('.modal-actions').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
+    <button class="btn btn-danger" onclick="confirmDeleteUser('${userId}')">🗑️ Delete</button>
+  `;
+  modal.classList.remove('hidden');
+}
+
+async function confirmDeleteUser(userId) {
+  try {
+    const res = await fetch(`${API_URL}/api/users/${userId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Failed', 'error'); return; }
+    showToast('User deleted');
+    closeGenericModal();
+    loadAdminUsers();
+  } catch (err) { showToast('Error deleting user', 'error'); }
+}
+
+function closeGenericModal() {
+  const modal = document.getElementById('generic-confirm-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
 // 15. Strategic Portfolio Audit Desk
 let auditChartsInstance = null;
 
@@ -3517,7 +3649,7 @@ async function loadChatHistory(partnerId) {
         <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;">
           <div style="max-width: 70%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
             ${attachmentHtml}
-            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}${editedTag}</div>
+            <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${formatMessageText(msg.message)}${editedTag}</div>
             <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
             ${actionsHtml}
           </div>
@@ -4718,7 +4850,7 @@ async function loadGroupChatHistory(groupId) {
           ${senderHeader}
           <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'};">
             <div style="max-width: 65%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-              <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${msg.message}${editedTag}</div>
+              <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${formatMessageText(msg.message)}${editedTag}</div>
               <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
               ${actionsHtml}
             </div>
@@ -5240,7 +5372,7 @@ async function loadChannelMessages(chId) {
         </div>` : ''}
         <div style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'};">
           <div style="max-width:65%; ${isMine ? 'background:linear-gradient(135deg,#704df4,#5a3fc0); color:#fff; border-radius:18px 18px 4px 18px;' : 'background:rgba(255,255,255,0.08); color:#fff; border-radius:18px 18px 18px 4px;'} padding:10px 14px;">
-            <div style="font-size:13px; word-wrap:break-word;">${msg.message}${editedTag}</div>
+            <div style="font-size:13px; word-wrap:break-word; white-space:pre-wrap; line-height:1.5;">${formatMessageText(msg.message)}${editedTag}</div>
             <div style="font-size:10px; ${isMine ? 'color:rgba(255,255,255,0.6)' : 'color:var(--text-muted)'}; text-align:right; margin-top:4px;">${timeStr}</div>
             ${actionsHtml}
           </div>
@@ -5708,6 +5840,211 @@ async function handleVcAnswer(sig) {
 async function handleVcCandidate(sig) {
   const peerData = vcPeers[sig.from_user_id];
   if (peerData) await peerData.pc.addIceCandidate(new RTCIceCandidate(sig.signal_data));
+}
+
+// ==================== USER PROFILE ====================
+function openProfileModal() {
+  document.getElementById('profile-modal').classList.remove('hidden');
+  loadProfileData();
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal').classList.add('hidden');
+}
+
+async function loadProfileData() {
+  try {
+    const res = await fetch(`${API_URL}/api/profile`, { headers: getHeaders() });
+    const profile = await safeJson(res);
+    document.getElementById('profile-name').value = profile.full_name || '';
+    document.getElementById('profile-email').value = profile.email || '';
+    document.getElementById('profile-phone').value = profile.phone || '';
+    document.getElementById('profile-bio').value = profile.bio || '';
+    document.getElementById('profile-role').value = profile.role || '';
+
+    // Avatar
+    const img = document.getElementById('profile-avatar-img');
+    const text = document.getElementById('profile-avatar-text');
+    if (profile.avatar) {
+      img.src = API_URL + profile.avatar;
+      img.style.display = 'block';
+      text.style.display = 'none';
+      // Also update sidebar avatar
+      const sideImg = document.getElementById('sidebar-avatar-img');
+      const sideText = document.getElementById('sidebar-avatar-text');
+      if (sideImg) { sideImg.src = API_URL + profile.avatar; sideImg.style.display = 'block'; }
+      if (sideText) sideText.style.display = 'none';
+    } else {
+      text.innerText = (profile.full_name || 'U').charAt(0).toUpperCase();
+    }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function handleProfileUpdate(e) {
+  e.preventDefault();
+  try {
+    const res = await fetch(`${API_URL}/api/profile`, {
+      method: 'PUT', headers: getHeaders(),
+      body: JSON.stringify({
+        full_name: document.getElementById('profile-name').value,
+        phone: document.getElementById('profile-phone').value,
+        bio: document.getElementById('profile-bio').value
+      })
+    });
+    if (res.ok) {
+      const data = await safeJson(res);
+      // Update sidebar
+      document.getElementById('shell-username-display').innerText = data.full_name;
+      document.getElementById('sidebar-avatar-text').innerText = data.full_name.charAt(0).toUpperCase();
+      currentUser.full_name = data.full_name;
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      showToast('success', 'Profile updated!');
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('error', 'Please select an image'); return; }
+
+  // Preview
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('profile-avatar-img').src = ev.target.result;
+    document.getElementById('profile-avatar-img').style.display = 'block';
+    document.getElementById('profile-avatar-text').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+
+  // Upload
+  const formData = new FormData();
+  formData.append('avatar', file);
+  try {
+    const res = await fetch(`${API_URL}/api/profile/avatar`, {
+      method: 'POST', headers: { 'Authorization': `Bearer ${currentToken}` },
+      body: formData
+    });
+    if (res.ok) {
+      const data = await safeJson(res);
+      const sideImg = document.getElementById('sidebar-avatar-img');
+      const sideText = document.getElementById('sidebar-avatar-text');
+      if (sideImg) { sideImg.src = API_URL + data.avatar; sideImg.style.display = 'block'; }
+      if (sideText) sideText.style.display = 'none';
+      showToast('success', 'Avatar updated!');
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+// Drag & drop avatar
+document.addEventListener('DOMContentLoaded', () => {
+  // Avatar drag & drop
+  const avatarPreview = document.getElementById('profile-avatar-preview');
+  if (avatarPreview) {
+    avatarPreview.addEventListener('dragover', (e) => { e.preventDefault(); avatarPreview.style.borderColor = 'var(--accent-purple)'; });
+    avatarPreview.addEventListener('dragleave', () => { avatarPreview.style.borderColor = 'transparent'; });
+    avatarPreview.addEventListener('drop', (e) => {
+      e.preventDefault();
+      avatarPreview.style.borderColor = 'transparent';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const input = document.getElementById('profile-avatar-input');
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  // Auto-grow textareas + Enter key handlers
+  document.querySelectorAll('textarea[data-auto-grow]').forEach(ta => {
+    ta.addEventListener('input', autoGrowHandler);
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const form = ta.closest('form');
+        if (form) form.dispatchEvent(new Event('submit'));
+      }
+    });
+  });
+});
+
+async function handlePasswordChange(e) {
+  e.preventDefault();
+  const current = document.getElementById('profile-current-pw').value;
+  const newPw = document.getElementById('profile-new-pw').value;
+  try {
+    const res = await fetch(`${API_URL}/api/profile/password`, {
+      method: 'PUT', headers: getHeaders(),
+      body: JSON.stringify({ current_password: current, new_password: newPw })
+    });
+    if (res.ok) {
+      showToast('success', 'Password changed!');
+      document.getElementById('profile-current-pw').value = '';
+      document.getElementById('profile-new-pw').value = '';
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+// ==================== AUTO-GROWING TEXTAREA FOR CHAT ====================
+function initAutoGrowTextareas() {
+  document.querySelectorAll('textarea[data-auto-grow], input[data-auto-grow]').forEach(el => {
+    el.addEventListener('input', autoGrowHandler);
+  });
+}
+
+function autoGrowHandler(e) {
+  const el = e.target;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+}
+
+// Convert chat inputs to auto-growing textareas
+function upgradeChatInput(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const form = container.querySelector('form');
+  if (!form) return;
+  const input = form.querySelector('input[type="text"]');
+  if (!input) return;
+
+  const textarea = document.createElement('textarea');
+  textarea.id = input.id;
+  textarea.name = input.name;
+  textarea.placeholder = input.placeholder;
+  textarea.disabled = input.disabled;
+  textarea.required = input.required;
+  textarea.setAttribute('data-auto-grow', 'true');
+  textarea.style.cssText = input.style.cssText + '; resize:none; min-height:44px; max-height:150px; line-height:1.5; overflow-y:auto; white-space:pre-wrap; word-wrap:break-word; font-family:inherit;';
+  textarea.rows = 1;
+  textarea.addEventListener('input', autoGrowHandler);
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      form.dispatchEvent(new Event('submit'));
+    }
+  });
+  input.replaceWith(textarea);
+}
+
+// ==================== MESSAGE FORMATTING ====================
+function formatMessageText(text) {
+  if (!text) return '';
+  // Escape HTML
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  // Bold **text**
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic *text*
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Code `text`
+  html = html.replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.1); padding:1px 4px; border-radius:3px; font-size:12px;">$1</code>');
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+  return html;
 }
 
 // --- TAKE A TOUR (ROLE-BASED INTERACTIVE) ---

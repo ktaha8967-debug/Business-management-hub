@@ -2476,9 +2476,90 @@ app.get('/api/users/all', authenticateToken, authorizeRoles('Super Admin', 'Admi
       email: u.email,
       role: u.role,
       status: u.status,
+      avatar: u.avatar || null,
       created_at: u.created_at
     }));
     res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== USER PROFILE ====================
+
+// Get own profile
+app.get('/api/profile', authenticateToken, (req, res) => {
+  try {
+    const user = db.findOne('users', u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      avatar: user.avatar || null,
+      phone: user.phone || '',
+      bio: user.bio || '',
+      created_at: user.created_at
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update own profile (name, phone, bio)
+app.put('/api/profile', authenticateToken, (req, res) => {
+  try {
+    const { full_name, phone, bio } = req.body;
+    const updates = {};
+    if (full_name) updates.full_name = full_name;
+    if (phone !== undefined) updates.phone = phone;
+    if (bio !== undefined) updates.bio = bio;
+
+    const updated = db.update('users', req.user.id, updates);
+    res.json({
+      id: updated.id,
+      full_name: updated.full_name,
+      email: updated.email,
+      role: updated.role,
+      avatar: updated.avatar || null,
+      phone: updated.phone || '',
+      bio: updated.bio || ''
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upload avatar
+app.post('/api/profile/avatar', authenticateToken, upload.single('avatar'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const avatarUrl = `/uploads/${req.file.filename}`;
+    const updated = db.update('users', req.user.id, { avatar: avatarUrl });
+    res.json({ avatar: avatarUrl });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Change own password
+app.put('/api/profile/password', authenticateToken, (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) return res.status(400).json({ error: 'Both passwords required' });
+    if (new_password.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
+
+    const user = db.findOne('users', u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const match = bcrypt.compareSync(current_password, user.password_hash);
+    if (!match) return res.status(400).json({ error: 'Current password is incorrect' });
+
+    const hash = bcrypt.hashSync(new_password, 10);
+    db.update('users', user.id, { password_hash: hash });
+    res.json({ message: 'Password changed successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

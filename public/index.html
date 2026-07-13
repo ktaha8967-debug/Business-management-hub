@@ -1637,6 +1637,9 @@
           <a href="#" class="nav-item" onclick="switchMainTab('admin-projects')">
             <span class="nav-icon">🚀</span> Project Approvals
           </a>
+          <a href="#" class="nav-item" onclick="switchMainTab('admin-users')">
+            <span class="nav-icon">👥</span> User Management
+          </a>
         </div>
 
         <!-- Super Admin (Boss) only links -->
@@ -1763,11 +1766,14 @@
 
       <!-- Sidebar Footer User Profile -->
       <div class="sidebar-footer">
-        <button onclick="startRoleTour()" style="width: 100%; padding: 8px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(112,77,244,0.15), rgba(0,210,255,0.15)); border: 1px solid rgba(112,77,244,0.3); border-radius: 10px; color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, rgba(112,77,244,0.25), rgba(0,210,255,0.25))'" onmouseout="this.style.background='linear-gradient(135deg, rgba(112,77,244,0.15), rgba(0,210,255,0.15))'">
+        <button onclick="startRoleTour()" style="width: 115px; padding: 8px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(112,77,244,0.15), rgba(0,210,255,0.15)); border: 1px solid rgba(112,77,244,0.3); border-radius: 10px; color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, rgba(112,77,244,0.25), rgba(0,210,255,0.25))'" onmouseout="this.style.background='linear-gradient(135deg, rgba(112,77,244,0.15), rgba(0,210,255,0.15))'">
           <span>🎯</span> Take a Tour
         </button>
-        <div class="user-profile-summary">
-          <div class="user-avatar" id="avatar-letters">US</div>
+        <div class="user-profile-summary" style="cursor:pointer;" onclick="openProfileModal()">
+          <div class="user-avatar" id="avatar-letters" style="position:relative;">
+            <img id="sidebar-avatar-img" src="" style="display:none; width:100%; height:100%; border-radius:50%; object-fit:cover; position:absolute; top:0; left:0;">
+            <span id="sidebar-avatar-text">US</span>
+          </div>
           <div class="user-text">
             <div class="user-name" id="shell-username-display">User Name</div>
             <div class="user-email" id="shell-email-display">user@example.com</div>
@@ -1926,7 +1932,7 @@
                   <input type="file" id="chat-file-input" style="display: none;" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.rar,.txt" onchange="handleChatFileSelect(event)">
                   <button type="button" onclick="document.getElementById('chat-file-input').click()" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Attach file">📎</button>
                   <div style="flex: 1; position: relative;">
-                    <input type="text" id="chat-message-input" placeholder="Type a message..." required disabled style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s; box-sizing: border-box;">
+                    <textarea id="chat-message-input" data-auto-grow placeholder="Type a message..." required disabled rows="1" style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s; box-sizing: border-box; resize: none; min-height: 44px; max-height: 150px; line-height: 1.5; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; font-family: inherit;"></textarea>
                   </div>
                   <button type="submit" id="chat-send-btn" disabled style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); border: none; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; flex-shrink: 0;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">➤</button>
                 </form>
@@ -1980,8 +1986,8 @@
                 <div id="ws-messages-container" style="flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:6px; background:linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 100%);">
                 </div>
                 <div id="ws-input-area" style="padding:14px 20px; border-top:1px solid var(--border-color); background:rgba(0,0,0,0.3); flex-shrink:0;">
-                  <form id="ws-msg-form" onsubmit="handleSendWsMessage(event)" style="display:flex; gap:10px; align-items:center;">
-                    <input type="text" id="ws-msg-input" placeholder="Message #channel" style="flex:1; padding:12px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:24px; color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                  <form id="ws-msg-form" onsubmit="handleSendWsMessage(event)" style="display:flex; gap:10px; align-items:flex-end;">
+                    <textarea id="ws-msg-input" data-auto-grow placeholder="Message #channel" rows="1" style="flex:1; padding:12px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:24px; color:#fff; font-size:14px; outline:none; box-sizing:border-box; resize:none; min-height:44px; max-height:150px; line-height:1.5; overflow-y:auto; white-space:pre-wrap; word-wrap:break-word; font-family:inherit;"></textarea>
                     <button type="submit" style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); border:none; color:#fff; font-size:18px; cursor:pointer; flex-shrink:0;">➤</button>
                   </form>
                 </div>
@@ -2035,6 +2041,69 @@
                   <textarea id="ws-desc-input" placeholder="What is this workspace for?"></textarea>
                 </div>
                 <button type="submit" class="btn-primary w-100">Create Workspace</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Modal -->
+        <div id="profile-modal" class="modal hidden">
+          <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+              <h4>My Profile</h4>
+              <button class="close-modal" onclick="closeProfileModal()">×</button>
+            </div>
+            <div class="modal-body">
+              <!-- Avatar Upload -->
+              <div style="text-align:center; margin-bottom:24px;">
+                <div id="profile-avatar-preview" style="width:100px; height:100px; border-radius:50%; margin:0 auto 12px; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:700; color:#fff; position:relative; cursor:pointer; overflow:hidden;" onclick="document.getElementById('profile-avatar-input').click()">
+                  <img id="profile-avatar-img" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+                  <span id="profile-avatar-text">U</span>
+                  <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); padding:4px; font-size:11px; color:#fff; text-align:center;">📷 Change</div>
+                </div>
+                <input type="file" id="profile-avatar-input" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+                <div style="font-size:12px; color:var(--text-muted);">Click avatar to upload photo (drag & drop supported)</div>
+              </div>
+
+              <!-- Profile Form -->
+              <form id="profile-form" onsubmit="handleProfileUpdate(event)">
+                <div class="form-group">
+                  <label>Full Name</label>
+                  <input type="text" id="profile-name" required>
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" id="profile-email" disabled style="opacity:0.6;">
+                </div>
+                <div class="form-group">
+                  <label>Phone</label>
+                  <input type="text" id="profile-phone" placeholder="+1 234 567 890">
+                </div>
+                <div class="form-group">
+                  <label>Bio</label>
+                  <textarea id="profile-bio" placeholder="Tell something about yourself..." rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Role</label>
+                  <input type="text" id="profile-role" disabled style="opacity:0.6;">
+                </div>
+                <button type="submit" class="btn-primary w-100">Save Profile</button>
+              </form>
+
+              <hr style="border:none; border-top:1px solid var(--border-color); margin:20px 0;">
+
+              <!-- Change Password -->
+              <form onsubmit="handlePasswordChange(event)">
+                <h4 style="font-size:14px; margin-bottom:12px;">Change Password</h4>
+                <div class="form-group">
+                  <label>Current Password</label>
+                  <input type="password" id="profile-current-pw" required>
+                </div>
+                <div class="form-group">
+                  <label>New Password</label>
+                  <input type="password" id="profile-new-pw" required minlength="6">
+                </div>
+                <button type="submit" class="btn-secondary w-100">Change Password</button>
               </form>
             </div>
           </div>
@@ -3154,6 +3223,32 @@
           </div>
         </section>
 
+        <!-- ==================== ADMIN USER MANAGEMENT ==================== -->
+        <section id="view-admin-users" class="dashboard-view">
+          <div class="section-actions-header">
+            <h3>👥 User Management</h3>
+          </div>
+          <p class="subtitle">Manage all platform users — change roles, reset passwords, suspend, or delete accounts.</p>
+          <div class="panel-card">
+            <div class="table-responsive">
+              <table class="data-table" id="admin-users-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="5" class="text-center">Loading users...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- ==================== T15. ADMIN AUDIT & STRATEGY VIEW ==================== -->
         <section id="view-admin-audit" class="dashboard-view">
           <h3>Strategic Portfolio Audit Desk</h3>
@@ -3788,6 +3883,21 @@
       </div>
       <div class="modal-sidebar-footer">
         <button class="btn-secondary w-100" onclick="markAllNotificationsRead()">Mark All as Read</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Confirm Modal -->
+  <div id="generic-confirm-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm</h3>
+        <button class="close-modal" onclick="closeGenericModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Dynamic content injected here -->
+      </div>
+      <div class="modal-actions" style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
       </div>
     </div>
   </div>
