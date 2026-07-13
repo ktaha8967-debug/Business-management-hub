@@ -5160,57 +5160,296 @@ async function showChannelRoles(chId) {
   else { const e = await updateRes.json(); showToast('error', e.error); }
 }
 
-// ==================== VOICE/VIDEO CHANNEL (Pure WebRTC) ====================
+// ==================== VIDEO CALL (Pure WebRTC, 100% Free) ====================
 let vcLocalStream = null;
-let vcPeers = {}; // userId -> { pc, stream }
+let vcVideoStream = null;
+let vcPeers = {};
 let vcPollInterval = null;
 let activeVcChannelId = null;
-const VC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+let vcMuted = false;
+let vcCameraOff = false;
+let vcScreenSharing = false;
+const VC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }] };
 
 async function joinVoiceChannel(chId) {
   try {
-    vcLocalStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    vcLocalStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    vcVideoStream = vcLocalStream;
     activeVcChannelId = chId;
+    vcMuted = false;
+    vcCameraOff = false;
 
     await fetch(`${API_URL}/api/workspaces/vc/join`, {
       method: 'POST', headers: getHeaders(),
       body: JSON.stringify({ channel_id: chId })
     });
 
-    showToast('success', 'Joined voice channel');
+    // Show video call overlay
+    showVideoCallOverlay(chId);
 
-    // Show VC controls
-    showVcControls(chId);
+    // Render local video
+    renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
 
-    // Poll for new users and signals
+    // Poll for peers and signals
     vcPollInterval = setInterval(() => pollVcUpdates(chId), 2000);
+    showToast('success', 'Joined video call');
   } catch (err) {
-    showToast('error', 'Microphone access denied: ' + err.message);
+    showToast('error', 'Camera/Mic access denied: ' + err.message);
   }
 }
 
-function showVcControls(chId) {
-  const header = document.getElementById('ws-channel-header');
-  if (!header) return;
-  let controls = document.getElementById('vc-controls');
-  if (!controls) {
-    controls = document.createElement('div');
-    controls.id = 'vc-controls';
-    controls.style.cssText = 'display:flex; gap:8px; margin-top:8px; align-items:center;';
-    header.appendChild(controls);
+function showVideoCallOverlay(chId) {
+  let overlay = document.getElementById('vc-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'vc-overlay';
+    overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(5,8,15,0.97); z-index:9999; display:flex; flex-direction:column; font-family:inherit;';
+    document.body.appendChild(overlay);
   }
-  controls.innerHTML = `
-    <span style="font-size:12px; color:#2ed573; font-weight:600;">🟢 In Voice</span>
-    <button onclick="toggleVcMute()" id="vc-mute-btn" style="padding:6px 12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; font-size:12px; cursor:pointer;">🎤 Mute</button>
-    <button onclick="leaveVoiceChannel()" style="padding:6px 12px; background:rgba(255,71,87,0.2); border:1px solid rgba(255,71,87,0.3); border-radius:8px; color:#ff4757; font-size:12px; cursor:pointer;">📞 Leave</button>
-    <div id="vc-participants" style="font-size:11px; color:var(--text-muted); margin-left:auto;"></div>
+
+  overlay.innerHTML = `
+    <div style="flex:1; display:flex; flex-direction:column; padding:16px; overflow:hidden;">
+      <!-- Header -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:20px;">🔊</span>
+          <div>
+            <div style="font-size:15px; font-weight:700; color:#fff;">Voice Channel</div>
+            <div style="font-size:11px; color:var(--text-muted);" id="vc-participant-count">Connecting...</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="toggleVcScreenShare()" id="vc-screenshare-btn" style="padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:12px; cursor:pointer;">🖥️ Share</button>
+          <button onclick="closeVcOverlay()" style="padding:8px 14px; background:rgba(255,71,87,0.2); border:1px solid rgba(255,71,87,0.3); border-radius:10px; color:#ff4757; font-size:12px; font-weight:600; cursor:pointer;">✕ Leave</button>
+        </div>
+      </div>
+
+      <!-- Video Grid -->
+      <div id="vc-video-grid" style="flex:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; align-content:center;">
+        <!-- Local video tile -->
+        <div id="vc-local" class="vc-tile" style="position:relative; background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid transparent;">
+          <div style="font-size:40px; color:#555;">📷</div>
+          <div style="position:absolute; bottom:10px; left:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:8px;">
+            <span style="font-size:12px; font-weight:600; color:#fff;">You</span>
+          </div>
+          <div id="vc-local-mute-indicator" style="position:absolute; top:10px; right:10px; display:none; background:rgba(255,71,87,0.8); padding:4px 8px; border-radius:6px; font-size:11px; color:#fff;">🔇</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div style="display:flex; justify-content:center; gap:12px; padding:16px; margin-top:12px;">
+        <button onclick="toggleVcMute()" id="vc-mute-btn" style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:20px; cursor:pointer; transition:all 0.2s;">🎤</button>
+        <button onclick="toggleVcCamera()" id="vc-camera-btn" style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:20px; cursor:pointer; transition:all 0.2s;">📹</button>
+        <button onclick="toggleVcScreenShare()" id="vc-screenshare-btn2" style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:20px; cursor:pointer; transition:all 0.2s;">🖥️</button>
+        <button onclick="leaveVoiceChannel()" style="width:60px; height:52px; border-radius:50%; background:linear-gradient(135deg, #ff4757, #c0392b); border:none; color:#fff; font-size:20px; cursor:pointer; font-weight:700;">📞</button>
+      </div>
+    </div>
   `;
+}
+
+function renderVcVideo(containerId, stream, name, isLocal) {
+  let container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Check if video track exists and is enabled
+  const videoTrack = stream.getVideoTracks()[0];
+  const hasVideo = videoTrack && videoTrack.enabled;
+
+  let videoEl = container.querySelector('video');
+  if (!videoEl) {
+    videoEl = document.createElement('video');
+    videoEl.autoplay = true;
+    videoEl.playsInline = true;
+    videoEl.muted = isLocal;
+    videoEl.style.cssText = 'width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;';
+    container.innerHTML = '';
+    container.appendChild(videoEl);
+
+    // Re-add label
+    const label = document.createElement('div');
+    label.style.cssText = 'position:absolute; bottom:10px; left:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:8px;';
+    label.innerHTML = `<span style="font-size:12px; font-weight:600; color:#fff;">${isLocal ? 'You' : name}</span>`;
+    container.appendChild(label);
+  }
+
+  if (hasVideo) {
+    videoEl.srcObject = stream;
+    videoEl.style.display = 'block';
+  } else {
+    // Show avatar placeholder when camera off
+    videoEl.style.display = 'none';
+    let placeholder = container.querySelector('.vc-avatar-placeholder');
+    if (!placeholder) {
+      placeholder = document.createElement('div');
+      placeholder.className = 'vc-avatar-placeholder';
+      placeholder.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; color:#fff;';
+      placeholder.innerText = (name || 'U').charAt(0).toUpperCase();
+      container.appendChild(placeholder);
+    }
+  }
+}
+
+function removeVcVideo(containerId) {
+  let container = document.getElementById(containerId);
+  if (container) {
+    container.remove();
+  }
+}
+
+function rebuildVcGrid(participants) {
+  const grid = document.getElementById('vc-video-grid');
+  if (!grid) return;
+
+  // Keep local tile, remove remote tiles
+  const localTile = document.getElementById('vc-local');
+  grid.innerHTML = '';
+  if (localTile) grid.appendChild(localTile);
+
+  // Add remote participant tiles
+  participants.forEach(p => {
+    if (p.user_id === currentUser.id) return;
+    let tile = document.getElementById(`vc-peer-${p.user_id}`);
+    if (!tile) {
+      tile = document.createElement('div');
+      tile.id = `vc-peer-${p.user_id}`;
+      tile.className = 'vc-tile';
+      tile.style.cssText = 'position:relative; background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid transparent;';
+      tile.innerHTML = `
+        <div class="vc-avatar-placeholder" style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; color:#fff;">${(p.user_name || 'U').charAt(0).toUpperCase()}</div>
+        <div style="position:absolute; bottom:10px; left:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:8px;">
+          <span style="font-size:12px; font-weight:600; color:#fff;">${p.user_name || 'Unknown'}</span>
+          <span style="font-size:10px;" id="vc-peer-status-${p.user_id}">${p.is_muted ? '🔇' : '🎤'}</span>
+        </div>
+      `;
+      grid.appendChild(tile);
+    }
+  });
+
+  // Update participant count
+  const countEl = document.getElementById('vc-participant-count');
+  if (countEl) countEl.innerText = `${participants.length + 1} participant${participants.length > 0 ? 's' : ''} in call`;
+
+  // Update grid layout based on participant count
+  const total = participants.length + 1;
+  if (total <= 1) {
+    grid.style.gridTemplateColumns = '1fr';
+    grid.style.maxWidth = '700px';
+    grid.style.margin = '0 auto';
+  } else if (total <= 2) {
+    grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    grid.style.maxWidth = '900px';
+    grid.style.margin = '0 auto';
+  } else if (total <= 4) {
+    grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    grid.style.maxWidth = '100%';
+    grid.style.margin = '0';
+  } else {
+    grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    grid.style.maxWidth = '100%';
+    grid.style.margin = '0';
+  }
+}
+
+function closeVcOverlay() {
+  leaveVoiceChannel();
+  const overlay = document.getElementById('vc-overlay');
+  if (overlay) overlay.remove();
+}
+
+function toggleVcMute() {
+  vcMuted = !vcMuted;
+  if (vcLocalStream) vcLocalStream.getAudioTracks().forEach(t => { t.enabled = !vcMuted; });
+  const btn = document.getElementById('vc-mute-btn');
+  if (btn) {
+    btn.innerText = vcMuted ? '🔇' : '🎤';
+    btn.style.background = vcMuted ? 'rgba(255,71,87,0.3)' : 'rgba(255,255,255,0.1)';
+    btn.style.borderColor = vcMuted ? 'rgba(255,71,87,0.5)' : 'rgba(255,255,255,0.15)';
+  }
+  const indicator = document.getElementById('vc-local-mute-indicator');
+  if (indicator) indicator.style.display = vcMuted ? 'block' : 'none';
+  // Update local video if camera on
+  if (!vcCameraOff && vcLocalStream) renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
+  fetch(`${API_URL}/api/workspaces/vc/toggle`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ channel_id: activeVcChannelId, mute: vcMuted })
+  });
+}
+
+function toggleVcCamera() {
+  vcCameraOff = !vcCameraOff;
+  if (vcLocalStream) {
+    vcLocalStream.getVideoTracks().forEach(t => { t.enabled = !vcCameraOff; });
+  }
+  const btn = document.getElementById('vc-camera-btn');
+  if (btn) {
+    btn.innerText = vcCameraOff ? '📷' : '📹';
+    btn.style.background = vcCameraOff ? 'rgba(255,71,87,0.3)' : 'rgba(255,255,255,0.1)';
+    btn.style.borderColor = vcCameraOff ? 'rgba(255,71,87,0.5)' : 'rgba(255,255,255,0.15)';
+  }
+  renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
+  fetch(`${API_URL}/api/workspaces/vc/toggle`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ channel_id: activeVcChannelId, video_off: vcCameraOff })
+  });
+}
+
+async function toggleVcScreenShare() {
+  if (vcScreenSharing) {
+    // Stop screen share, go back to camera
+    const btn = document.getElementById('vc-screenshare-btn');
+    const btn2 = document.getElementById('vc-screenshare-btn2');
+    if (btn) { btn.innerText = '🖥️ Share'; btn.style.background = 'rgba(255,255,255,0.08)'; }
+    if (btn2) { btn2.style.background = 'rgba(255,255,255,0.1)'; btn2.style.borderColor = 'rgba(255,255,255,0.15)'; }
+    vcScreenSharing = false;
+    // Replace screen share track with camera track
+    if (vcLocalStream) {
+      const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const cameraTrack = cameraStream.getVideoTracks()[0];
+      Object.values(vcPeers).forEach(p => {
+        const sender = p.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) sender.replaceTrack(cameraTrack);
+      });
+      vcLocalStream.removeTrack(vcLocalStream.getVideoTracks()[0]);
+      vcLocalStream.addTrack(cameraTrack);
+      vcCameraOff = false;
+      renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
+    }
+  } else {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const screenTrack = screenStream.getVideoTracks()[0];
+      const btn = document.getElementById('vc-screenshare-btn');
+      const btn2 = document.getElementById('vc-screenshare-btn2');
+      if (btn) { btn.innerText = '🛑 Stop'; btn.style.background = 'rgba(112,77,244,0.3)'; }
+      if (btn2) { btn2.style.background = 'rgba(112,77,244,0.3)'; btn2.style.borderColor = 'rgba(112,77,244,0.5)'; }
+      vcScreenSharing = true;
+      vcCameraOff = false;
+
+      screenTrack.onended = () => { toggleVcScreenShare(); };
+
+      // Replace camera track with screen share track in all peer connections
+      Object.values(vcPeers).forEach(p => {
+        const sender = p.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) sender.replaceTrack(screenTrack);
+      });
+
+      // Replace in local stream
+      if (vcLocalStream) {
+        vcLocalStream.removeTrack(vcLocalStream.getVideoTracks()[0]);
+        vcLocalStream.addTrack(screenTrack);
+      }
+      renderVcVideo('vc-local', vcLocalStream, currentUser.full_name + ' (Sharing)', true);
+    } catch (err) {
+      // User cancelled screen share
+    }
+  }
 }
 
 async function leaveVoiceChannel() {
   if (vcLocalStream) {
     vcLocalStream.getTracks().forEach(t => t.stop());
     vcLocalStream = null;
+    vcVideoStream = null;
   }
   Object.values(vcPeers).forEach(p => { if (p.pc) p.pc.close(); });
   vcPeers = {};
@@ -5222,23 +5461,10 @@ async function leaveVoiceChannel() {
     });
   }
   activeVcChannelId = null;
-  const controls = document.getElementById('vc-controls');
-  if (controls) controls.remove();
-  showToast('success', 'Left voice channel');
-}
-
-let vcMuted = false;
-function toggleVcMute() {
-  vcMuted = !vcMuted;
-  if (vcLocalStream) {
-    vcLocalStream.getAudioTracks().forEach(t => { t.enabled = !vcMuted; });
-  }
-  const btn = document.getElementById('vc-mute-btn');
-  if (btn) btn.innerText = vcMuted ? '🔇 Unmute' : '🎤 Mute';
-  fetch(`${API_URL}/api/workspaces/vc/toggle`, {
-    method: 'POST', headers: getHeaders(),
-    body: JSON.stringify({ channel_id: activeVcChannelId, mute: vcMuted })
-  });
+  vcScreenSharing = false;
+  const overlay = document.getElementById('vc-overlay');
+  if (overlay) overlay.remove();
+  showToast('success', 'Left call');
 }
 
 async function pollVcUpdates(chId) {
@@ -5246,11 +5472,9 @@ async function pollVcUpdates(chId) {
     const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
     const participants = await safeJson(res);
 
-    // Show participants
-    const pDiv = document.getElementById('vc-participants');
-    if (pDiv) pDiv.innerText = `${participants.length} in voice`;
+    rebuildVcGrid(participants);
 
-    // Connect to new users
+    // Connect to new peers
     for (const p of participants) {
       if (p.user_id === currentUser.id) continue;
       if (!vcPeers[p.user_id]) {
@@ -5258,17 +5482,23 @@ async function pollVcUpdates(chId) {
       }
     }
 
-    // Check for signals
+    // Remove disconnected peers
+    const participantIds = participants.map(p => p.user_id);
+    Object.keys(vcPeers).forEach(uid => {
+      if (!participantIds.includes(uid) || uid === currentUser.id) {
+        if (vcPeers[uid] && vcPeers[uid].pc) vcPeers[uid].pc.close();
+        delete vcPeers[uid];
+        removeVcVideo(`vc-peer-${uid}`);
+      }
+    });
+
+    // Poll signals
     const sigRes = await fetch(`${API_URL}/api/workspaces/vc/signals/${chId}`, { headers: getHeaders() });
     const signals = await safeJson(sigRes);
     for (const sig of signals) {
-      if (sig.signal_type === 'offer') {
-        await handleVcOffer(sig, chId);
-      } else if (sig.signal_type === 'answer') {
-        await handleVcAnswer(sig);
-      } else if (sig.signal_type === 'candidate') {
-        await handleVcCandidate(sig);
-      }
+      if (sig.signal_type === 'offer') await handleVcOffer(sig, chId);
+      else if (sig.signal_type === 'answer') await handleVcAnswer(sig);
+      else if (sig.signal_type === 'candidate') await handleVcCandidate(sig);
     }
   } catch (err) { /* silent poll */ }
 }
@@ -5277,16 +5507,17 @@ async function createVcPeer(remoteUserId, chId) {
   const pc = new RTCPeerConnection(VC_CONFIG);
   vcPeers[remoteUserId] = { pc, stream: null };
 
-  // Add local tracks
   if (vcLocalStream) {
     vcLocalStream.getTracks().forEach(track => pc.addTrack(track, vcLocalStream));
   }
 
-  // Handle remote stream
   pc.ontrack = (e) => {
     if (!vcPeers[remoteUserId].stream) {
       vcPeers[remoteUserId].stream = e.streams[0];
-      playVcAudio(e.streams[0], remoteUserId);
+      // Find participant name
+      const pDiv = document.getElementById(`vc-peer-${remoteUserId}`);
+      const name = pDiv ? (pDiv.querySelector('span')?.innerText || 'Peer') : 'Peer';
+      renderVcVideo(`vc-peer-${remoteUserId}`, e.streams[0], name, false);
     }
   };
 
@@ -5299,7 +5530,13 @@ async function createVcPeer(remoteUserId, chId) {
     }
   };
 
-  // Create offer
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+      removeVcVideo(`vc-peer-${remoteUserId}`);
+      if (vcPeers[remoteUserId]) { vcPeers[remoteUserId].pc.close(); delete vcPeers[remoteUserId]; }
+    }
+  };
+
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   fetch(`${API_URL}/api/workspaces/vc/signal`, {
@@ -5310,22 +5547,17 @@ async function createVcPeer(remoteUserId, chId) {
 
 async function handleVcOffer(sig, chId) {
   let peerData = vcPeers[sig.from_user_id];
+  const pc = peerData ? peerData.pc : new RTCPeerConnection(VC_CONFIG);
   if (!peerData) {
-    const pc = new RTCPeerConnection(VC_CONFIG);
     peerData = { pc, stream: null };
     vcPeers[sig.from_user_id] = peerData;
-
-    if (vcLocalStream) {
-      vcLocalStream.getTracks().forEach(track => pc.addTrack(track, vcLocalStream));
-    }
-
+    if (vcLocalStream) vcLocalStream.getTracks().forEach(track => pc.addTrack(track, vcLocalStream));
     pc.ontrack = (e) => {
       if (!peerData.stream) {
         peerData.stream = e.streams[0];
-        playVcAudio(e.streams[0], sig.from_user_id);
+        renderVcVideo(`vc-peer-${sig.from_user_id}`, e.streams[0], sig.from_user_name, false);
       }
     };
-
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         fetch(`${API_URL}/api/workspaces/vc/signal`, {
@@ -5334,11 +5566,16 @@ async function handleVcOffer(sig, chId) {
         });
       }
     };
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        removeVcVideo(`vc-peer-${sig.from_user_id}`);
+        if (vcPeers[sig.from_user_id]) { vcPeers[sig.from_user_id].pc.close(); delete vcPeers[sig.from_user_id]; }
+      }
+    };
   }
-
-  await peerData.pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
-  const answer = await peerData.pc.createAnswer();
-  await peerData.pc.setLocalDescription(answer);
+  await pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
   fetch(`${API_URL}/api/workspaces/vc/signal`, {
     method: 'POST', headers: getHeaders(),
     body: JSON.stringify({ channel_id: chId, to_user_id: sig.from_user_id, signal_type: 'answer', signal_data: answer })
@@ -5347,27 +5584,12 @@ async function handleVcOffer(sig, chId) {
 
 async function handleVcAnswer(sig) {
   const peerData = vcPeers[sig.from_user_id];
-  if (peerData) {
-    await peerData.pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
-  }
+  if (peerData) await peerData.pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
 }
 
 async function handleVcCandidate(sig) {
   const peerData = vcPeers[sig.from_user_id];
-  if (peerData) {
-    await peerData.pc.addIceCandidate(new RTCIceCandidate(sig.signal_data));
-  }
-}
-
-function playVcAudio(stream, userId) {
-  let audio = document.getElementById(`vc-audio-${userId}`);
-  if (!audio) {
-    audio = document.createElement('audio');
-    audio.id = `vc-audio-${userId}`;
-    audio.autoplay = true;
-    document.body.appendChild(audio);
-  }
-  audio.srcObject = stream;
+  if (peerData) await peerData.pc.addIceCandidate(new RTCIceCandidate(sig.signal_data));
 }
 
 // --- TAKE A TOUR (ROLE-BASED INTERACTIVE) ---
