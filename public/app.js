@@ -5513,8 +5513,6 @@ async function toggleChannelRole(chId, roleId) {
     else { const e = await res.json(); showToast('error', e.error); }
   } catch (err) { showToast('error', err.message); }
 }
-  else { const e = await updateRes.json(); showToast('error', e.error); }
-}
 
 // ==================== VIDEO CALL (Pure WebRTC, 100% Free) ====================
 let vcLocalStream = null;
