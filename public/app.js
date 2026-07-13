@@ -4817,8 +4817,32 @@ async function showGroupMembers(groupId) {
   try {
     const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/members`, { headers: getHeaders() });
     const members = await safeJson(res);
-    const names = members.map(m => `${m.full_name} (${m.role})`).join('\n');
-    alert(`Group Members (${members.length}):\n\n${names}`);
+    // Show in a proper panel instead of alert
+    let panel = document.getElementById('ws-right-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'ws-right-panel';
+      panel.style.cssText = 'position:fixed; top:0; right:0; bottom:0; width:320px; background:var(--bg-secondary); border-left:1px solid var(--border-color); z-index:5000; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); box-shadow:-4px 0 20px rgba(0,0,0,0.3);';
+      document.body.appendChild(panel);
+    }
+    panel.style.transform = 'translateX(0)';
+    panel.innerHTML = `
+      <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;">👥 Group Members — ${members.length}</h4>
+        <button onclick="document.getElementById('ws-right-panel').style.transform='translateX(100%)'" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:12px;">
+        ${members.map(m => `
+          <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:4px;">
+            <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff;">${m.full_name.charAt(0)}</div>
+            <div>
+              <div style="font-size:13px; font-weight:600; color:#fff;">${m.full_name}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${m.role}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
   } catch (err) { showToast('error', err.message); }
 }
 
@@ -4920,48 +4944,267 @@ async function loadWsChannels(wsId) {
   } catch (err) { showToast('error', err.message); }
 }
 
+// Discord-style: click voice channel → show participants + join button
 async function toggleVoiceChannel(chId) {
-  // If already in this VC, do nothing (or show participants)
   if (activeVcChannelId === chId) return;
-  // If in another VC, leave first
   if (activeVcChannelId) await leaveVoiceChannel();
-  // Show VC panel for this channel
-  showVcPanel(chId);
-}
+  activeChannelId = null;
+  showWsView('voice');
 
-async function showVcPanel(chId) {
-  // Show participants below channel in sidebar
+  // Set header
+  const channelName = document.getElementById('ws-vc-name');
+  if (channelName) channelName.innerText = '🔊 Voice Channel';
+
+  // Show join panel first (not connected yet)
+  const grid = document.getElementById('ws-vc-grid');
+  if (grid) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:60px 20px; text-align:center;">
+        <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, rgba(46,213,115,0.2), rgba(0,210,255,0.2)); display:flex; align-items:center; justify-content:center; font-size:48px;">🔊</div>
+        <div>
+          <div style="font-size:20px; font-weight:700; color:#fff; margin-bottom:6px;">Voice Channel</div>
+          <div style="font-size:13px; color:var(--text-muted);">No one is currently in this voice channel</div>
+        </div>
+        <button onclick="joinVoiceChannel('${chId}')" style="padding:14px 32px; background:linear-gradient(135deg, #2ed573, #1a9c4a); border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(46,213,115,0.3); transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">📞 Join Voice</button>
+      </div>
+    `;
+  }
+
+  // Load current participants
   try {
     const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
     const participants = await safeJson(res);
-    const panel = document.getElementById(`vc-participants-${chId}`);
-    if (panel) {
-      panel.style.display = 'block';
-      let html = '';
-      if (participants.length > 0) {
-        html += participants.map(p => `
-          <div style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:11px;">
-            <div style="width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
-            <span style="color:#fff;">${p.user_name}</span>
-            <span style="font-size:10px; color:var(--text-muted);">${p.is_muted ? '🔇' : '🎤'}</span>
+    if (participants.length > 0 && grid) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1; padding:20px;">
+          <div style="font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:12px;">${participants.length} in voice</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:20px;">
+            ${participants.map(p => `
+              <div style="background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.08);">
+                <div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
+                <div style="position:absolute; bottom:8px; left:10px; background:rgba(0,0,0,0.6); padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; color:#fff;">${p.user_name} ${p.is_muted ? '🔇' : '🎤'}</div>
+              </div>
+            `).join('')}
           </div>
-        `).join('');
-      } else {
-        html = '<div style="font-size:11px; color:var(--text-muted); padding:4px 0;">No one here yet</div>';
-      }
-      html += `<button onclick="joinVoiceChannel('${chId}')" style="width:100%; padding:8px; margin-top:8px; background:linear-gradient(135deg, #2ed573, #1a9c4a); border:none; border-radius:8px; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">📞 Join Voice</button>`;
-      panel.innerHTML = html;
+          <div style="text-align:center;">
+            <button onclick="joinVoiceChannel('${chId}')" style="padding:14px 32px; background:linear-gradient(135deg, #2ed573, #1a9c4a); border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(46,213,115,0.3); transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">📞 Join Voice</button>
+          </div>
+        </div>
+      `;
     }
   } catch (err) { /* silent */ }
+
+  loadWsChannels(activeWorkspaceId);
+}
+
+// ==================== VIEW SWITCHING ====================
+function showWsView(view) {
+  document.getElementById('ws-text-channel-view').style.display = view === 'text' ? 'flex' : 'none';
+  document.getElementById('ws-voice-channel-view').style.display = view === 'voice' ? 'flex' : 'none';
+  document.getElementById('ws-default-view').style.display = view === 'default' ? 'flex' : 'none';
 }
 
 async function selectChannel(chId) {
   activeChannelId = chId;
-  document.getElementById('ws-input-area').style.display = 'block';
-  document.getElementById('ws-msg-input').focus();
-  // Reload channels to highlight active
+  showWsView('text');
+  document.getElementById('ws-channel-header').style.display = 'flex';
   loadWsChannels(activeWorkspaceId);
   loadChannelMessages(chId);
+}
+
+function openWorkspaceFromDetail() {
+  showWsView('default');
+  activeChannelId = null;
+  activeVcChannelId = null;
+}
+
+// ==================== DISCORD-STYLE RIGHT SIDEBAR (Members/Roles) ====================
+function showWsRightPanel(type) {
+  let panel = document.getElementById('ws-right-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'ws-right-panel';
+    panel.style.cssText = 'position:fixed; top:0; right:0; bottom:0; width:320px; background:var(--bg-secondary); border-left:1px solid var(--border-color); z-index:5000; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); box-shadow:-4px 0 20px rgba(0,0,0,0.3);';
+    document.body.appendChild(panel);
+  }
+  panel.style.transform = 'translateX(0)';
+
+  // Add overlay
+  let overlay = document.getElementById('ws-panel-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'ws-panel-overlay';
+    overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:4999; display:none;';
+    overlay.onclick = closeWsRightPanel;
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'block';
+
+  if (type === 'members') loadWsMembersPanel();
+  else if (type === 'roles') loadWsRolesPanel();
+  else if (type.startsWith('channel-roles-')) loadChannelRolesPanel(type.replace('channel-roles-', ''));
+}
+
+function closeWsRightPanel() {
+  const panel = document.getElementById('ws-right-panel');
+  if (panel) panel.style.transform = 'translateX(100%)';
+  const overlay = document.getElementById('ws-panel-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+async function loadWsMembersPanel() {
+  const panel = document.getElementById('ws-right-panel');
+  try {
+    const wsRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
+    const ws = await safeJson(wsRes);
+    const rolesRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, { headers: getHeaders() });
+    const roles = await safeJson(rolesRes);
+    const memberRoles = ws.member_roles || {};
+
+    panel.innerHTML = `
+      <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;">👥 Members — ${ws.member_names.length}</h4>
+        <button onclick="closeWsRightPanel()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:12px;">
+        ${ws.member_names.map((name, i) => {
+          const uid = ws.members[i];
+          const roleId = memberRoles[uid];
+          const role = roleId ? roles.find(r => r.id === roleId) : null;
+          const isCreator = uid === ws.creator_id;
+          return `
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:4px; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+              <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, ${role ? role.color : '#704df4'}, ${role ? role.color : '#00d2ff'}); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff;">${name.charAt(0)}</div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:600; color:#fff; display:flex; align-items:center; gap:6px;">
+                  ${name}
+                  ${isCreator ? '<span style="font-size:9px; background:rgba(255,159,67,0.2); color:#ff9f43; padding:1px 6px; border-radius:4px;">OWNER</span>' : ''}
+                </div>
+                ${role ? `<div style="font-size:11px; color:${role.color}; display:flex; align-items:center; gap:4px;">${role.icon} ${role.display_name}</div>` : '<div style="font-size:11px; color:var(--text-muted);">No role</div>'}
+              </div>
+              ${uid !== ws.creator_id && currentUser.id === ws.creator_id ? `
+                <div style="display:flex; gap:4px;">
+                  <button onclick="assignRolePrompt('${uid}')" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; padding:4px;" title="Assign role">🎭</button>
+                  <button onclick="removeWsMemberPrompt('${uid}')" style="background:none; border:none; color:#ff4757; font-size:12px; cursor:pointer; padding:4px;" title="Remove">✕</button>
+                </div>
+              ` : ''}
+            </div>`;
+        }).join('')}
+      </div>
+      <div style="padding:12px; border-top:1px solid var(--border-color);">
+        <button onclick="addMemberPrompt()" style="width:100%; padding:10px; background:rgba(46,213,115,0.15); border:1px solid rgba(46,213,115,0.3); border-radius:10px; color:#2ed573; font-size:13px; font-weight:600; cursor:pointer;">+ Add Member</button>
+      </div>
+    `;
+  } catch (err) { panel.innerHTML = '<div style="padding:20px; color:#ff4757;">Error loading members</div>'; }
+}
+
+// ==================== WORKSPACE ROLES ====================
+async function loadWsRoles() {
+  if (!activeWorkspaceId) return [];
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, { headers: getHeaders() });
+    return await safeJson(res);
+  } catch { return []; }
+}
+
+async function loadWsRolesPanel() {
+  const panel = document.getElementById('ws-right-panel');
+  try {
+    const rolesRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, { headers: getHeaders() });
+    const roles = await safeJson(rolesRes);
+
+    panel.innerHTML = `
+      <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;">🎭 Roles — ${roles.length}</h4>
+        <button onclick="closeWsRightPanel()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:12px;">
+        ${roles.length === 0 ? '<div style="text-align:center; padding:30px; color:var(--text-muted);">No roles created yet</div>' : ''}
+        ${roles.map(r => `
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; margin-bottom:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border-color);">
+            <span style="font-size:18px;">${r.icon}</span>
+            <div style="flex:1;">
+              <div style="font-size:13px; font-weight:600; color:${r.color};">${r.display_name}</div>
+            </div>
+            <button onclick="deleteWsRole('${r.id}')" style="background:none; border:none; color:#ff4757; font-size:14px; cursor:pointer;">🗑️</button>
+          </div>
+        `).join('')}
+      </div>
+      <div style="padding:12px; border-top:1px solid var(--border-color);">
+        <button onclick="createRolePrompt()" style="width:100%; padding:10px; background:rgba(112,77,244,0.15); border:1px solid rgba(112,77,244,0.3); border-radius:10px; color:var(--accent-purple); font-size:13px; font-weight:600; cursor:pointer;">+ Create Role</button>
+      </div>
+    `;
+  } catch (err) { panel.innerHTML = '<div style="padding:20px; color:#ff4757;">Error loading roles</div>'; }
+}
+
+// ==================== PROMPT-BASED ACTIONS (replace alert/prompt) ====================
+async function createRolePrompt() {
+  const name = prompt('Role name:');
+  if (!name) return;
+  const color = prompt('Color hex:', '#704df4');
+  const icon = prompt('Icon emoji:', '🔵');
+  const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ name, color: color || '#704df4', icon: icon || '🔵' })
+  });
+  if (res.ok) { showToast('success', 'Role created!'); loadWsRolesPanel(); }
+  else { const e = await res.json(); showToast('error', e.error); }
+}
+
+async function deleteWsRole(roleId) {
+  if (!confirm('Delete this role?')) return;
+  const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles/${roleId}`, {
+    method: 'DELETE', headers: getHeaders()
+  });
+  if (res.ok) { showToast('success', 'Role deleted'); loadWsRolesPanel(); }
+  else { const e = await res.json(); showToast('error', e.error); }
+}
+
+async function assignRolePrompt(userId) {
+  const rolesRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, { headers: getHeaders() });
+  const roles = await safeJson(rolesRes);
+  if (roles.length === 0) { showToast('error', 'Create a role first'); return; }
+  const roleNames = roles.map((r, i) => `${i + 1}. ${r.icon} ${r.display_name}`).join('\n');
+  const num = prompt(`Assign role:\n${roleNames}\n\nEnter number:`);
+  if (!num) return;
+  const role = roles[parseInt(num) - 1];
+  if (!role) { showToast('error', 'Invalid'); return; }
+  const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/members/${userId}/role`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ role_id: role.id })
+  });
+  if (res.ok) { showToast('success', 'Role assigned!'); loadWsMembersPanel(); }
+  else { const e = await res.json(); showToast('error', e.error); }
+}
+
+async function removeWsMemberPrompt(userId) {
+  if (!confirm('Remove this member?')) return;
+  const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/members/${userId}`, {
+    method: 'DELETE', headers: getHeaders()
+  });
+  if (res.ok) { showToast('success', 'Member removed'); loadWsMembersPanel(); }
+  else { const e = await res.json(); showToast('error', e.error); }
+}
+
+async function addMemberPrompt() {
+  try {
+    const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
+    const users = await safeJson(usersRes);
+    const wsRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
+    const ws = await safeJson(wsRes);
+    const notMembers = users.filter(u => !ws.members.includes(u.id));
+    if (notMembers.length === 0) { showToast('error', 'All users are already members'); return; }
+    const name = prompt(`Available:\n${notMembers.map(u => u.full_name).join(', ')}\n\nEnter name:`);
+    if (!name) return;
+    const user = notMembers.find(u => u.full_name.toLowerCase() === name.toLowerCase());
+    if (!user) { showToast('error', 'User not found'); return; }
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/members`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ user_id: user.id })
+    });
+    if (res.ok) { showToast('success', `${user.full_name} added!`); loadWsMembersPanel(); }
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
 }
 
 async function loadChannelMessages(chId) {
@@ -5076,124 +5319,68 @@ async function deleteWsMsg(msgId) {
   } catch (err) { showToast('error', err.message); }
 }
 
-async function showWsMembers() {
-  if (!activeWorkspaceId) return;
-  try {
-    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
-    const ws = await safeJson(res);
-    const names = ws.member_names.map((n, i) => `${i + 1}. ${n}`).join('\n');
-    alert(`Workspace Members (${ws.member_names.length}):\n\n${names}`);
-  } catch (err) { showToast('error', err.message); }
-}
+// Old showWsMembers/showWsRoles/showWsAddMember removed — use showWsRightPanel('members') and showWsRightPanel('roles') instead
 
-async function showWsAddMember() {
-  if (!activeWorkspaceId) return;
-  try {
-    const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
-    const users = await safeJson(usersRes);
-    const wsRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
-    const ws = await safeJson(wsRes);
-    const notMembers = users.filter(u => !ws.members.includes(u.id));
-    if (notMembers.length === 0) { showToast('error', 'All users are already members'); return; }
-
-    const names = notMembers.map(u => u.full_name).join(', ');
-    const choice = prompt(`Add member (enter exact name):\n\nAvailable: ${names}`);
-    if (!choice) return;
-    const user = notMembers.find(u => u.full_name.toLowerCase() === choice.toLowerCase());
-    if (!user) { showToast('error', 'User not found'); return; }
-
-    const addRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/members`, {
-      method: 'POST', headers: getHeaders(),
-      body: JSON.stringify({ user_id: user.id })
-    });
-    if (addRes.ok) showToast('success', `${user.full_name} added!`);
-    else { const e = await addRes.json(); showToast('error', e.error); }
-  } catch (err) { showToast('error', err.message); }
-}
-
-// ==================== WORKSPACE ROLES ====================
-async function loadWsRoles() {
-  if (!activeWorkspaceId) return [];
-  try {
-    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, { headers: getHeaders() });
-    return await safeJson(res);
-  } catch { return []; }
-}
-
-async function showWsRoles() {
-  if (!activeWorkspaceId) return;
-  const roles = await loadWsRoles();
-  const wsRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
-  const ws = await safeJson(wsRes);
-
-  let msg = 'Roles:\n';
-  roles.forEach(r => { msg += `\n${r.icon} ${r.display_name} (${r.color})`; });
-  if (roles.length === 0) msg += '\nNo roles created yet.';
-
-  const action = prompt(`${msg}\n\nOptions:\n1. Create new role\n2. Assign role to member\n\nType number or Cancel:`);
-  if (action === '1') {
-    const name = prompt('Role name:');
-    if (!name) return;
-    const color = prompt('Color hex (default #704df4):', '#704df4');
-    const icon = prompt('Icon emoji (default 🔵):', '🔵');
-    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, {
-      method: 'POST', headers: getHeaders(),
-      body: JSON.stringify({ name, color, icon })
-    });
-    if (res.ok) showToast('success', 'Role created!');
-    else { const e = await res.json(); showToast('error', e.error); }
-  } else if (action === '2') {
-    if (roles.length === 0) { showToast('error', 'Create a role first'); return; }
-    const memberNames = ws.member_names.join(', ');
-    const memberName = prompt(`Members: ${memberNames}\n\nEnter member name:`);
-    if (!memberName) return;
-    const memberIdx = ws.member_names.findIndex(n => n.toLowerCase() === memberName.toLowerCase());
-    if (memberIdx === -1) { showToast('error', 'Member not found'); return; }
-    const memberId = ws.members[memberIdx];
-    const roleNames = roles.map((r, i) => `${i + 1}. ${r.display_name}`).join('\n');
-    const roleNum = prompt(`Roles:\n${roleNames}\n\nEnter role number:`);
-    if (!roleNum) return;
-    const role = roles[parseInt(roleNum) - 1];
-    if (!role) { showToast('error', 'Invalid role'); return; }
-    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/members/${memberId}/role`, {
-      method: 'POST', headers: getHeaders(),
-      body: JSON.stringify({ role_id: role.id })
-    });
-    if (res.ok) showToast('success', `Role "${role.display_name}" assigned to ${memberName}!`);
-    else { const e = await res.json(); showToast('error', e.error); }
-  }
-}
-
-// ==================== CHANNEL ROLE ACCESS ====================
+// ==================== CHANNEL ROLE ACCESS (Panel-based) ====================
 async function showChannelRoles(chId) {
-  if (!activeWorkspaceId) return;
-  const roles = await loadWsRoles();
-  if (roles.length === 0) { showToast('error', 'Create workspace roles first'); return; }
+  showWsRightPanel('channel-roles-' + chId);
+}
 
-  const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels`, { headers: getHeaders() });
-  const channels = await safeJson(res);
-  const ch = channels.find(c => c.id === chId);
-  if (!ch) return;
+async function loadChannelRolesPanel(chId) {
+  const panel = document.getElementById('ws-right-panel');
+  if (!panel) return;
+  try {
+    const rolesRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/roles`, { headers: getHeaders() });
+    const roles = await safeJson(rolesRes);
+    const chRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels`, { headers: getHeaders() });
+    const channels = await safeJson(chRes);
+    const ch = channels.find(c => c.id === chId);
+    if (!ch) return;
+    const currentRoles = ch.allowed_roles || [];
 
-  const currentRoles = ch.allowed_roles || [];
-  const msg = roles.map(r => `${currentRoles.includes(r.id) ? '✅' : '❌'} ${r.icon} ${r.display_name}`).join('\n');
-  const choice = prompt(`Channel: #${ch.name}\nCurrent access:\n${msg}\n\nToggle role (enter name):`);
-  if (!choice) return;
-  const role = roles.find(r => r.display_name.toLowerCase() === choice.toLowerCase());
-  if (!role) { showToast('error', 'Role not found'); return; }
+    panel.innerHTML = `
+      <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;">🔐 #${ch.name} Access</h4>
+        <button onclick="closeWsRightPanel()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+      <div style="padding:12px; font-size:12px; color:var(--text-muted); border-bottom:1px solid var(--border-color);">
+        Toggle which roles can access this channel. Empty = everyone can see it.
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:12px;">
+        ${roles.length === 0 ? '<div style="text-align:center; padding:30px; color:var(--text-muted);">No roles created yet. Create roles first.</div>' : ''}
+        ${roles.map(r => {
+          const hasAccess = currentRoles.includes(r.id);
+          return `
+            <div onclick="toggleChannelRole('${chId}','${r.id}')" style="display:flex; align-items:center; gap:10px; padding:12px; border-radius:10px; margin-bottom:8px; cursor:pointer; background:${hasAccess ? 'rgba(46,213,115,0.1)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${hasAccess ? 'rgba(46,213,115,0.3)' : 'var(--border-color)'}; transition:all 0.2s;">
+              <span style="font-size:18px;">${r.icon}</span>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:600; color:${r.color};">${r.display_name}</div>
+              </div>
+              <span style="font-size:16px; color:${hasAccess ? '#2ed573' : 'var(--text-muted)'};">${hasAccess ? '✅' : '❌'}</span>
+            </div>`;
+        }).join('')}
+      </div>
+    `;
+  } catch (err) { panel.innerHTML = '<div style="padding:20px; color:#ff4757;">Error</div>'; }
+}
 
-  let updated = [...currentRoles];
-  if (updated.includes(role.id)) {
-    updated = updated.filter(id => id !== role.id);
-  } else {
-    updated.push(role.id);
-  }
-
-  const updateRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels/${chId}/roles`, {
-    method: 'PUT', headers: getHeaders(),
-    body: JSON.stringify({ allowed_roles: updated })
-  });
-  if (updateRes.ok) showToast('success', 'Channel access updated!');
+async function toggleChannelRole(chId, roleId) {
+  try {
+    const chRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels`, { headers: getHeaders() });
+    const channels = await safeJson(chRes);
+    const ch = channels.find(c => c.id === chId);
+    if (!ch) return;
+    let updated = [...(ch.allowed_roles || [])];
+    if (updated.includes(roleId)) updated = updated.filter(id => id !== roleId);
+    else updated.push(roleId);
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels/${chId}/roles`, {
+      method: 'PUT', headers: getHeaders(),
+      body: JSON.stringify({ allowed_roles: updated })
+    });
+    if (res.ok) { showToast('success', 'Access updated!'); loadChannelRolesPanel(chId); }
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
   else { const e = await updateRes.json(); showToast('error', e.error); }
 }
 
@@ -5221,94 +5408,31 @@ async function joinVoiceChannel(chId) {
       body: JSON.stringify({ channel_id: chId })
     });
 
-    showVideoCallOverlay(chId);
-    renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
+    showWsView('voice');
+    document.getElementById('ws-vc-name').innerText = '🔊 ' + chId;
+
+    renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
     vcPollInterval = setInterval(() => pollVcUpdates(chId), 2000);
-    // Update sidebar participants
     showVcParticipantsInSidebar(chId);
-    showToast('success', 'Joined video call');
+    showToast('success', 'Joined voice channel');
   } catch (err) {
     showToast('error', 'Camera/Mic access denied: ' + err.message);
   }
 }
 
-async function showVcParticipantsInSidebar(chId) {
-  try {
-    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
-    const participants = await safeJson(res);
-    const panel = document.getElementById(`vc-participants-${chId}`);
-    if (panel) {
-      panel.style.display = 'block';
-      let html = '';
-      // Always include self
-      const all = [{ user_id: currentUser.id, user_name: currentUser.full_name, is_muted: vcMuted }, ...participants.filter(p => p.user_id !== currentUser.id)];
-      html += all.map(p => `
-        <div style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:11px;">
-          <div style="width:24px; height:24px; border-radius:50%; background:${p.user_id === currentUser.id ? 'linear-gradient(135deg, #2ed573, #1a9c4a)' : 'linear-gradient(135deg, #704df4, #00d2ff)'}; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
-          <span style="color:#fff;">${p.user_id === currentUser.id ? 'You' : p.user_name}</span>
-          <span style="font-size:10px;">${p.is_muted ? '🔇' : '🎤'}</span>
-        </div>
-      `).join('');
-      html += `<button onclick="leaveVoiceChannel()" style="width:100%; padding:8px; margin-top:8px; background:rgba(255,71,87,0.2); border:1px solid rgba(255,71,87,0.3); border-radius:8px; color:#ff4757; font-size:12px; font-weight:600; cursor:pointer;">📞 Leave</button>`;
-      panel.innerHTML = html;
-    }
-  } catch (err) { /* silent */ }
-}
-
-function showVideoCallOverlay(chId) {
-  let overlay = document.getElementById('vc-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'vc-overlay';
-    overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(5,8,15,0.97); z-index:9999; display:flex; flex-direction:column; font-family:inherit;';
-    document.body.appendChild(overlay);
+function renderVcTile(containerId, stream, name, isLocal) {
+  let container = document.getElementById(containerId);
+  if (!container) {
+    // Create tile in the VC grid
+    const grid = document.getElementById('ws-vc-grid');
+    if (!grid) return;
+    container = document.createElement('div');
+    container.id = containerId;
+    container.style.cssText = 'position:relative; background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.08);';
+    if (isLocal) grid.prepend(container);
+    else grid.appendChild(container);
   }
 
-  overlay.innerHTML = `
-    <div style="flex:1; display:flex; flex-direction:column; padding:16px; overflow:hidden;">
-      <!-- Header -->
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-size:20px;">🔊</span>
-          <div>
-            <div style="font-size:15px; font-weight:700; color:#fff;">Voice Channel</div>
-            <div style="font-size:11px; color:var(--text-muted);" id="vc-participant-count">Connecting...</div>
-          </div>
-        </div>
-        <div style="display:flex; gap:6px;">
-          <button onclick="toggleVcScreenShare()" id="vc-screenshare-btn" style="padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:12px; cursor:pointer;">🖥️ Share</button>
-          <button onclick="closeVcOverlay()" style="padding:8px 14px; background:rgba(255,71,87,0.2); border:1px solid rgba(255,71,87,0.3); border-radius:10px; color:#ff4757; font-size:12px; font-weight:600; cursor:pointer;">✕ Leave</button>
-        </div>
-      </div>
-
-      <!-- Video Grid -->
-      <div id="vc-video-grid" style="flex:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; align-content:center;">
-        <!-- Local video tile -->
-        <div id="vc-local" class="vc-tile" style="position:relative; background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid transparent;">
-          <div style="font-size:40px; color:#555;">📷</div>
-          <div style="position:absolute; bottom:10px; left:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:8px;">
-            <span style="font-size:12px; font-weight:600; color:#fff;">You</span>
-          </div>
-          <div id="vc-local-mute-indicator" style="position:absolute; top:10px; right:10px; display:none; background:rgba(255,71,87,0.8); padding:4px 8px; border-radius:6px; font-size:11px; color:#fff;">🔇</div>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div style="display:flex; justify-content:center; gap:12px; padding:16px; margin-top:12px;">
-        <button onclick="toggleVcMute()" id="vc-mute-btn" style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:20px; cursor:pointer; transition:all 0.2s;">🎤</button>
-        <button onclick="toggleVcCamera()" id="vc-camera-btn" style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:20px; cursor:pointer; transition:all 0.2s;">📹</button>
-        <button onclick="toggleVcScreenShare()" id="vc-screenshare-btn2" style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:20px; cursor:pointer; transition:all 0.2s;">🖥️</button>
-        <button onclick="leaveVoiceChannel()" style="width:60px; height:52px; border-radius:50%; background:linear-gradient(135deg, #ff4757, #c0392b); border:none; color:#fff; font-size:20px; cursor:pointer; font-weight:700;">📞</button>
-      </div>
-    </div>
-  `;
-}
-
-function renderVcVideo(containerId, stream, name, isLocal) {
-  let container = document.getElementById(containerId);
-  if (!container) return;
-
-  // Check if video track exists and is enabled
   const videoTrack = stream.getVideoTracks()[0];
   const hasVideo = videoTrack && videoTrack.enabled;
 
@@ -5321,111 +5445,44 @@ function renderVcVideo(containerId, stream, name, isLocal) {
     videoEl.style.cssText = 'width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;';
     container.innerHTML = '';
     container.appendChild(videoEl);
-
-    // Re-add label
     const label = document.createElement('div');
-    label.style.cssText = 'position:absolute; bottom:10px; left:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:8px;';
-    label.innerHTML = `<span style="font-size:12px; font-weight:600; color:#fff;">${isLocal ? 'You' : name}</span>`;
+    label.style.cssText = 'position:absolute; bottom:8px; left:10px; background:rgba(0,0,0,0.6); padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; color:#fff; z-index:1;';
+    label.innerText = isLocal ? 'You' : name;
     container.appendChild(label);
   }
 
   if (hasVideo) {
     videoEl.srcObject = stream;
     videoEl.style.display = 'block';
+    const ph = container.querySelector('.vc-avatar-placeholder');
+    if (ph) ph.remove();
   } else {
-    // Show avatar placeholder when camera off
     videoEl.style.display = 'none';
-    let placeholder = container.querySelector('.vc-avatar-placeholder');
-    if (!placeholder) {
-      placeholder = document.createElement('div');
-      placeholder.className = 'vc-avatar-placeholder';
-      placeholder.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; color:#fff;';
-      placeholder.innerText = (name || 'U').charAt(0).toUpperCase();
-      container.appendChild(placeholder);
+    if (!container.querySelector('.vc-avatar-placeholder')) {
+      const ph = document.createElement('div');
+      ph.className = 'vc-avatar-placeholder';
+      ph.style.cssText = 'position:absolute; width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; color:#fff; z-index:1;';
+      ph.innerText = (name || 'U').charAt(0).toUpperCase();
+      container.appendChild(ph);
     }
   }
 }
 
-function removeVcVideo(containerId) {
-  let container = document.getElementById(containerId);
-  if (container) {
-    container.remove();
-  }
-}
-
-function rebuildVcGrid(participants) {
-  const grid = document.getElementById('vc-video-grid');
-  if (!grid) return;
-
-  // Keep local tile, remove remote tiles
-  const localTile = document.getElementById('vc-local');
-  grid.innerHTML = '';
-  if (localTile) grid.appendChild(localTile);
-
-  // Add remote participant tiles
-  participants.forEach(p => {
-    if (p.user_id === currentUser.id) return;
-    let tile = document.getElementById(`vc-peer-${p.user_id}`);
-    if (!tile) {
-      tile = document.createElement('div');
-      tile.id = `vc-peer-${p.user_id}`;
-      tile.className = 'vc-tile';
-      tile.style.cssText = 'position:relative; background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid transparent;';
-      tile.innerHTML = `
-        <div class="vc-avatar-placeholder" style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; color:#fff;">${(p.user_name || 'U').charAt(0).toUpperCase()}</div>
-        <div style="position:absolute; bottom:10px; left:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:8px;">
-          <span style="font-size:12px; font-weight:600; color:#fff;">${p.user_name || 'Unknown'}</span>
-          <span style="font-size:10px;" id="vc-peer-status-${p.user_id}">${p.is_muted ? '🔇' : '🎤'}</span>
-        </div>
-      `;
-      grid.appendChild(tile);
-    }
-  });
-
-  // Update participant count
-  const countEl = document.getElementById('vc-participant-count');
-  if (countEl) countEl.innerText = `${participants.length + 1} participant${participants.length > 0 ? 's' : ''} in call`;
-
-  // Update grid layout based on participant count
-  const total = participants.length + 1;
-  if (total <= 1) {
-    grid.style.gridTemplateColumns = '1fr';
-    grid.style.maxWidth = '700px';
-    grid.style.margin = '0 auto';
-  } else if (total <= 2) {
-    grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-    grid.style.maxWidth = '900px';
-    grid.style.margin = '0 auto';
-  } else if (total <= 4) {
-    grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-    grid.style.maxWidth = '100%';
-    grid.style.margin = '0';
-  } else {
-    grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    grid.style.maxWidth = '100%';
-    grid.style.margin = '0';
-  }
-}
-
-function closeVcOverlay() {
-  leaveVoiceChannel();
-  const overlay = document.getElementById('vc-overlay');
-  if (overlay) overlay.remove();
+function removeVcTile(containerId) {
+  const el = document.getElementById(containerId);
+  if (el) el.remove();
 }
 
 function toggleVcMute() {
   vcMuted = !vcMuted;
   if (vcLocalStream) vcLocalStream.getAudioTracks().forEach(t => { t.enabled = !vcMuted; });
-  const btn = document.getElementById('vc-mute-btn');
+  const btn = document.getElementById('ws-vc-mute-btn');
   if (btn) {
     btn.innerText = vcMuted ? '🔇' : '🎤';
     btn.style.background = vcMuted ? 'rgba(255,71,87,0.3)' : 'rgba(255,255,255,0.1)';
     btn.style.borderColor = vcMuted ? 'rgba(255,71,87,0.5)' : 'rgba(255,255,255,0.15)';
   }
-  const indicator = document.getElementById('vc-local-mute-indicator');
-  if (indicator) indicator.style.display = vcMuted ? 'block' : 'none';
-  // Update local video if camera on
-  if (!vcCameraOff && vcLocalStream) renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
+  if (!vcCameraOff && vcLocalStream) renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
   fetch(`${API_URL}/api/workspaces/vc/toggle`, {
     method: 'POST', headers: getHeaders(),
     body: JSON.stringify({ channel_id: activeVcChannelId, mute: vcMuted })
@@ -5434,16 +5491,14 @@ function toggleVcMute() {
 
 function toggleVcCamera() {
   vcCameraOff = !vcCameraOff;
-  if (vcLocalStream) {
-    vcLocalStream.getVideoTracks().forEach(t => { t.enabled = !vcCameraOff; });
-  }
-  const btn = document.getElementById('vc-camera-btn');
+  if (vcLocalStream) vcLocalStream.getVideoTracks().forEach(t => { t.enabled = !vcCameraOff; });
+  const btn = document.getElementById('ws-vc-camera-btn');
   if (btn) {
     btn.innerText = vcCameraOff ? '📷' : '📹';
     btn.style.background = vcCameraOff ? 'rgba(255,71,87,0.3)' : 'rgba(255,255,255,0.1)';
     btn.style.borderColor = vcCameraOff ? 'rgba(255,71,87,0.5)' : 'rgba(255,255,255,0.15)';
   }
-  renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
+  renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
   fetch(`${API_URL}/api/workspaces/vc/toggle`, {
     method: 'POST', headers: getHeaders(),
     body: JSON.stringify({ channel_id: activeVcChannelId, video_off: vcCameraOff })
@@ -5451,54 +5506,30 @@ function toggleVcCamera() {
 }
 
 async function toggleVcScreenShare() {
+  const btn = document.getElementById('ws-vc-screenshare-btn');
   if (vcScreenSharing) {
-    // Stop screen share, go back to camera
-    const btn = document.getElementById('vc-screenshare-btn');
-    const btn2 = document.getElementById('vc-screenshare-btn2');
-    if (btn) { btn.innerText = '🖥️ Share'; btn.style.background = 'rgba(255,255,255,0.08)'; }
-    if (btn2) { btn2.style.background = 'rgba(255,255,255,0.1)'; btn2.style.borderColor = 'rgba(255,255,255,0.15)'; }
     vcScreenSharing = false;
-    // Replace screen share track with camera track
+    if (btn) { btn.innerText = '🖥️'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.borderColor = 'rgba(255,255,255,0.15)'; }
     if (vcLocalStream) {
-      const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      const cameraTrack = cameraStream.getVideoTracks()[0];
-      Object.values(vcPeers).forEach(p => {
-        const sender = p.pc.getSenders().find(s => s.track && s.track.kind === 'video');
-        if (sender) sender.replaceTrack(cameraTrack);
-      });
+      const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const camTrack = camStream.getVideoTracks()[0];
+      Object.values(vcPeers).forEach(p => { const s = p.pc.getSenders().find(s => s.track?.kind === 'video'); if (s) s.replaceTrack(camTrack); });
       vcLocalStream.removeTrack(vcLocalStream.getVideoTracks()[0]);
-      vcLocalStream.addTrack(cameraTrack);
+      vcLocalStream.addTrack(camTrack);
       vcCameraOff = false;
-      renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
+      renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
     }
   } else {
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       const screenTrack = screenStream.getVideoTracks()[0];
-      const btn = document.getElementById('vc-screenshare-btn');
-      const btn2 = document.getElementById('vc-screenshare-btn2');
-      if (btn) { btn.innerText = '🛑 Stop'; btn.style.background = 'rgba(112,77,244,0.3)'; }
-      if (btn2) { btn2.style.background = 'rgba(112,77,244,0.3)'; btn2.style.borderColor = 'rgba(112,77,244,0.5)'; }
       vcScreenSharing = true;
-      vcCameraOff = false;
-
-      screenTrack.onended = () => { toggleVcScreenShare(); };
-
-      // Replace camera track with screen share track in all peer connections
-      Object.values(vcPeers).forEach(p => {
-        const sender = p.pc.getSenders().find(s => s.track && s.track.kind === 'video');
-        if (sender) sender.replaceTrack(screenTrack);
-      });
-
-      // Replace in local stream
-      if (vcLocalStream) {
-        vcLocalStream.removeTrack(vcLocalStream.getVideoTracks()[0]);
-        vcLocalStream.addTrack(screenTrack);
-      }
-      renderVcVideo('vc-local', vcLocalStream, currentUser.full_name + ' (Sharing)', true);
-    } catch (err) {
-      // User cancelled screen share
-    }
+      if (btn) { btn.innerText = '🛑'; btn.style.background = 'rgba(112,77,244,0.3)'; btn.style.borderColor = 'rgba(112,77,244,0.5)'; }
+      screenTrack.onended = () => toggleVcScreenShare();
+      Object.values(vcPeers).forEach(p => { const s = p.pc.getSenders().find(s => s.track?.kind === 'video'); if (s) s.replaceTrack(screenTrack); });
+      if (vcLocalStream) { vcLocalStream.removeTrack(vcLocalStream.getVideoTracks()[0]); vcLocalStream.addTrack(screenTrack); }
+      renderVcTile('ws-vc-local', vcLocalStream, 'You (Sharing)', true);
+    } catch (err) { /* cancelled */ }
   }
 }
 
@@ -5517,12 +5548,15 @@ async function leaveVoiceChannel() {
       body: JSON.stringify({ channel_id: activeVcChannelId })
     });
   }
+  const oldChId = activeVcChannelId;
   activeVcChannelId = null;
   vcScreenSharing = false;
-  const overlay = document.getElementById('vc-overlay');
-  if (overlay) overlay.remove();
-  // Hide all sidebar VC panels
+
+  // Remove VC tiles
+  document.querySelectorAll('#ws-vc-grid > div[id]').forEach(el => el.remove());
+  showWsView('default');
   document.querySelectorAll('[id^="vc-participants-"]').forEach(el => { el.style.display = 'none'; el.innerHTML = ''; });
+  loadWsChannels(activeWorkspaceId);
   showToast('success', 'Left call');
 }
 
@@ -5531,28 +5565,33 @@ async function pollVcUpdates(chId) {
     const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
     const participants = await safeJson(res);
 
-    rebuildVcGrid(participants);
+    const countEl = document.getElementById('ws-vc-participants-count');
+    if (countEl) countEl.innerText = `${participants.length + 1} participant${participants.length > 0 ? 's' : ''} in call`;
 
-    // Update sidebar participants
-    showVcParticipantsInSidebar(chId);
-
-    // Connect to new peers
+    // Add new peers
     for (const p of participants) {
       if (p.user_id === currentUser.id) continue;
-      if (!vcPeers[p.user_id]) {
-        await createVcPeer(p.user_id, chId);
-      }
+      if (!vcPeers[p.user_id]) await createVcPeer(p.user_id, chId);
     }
 
-    // Remove disconnected peers
-    const participantIds = participants.map(p => p.user_id);
+    // Remove disconnected
+    const pIds = participants.map(p => p.user_id);
     Object.keys(vcPeers).forEach(uid => {
-      if (!participantIds.includes(uid) || uid === currentUser.id) {
-        if (vcPeers[uid] && vcPeers[uid].pc) vcPeers[uid].pc.close();
+      if (!pIds.includes(uid) || uid === currentUser.id) {
+        if (vcPeers[uid]?.pc) vcPeers[uid].pc.close();
         delete vcPeers[uid];
-        removeVcVideo(`vc-peer-${uid}`);
+        removeVcTile(`vc-peer-${uid}`);
       }
     });
+
+    // Update grid layout
+    const total = participants.length + 1;
+    const grid = document.getElementById('ws-vc-grid');
+    if (grid) {
+      grid.style.gridTemplateColumns = total <= 2 ? 'repeat(2, 1fr)' : total <= 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)';
+    }
+
+    showVcParticipantsInSidebar(chId);
 
     // Poll signals
     const sigRes = await fetch(`${API_URL}/api/workspaces/vc/signals/${chId}`, { headers: getHeaders() });
@@ -5562,7 +5601,26 @@ async function pollVcUpdates(chId) {
       else if (sig.signal_type === 'answer') await handleVcAnswer(sig);
       else if (sig.signal_type === 'candidate') await handleVcCandidate(sig);
     }
-  } catch (err) { /* silent poll */ }
+  } catch (err) { /* silent */ }
+}
+
+async function showVcParticipantsInSidebar(chId) {
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
+    const participants = await safeJson(res);
+    const panel = document.getElementById(`vc-participants-${chId}`);
+    if (panel) {
+      panel.style.display = 'block';
+      const all = [{ user_id: currentUser.id, user_name: currentUser.full_name, is_muted: vcMuted }, ...participants.filter(p => p.user_id !== currentUser.id)];
+      panel.innerHTML = all.map(p => `
+        <div style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:11px;">
+          <div style="width:22px; height:22px; border-radius:50%; background:${p.user_id === currentUser.id ? 'linear-gradient(135deg, #2ed573, #1a9c4a)' : 'linear-gradient(135deg, #704df4, #00d2ff)'}; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
+          <span style="color:#fff;">${p.user_id === currentUser.id ? 'You' : p.user_name}</span>
+          <span style="font-size:10px;">${p.is_muted ? '🔇' : '🎤'}</span>
+        </div>
+      `).join('');
+    }
+  } catch (err) { /* silent */ }
 }
 
 async function createVcPeer(remoteUserId, chId) {
@@ -5576,10 +5634,8 @@ async function createVcPeer(remoteUserId, chId) {
   pc.ontrack = (e) => {
     if (!vcPeers[remoteUserId].stream) {
       vcPeers[remoteUserId].stream = e.streams[0];
-      // Find participant name
-      const pDiv = document.getElementById(`vc-peer-${remoteUserId}`);
-      const name = pDiv ? (pDiv.querySelector('span')?.innerText || 'Peer') : 'Peer';
-      renderVcVideo(`vc-peer-${remoteUserId}`, e.streams[0], name, false);
+      const peerName = participants?.find(p => p.user_id === remoteUserId)?.user_name || 'Peer';
+      renderVcTile(`vc-peer-${remoteUserId}`, e.streams[0], peerName, false);
     }
   };
 
@@ -5594,7 +5650,7 @@ async function createVcPeer(remoteUserId, chId) {
 
   pc.onconnectionstatechange = () => {
     if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-      removeVcVideo(`vc-peer-${remoteUserId}`);
+      removeVcTile(`vc-peer-${remoteUserId}`);
       if (vcPeers[remoteUserId]) { vcPeers[remoteUserId].pc.close(); delete vcPeers[remoteUserId]; }
     }
   };
@@ -5617,7 +5673,7 @@ async function handleVcOffer(sig, chId) {
     pc.ontrack = (e) => {
       if (!peerData.stream) {
         peerData.stream = e.streams[0];
-        renderVcVideo(`vc-peer-${sig.from_user_id}`, e.streams[0], sig.from_user_name, false);
+        renderVcTile(`vc-peer-${sig.from_user_id}`, e.streams[0], sig.from_user_name, false);
       }
     };
     pc.onicecandidate = (e) => {
@@ -5630,7 +5686,7 @@ async function handleVcOffer(sig, chId) {
     };
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        removeVcVideo(`vc-peer-${sig.from_user_id}`);
+        removeVcTile(`vc-peer-${sig.from_user_id}`);
         if (vcPeers[sig.from_user_id]) { vcPeers[sig.from_user_id].pc.close(); delete vcPeers[sig.from_user_id]; }
       }
     };

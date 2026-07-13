@@ -1960,9 +1960,8 @@
                 </div>
                 <div style="display:flex; gap:6px;">
                   <button onclick="openCreateChannelModal()" style="flex:1; padding:6px; background:rgba(112,77,244,0.15); border:1px solid rgba(112,77,244,0.3); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;"># + Channel</button>
-                  <button onclick="showWsRoles()" style="flex:1; padding:6px; background:rgba(112,77,244,0.1); border:1px solid rgba(112,77,244,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">🎭 Roles</button>
-                  <button onclick="showWsMembers()" style="flex:1; padding:6px; background:rgba(0,210,255,0.1); border:1px solid rgba(0,210,255,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">👥 Members</button>
-                  <button onclick="showWsAddMember()" style="padding:6px 10px; background:rgba(46,213,115,0.1); border:1px solid rgba(46,213,115,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer;">+</button>
+                  <button onclick="showWsRightPanel('roles')" style="flex:1; padding:6px; background:rgba(112,77,244,0.1); border:1px solid rgba(112,77,244,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">🎭 Roles</button>
+                  <button onclick="showWsRightPanel('members')" style="flex:1; padding:6px; background:rgba(0,210,255,0.1); border:1px solid rgba(0,210,255,0.2); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">👥 Members</button>
                 </div>
               </div>
               <div id="ws-channels-list" style="flex:1; overflow-y:auto; padding:8px;">
@@ -1970,25 +1969,45 @@
               </div>
             </div>
 
-            <!-- Channel Messages Area -->
-            <div style="display:flex; flex-direction:column; background:rgba(11,15,25,0.5);">
-              <div id="ws-channel-header" style="padding:14px 24px; border-bottom:1px solid var(--border-color); background:rgba(0,0,0,0.25); flex-shrink:0;">
-                <h4 id="ws-channel-name" style="margin:0; font-size:15px; font-weight:600; color:#fff;">Select a channel</h4>
-                <span id="ws-channel-desc" style="font-size:12px; color:var(--text-muted);"></span>
-              </div>
-              <div id="ws-messages-container" style="flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:6px; background:linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 100%);">
-                <div style="flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; text-align:center;">
-                  <div style="width:80px; height:80px; border-radius:50%; background:rgba(0,210,255,0.1); display:flex; align-items:center; justify-content:center; font-size:36px;">#</div>
-                  <div style="font-size:15px; font-weight:600; color:#fff;">Select a channel</div>
-                  <div style="font-size:13px; color:var(--text-muted);">Choose a channel from the sidebar to start chatting</div>
+            <!-- Channel Content Area -->
+            <div style="display:flex; flex-direction:column; background:rgba(11,15,25,0.5); overflow:hidden;">
+              <!-- Text Channel View -->
+              <div id="ws-text-channel-view" style="display:none; flex-direction:column; flex:1; min-height:0;">
+                <div id="ws-channel-header" style="padding:14px 24px; border-bottom:1px solid var(--border-color); background:rgba(0,0,0,0.25); flex-shrink:0;">
+                  <h4 id="ws-channel-name" style="margin:0; font-size:15px; font-weight:600; color:#fff;">Select a channel</h4>
+                  <span id="ws-channel-desc" style="font-size:12px; color:var(--text-muted);"></span>
+                </div>
+                <div id="ws-messages-container" style="flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:6px; background:linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 100%);">
+                </div>
+                <div id="ws-input-area" style="padding:14px 20px; border-top:1px solid var(--border-color); background:rgba(0,0,0,0.3); flex-shrink:0;">
+                  <form id="ws-msg-form" onsubmit="handleSendWsMessage(event)" style="display:flex; gap:10px; align-items:center;">
+                    <input type="text" id="ws-msg-input" placeholder="Message #channel" style="flex:1; padding:12px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:24px; color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                    <button type="submit" style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); border:none; color:#fff; font-size:18px; cursor:pointer; flex-shrink:0;">➤</button>
+                  </form>
                 </div>
               </div>
-              <!-- Input -->
-              <div id="ws-input-area" style="padding:14px 20px; border-top:1px solid var(--border-color); background:rgba(0,0,0,0.3); flex-shrink:0; display:none;">
-                <form id="ws-msg-form" onsubmit="handleSendWsMessage(event)" style="display:flex; gap:10px; align-items:center;">
-                  <input type="text" id="ws-msg-input" placeholder="Message #channel" style="flex:1; padding:12px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:24px; color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
-                  <button type="submit" style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); border:none; color:#fff; font-size:18px; cursor:pointer; flex-shrink:0;">➤</button>
-                </form>
+
+              <!-- Voice Channel View -->
+              <div id="ws-voice-channel-view" style="display:none; flex-direction:column; flex:1; min-height:0;">
+                <div id="ws-vc-header" style="padding:14px 24px; border-bottom:1px solid var(--border-color); background:rgba(0,0,0,0.25); flex-shrink:0;">
+                  <h4 id="ws-vc-name" style="margin:0; font-size:15px; font-weight:600; color:#fff;">🔊 Voice Channel</h4>
+                  <span id="ws-vc-participants-count" style="font-size:12px; color:var(--text-muted);">0 participants</span>
+                </div>
+                <div id="ws-vc-grid" style="flex:1; overflow-y:auto; padding:20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; align-content:start;">
+                </div>
+                <div id="ws-vc-controls" style="padding:14px 20px; border-top:1px solid var(--border-color); background:rgba(0,0,0,0.3); flex-shrink:0; display:flex; justify-content:center; gap:12px; align-items:center;">
+                  <button onclick="toggleVcMute()" id="ws-vc-mute-btn" style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:18px; cursor:pointer;">🎤</button>
+                  <button onclick="toggleVcCamera()" id="ws-vc-camera-btn" style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:18px; cursor:pointer;">📹</button>
+                  <button onclick="toggleVcScreenShare()" id="ws-vc-screenshare-btn" style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15); color:#fff; font-size:18px; cursor:pointer;">🖥️</button>
+                  <button onclick="leaveVoiceChannel()" style="width:56px; height:48px; border-radius:50%; background:linear-gradient(135deg, #ff4757, #c0392b); border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:700;">📞</button>
+                </div>
+              </div>
+
+              <!-- Default View -->
+              <div id="ws-default-view" style="flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; text-align:center;">
+                <div style="width:80px; height:80px; border-radius:50%; background:rgba(0,210,255,0.1); display:flex; align-items:center; justify-content:center; font-size:36px;">#</div>
+                <div style="font-size:15px; font-weight:600; color:#fff;">Select a channel</div>
+                <div style="font-size:13px; color:var(--text-muted);">Choose a channel from the sidebar</div>
               </div>
             </div>
           </div>
