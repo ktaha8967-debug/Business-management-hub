@@ -171,7 +171,8 @@ function initCommandShell() {
   // Set avatar letters
   const parts = currentUser.full_name.split(' ');
   const letters = parts.map(p => p[0]).join('').toUpperCase().slice(0, 2);
-  document.getElementById('avatar-letters').innerText = letters;
+  const avatarText = document.getElementById('sidebar-avatar-text');
+  if (avatarText) avatarText.innerText = letters;
 
   // Set roles navigation visibility
   document.querySelector('.admin-links').classList.add('hidden');
