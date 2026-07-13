@@ -789,6 +789,29 @@ input[type="file"] {
   background: rgba(255, 255, 255, 0.02);
 }
 
+/* ADMIN USER MANAGEMENT TABLE */
+.role-select {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.role-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.action-buttons .btn {
+  white-space: nowrap;
+}
+
 /* BADGES */
 .badge {
   display: inline-block;
