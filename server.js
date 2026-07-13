@@ -2661,6 +2661,295 @@ app.post('/api/voice-agent/transcribe', authenticateToken, upload.single('file')
   }
 });
 
+// ==================== WORKSPACE SYSTEM (Discord/Slack style) ====================
+
+// Create Workspace (Admin/Boss only)
+app.post('/api/workspaces', authenticateToken, authorizeRoles('Super Admin', 'Admin Team', 'Business Owners'), (req, res) => {
+  try {
+    const { name, icon, description } = req.body;
+    if (!name) return res.status(400).json({ error: 'Workspace name is required' });
+
+    const workspace = db.insert('workspaces', {
+      name,
+      icon: icon || '🏠',
+      description: description || '',
+      creator_id: req.user.id,
+      creator_name: req.user.full_name,
+      members: [req.user.id],
+      member_names: [req.user.full_name]
+    });
+
+    // Auto-create #general channel
+    db.insert('workspace_channels', {
+      workspace_id: workspace.id,
+      name: 'general',
+      description: 'General discussion',
+      created_by: req.user.id,
+      created_by_name: req.user.full_name,
+      is_default: true
+    });
+
+    db.logActivity(req.user.id, 'create_workspace', `Created workspace "${name}"`);
+    res.status(201).json(workspace);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user's workspaces
+app.get('/api/workspaces', authenticateToken, (req, res) => {
+  try {
+    const workspaces = db.find('workspaces', w => w.members.includes(req.user.id));
+    // Add channel count to each workspace
+    const result = workspaces.map(w => {
+      const channels = db.find('workspace_channels', c => c.workspace_id === w.id);
+      return { ...w, channel_count: channels.length };
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get workspace details
+app.get('/api/workspaces/:id', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.id);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (!ws.members.includes(req.user.id)) return res.status(403).json({ error: 'Not a member' });
+    res.json(ws);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update workspace
+app.put('/api/workspaces/:id', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.id);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    const updated = db.update('workspaces', ws.id, req.body);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete workspace
+app.delete('/api/workspaces/:id', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.id);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    // Delete all channels and messages
+    db.find('workspace_channels', c => c.workspace_id === ws.id).forEach(c => {
+      db.find('workspace_messages', m => m.channel_id === c.id).forEach(m => {
+        db.delete('workspace_messages', m.id);
+      });
+      db.delete('workspace_channels', c.id);
+    });
+    db.delete('workspaces', ws.id);
+    res.json({ message: 'Workspace deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add member to workspace
+app.post('/api/workspaces/:id/members', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.id);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+    const user = db.findOne('users', u => u.id === user_id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (ws.members.includes(user_id)) return res.status(400).json({ error: 'Already a member' });
+
+    const updatedMembers = [...ws.members, user_id];
+    const updatedNames = [...ws.member_names, user.full_name];
+    const updated = db.update('workspaces', ws.id, { members: updatedMembers, member_names: updatedNames });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove member from workspace
+app.delete('/api/workspaces/:id/members/:userId', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.id);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (ws.creator_id !== req.user.id && !['Super Admin', 'Admin Team'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    const userIdx = ws.members.indexOf(req.params.userId);
+    if (userIdx === -1) return res.status(400).json({ error: 'Not a member' });
+    ws.members.splice(userIdx, 1);
+    ws.member_names.splice(userIdx, 1);
+    db.update('workspaces', ws.id, { members: ws.members, member_names: ws.member_names });
+    res.json({ message: 'Member removed' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== CHANNEL ROUTES ====================
+
+// Create channel in workspace
+app.post('/api/workspaces/:wsId/channels', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.wsId);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (!ws.members.includes(req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const { name, description } = req.body;
+    if (!name) return res.status(400).json({ error: 'Channel name is required' });
+
+    const channel = db.insert('workspace_channels', {
+      workspace_id: ws.id,
+      name: name.toLowerCase().replace(/\s+/g, '-'),
+      description: description || '',
+      created_by: req.user.id,
+      created_by_name: req.user.full_name,
+      is_default: false
+    });
+    res.status(201).json(channel);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get channels in workspace
+app.get('/api/workspaces/:wsId/channels', authenticateToken, (req, res) => {
+  try {
+    const ws = db.findOne('workspaces', w => w.id === req.params.wsId);
+    if (!ws) return res.status(404).json({ error: 'Workspace not found' });
+    if (!ws.members.includes(req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const channels = db.find('workspace_channels', c => c.workspace_id === ws.id);
+    // Add last message preview to each channel
+    const result = channels.map(ch => {
+      const msgs = db.find('workspace_messages', m => m.channel_id === ch.id);
+      msgs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      const lastMsg = msgs[0];
+      return {
+        ...ch,
+        message_count: msgs.length,
+        last_message: lastMsg ? { sender: lastMsg.sender_name, text: lastMsg.message, time: lastMsg.timestamp } : null
+      };
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete channel
+app.delete('/api/workspaces/:wsId/channels/:chId', authenticateToken, (req, res) => {
+  try {
+    const channel = db.findOne('workspace_channels', c => c.id === req.params.chId);
+    if (!channel || channel.workspace_id !== req.params.wsId) return res.status(404).json({ error: 'Channel not found' });
+    if (channel.is_default) return res.status(400).json({ error: 'Cannot delete default channel' });
+
+    db.find('workspace_messages', m => m.channel_id === channel.id).forEach(m => {
+      db.delete('workspace_messages', m.id);
+    });
+    db.delete('workspace_channels', channel.id);
+    res.json({ message: 'Channel deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== CHANNEL MESSAGE ROUTES ====================
+
+// Send message to channel
+app.post('/api/workspaces/channels/:chId/messages', authenticateToken, (req, res) => {
+  try {
+    const channel = db.findOne('workspace_channels', c => c.id === req.params.chId);
+    if (!channel) return res.status(404).json({ error: 'Channel not found' });
+
+    const ws = db.findOne('workspaces', w => w.id === channel.workspace_id);
+    if (!ws || !ws.members.includes(req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const { message, attachment } = req.body;
+    if (!message && !attachment) return res.status(400).json({ error: 'Message or attachment required' });
+
+    const newMsg = db.insert('workspace_messages', {
+      channel_id: channel.id,
+      workspace_id: ws.id,
+      sender_id: req.user.id,
+      sender_name: req.user.full_name,
+      message: message || '',
+      attachment: attachment || null,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json(newMsg);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get channel messages
+app.get('/api/workspaces/channels/:chId/messages', authenticateToken, (req, res) => {
+  try {
+    const channel = db.findOne('workspace_channels', c => c.id === req.params.chId);
+    if (!channel) return res.status(404).json({ error: 'Channel not found' });
+
+    const ws = db.findOne('workspaces', w => w.id === channel.workspace_id);
+    if (!ws || !ws.members.includes(req.user.id)) return res.status(403).json({ error: 'Not a member' });
+
+    const messages = db.find('workspace_messages', m => m.channel_id === channel.id);
+    messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Edit channel message
+app.put('/api/workspaces/messages/:msgId', authenticateToken, (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message required' });
+
+    const msg = db.findOne('workspace_messages', m => m.id === req.params.msgId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    if (msg.sender_id !== req.user.id) return res.status(403).json({ error: 'Can only edit your own messages' });
+
+    const updated = db.update('workspace_messages', msg.id, { message, edited: true, edited_at: new Date().toISOString() });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete channel message
+app.delete('/api/workspaces/messages/:msgId', authenticateToken, (req, res) => {
+  try {
+    const msg = db.findOne('workspace_messages', m => m.id === req.params.msgId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+
+    const isAdmin = ['Super Admin', 'Admin Team'].includes(req.user.role);
+    if (msg.sender_id !== req.user.id && !isAdmin) return res.status(403).json({ error: 'Permission denied' });
+
+    db.delete('workspace_messages', msg.id);
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Serve frontend SPA index file
 app.use(express.static(path.join(__dirname, 'public')));
 

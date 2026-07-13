@@ -62,7 +62,10 @@ const defaultDB = {
   chat_groups: [],
   chat_group_messages: [],
   meeting_tasks: [],
-  projects: []
+  projects: [],
+  workspaces: [],
+  workspace_channels: [],
+  workspace_messages: []
 };
 
 function readDB() {

@@ -561,6 +561,14 @@ input[type="file"] {
   flex-shrink: 0 !important;
 }
 
+/* Workspace detail responsive */
+@media (max-width: 768px) {
+  #workspace-detail-layout {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto 1fr !important;
+  }
+}
+
 .main-header {
   padding: 20px 30px;
   border-bottom: 1px solid var(--border-color);

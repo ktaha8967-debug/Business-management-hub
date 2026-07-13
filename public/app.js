@@ -314,7 +314,9 @@ function switchMainTab(tabId) {
     'mentee-meetings': 'Mentee Meetings',
     'owner-projects': 'Submit Project Request',
     'assigned-projects': 'My Assigned Projects',
-    'admin-projects': 'Project Approvals'
+    'admin-projects': 'Project Approvals',
+    'workspaces': 'Workspaces',
+    'workspace-detail': 'Workspace Channel'
   };
   document.getElementById('header-view-title').innerText = titleMap[tabId] || 'Platform Dashboard';
 
@@ -529,6 +531,8 @@ async function fetchTabData(tabId) {
     loadAssignedProjects();
   } else if (tabId === 'admin-projects') {
     loadAdminProjects();
+  } else if (tabId === 'workspaces') {
+    loadWorkspaces();
   }
 }
 
@@ -4815,6 +4819,250 @@ async function showGroupMembers(groupId) {
     const members = await safeJson(res);
     const names = members.map(m => `${m.full_name} (${m.role})`).join('\n');
     alert(`Group Members (${members.length}):\n\n${names}`);
+  } catch (err) { showToast('error', err.message); }
+}
+
+// ==================== WORKSPACE SYSTEM ====================
+let activeWorkspaceId = null;
+let activeChannelId = null;
+
+async function loadWorkspaces() {
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces`, { headers: getHeaders() });
+    const workspaces = await safeJson(res);
+    const grid = document.getElementById('workspaces-grid');
+    if (workspaces.length === 0) {
+      grid.innerHTML = '<div style="text-align:center; padding:60px; color:var(--text-muted);"><div style="font-size:40px; margin-bottom:12px;">🏢</div><div style="font-size:15px; font-weight:600; color:#fff; margin-bottom:4px;">No Workspaces Yet</div><div style="font-size:13px;">Create your first workspace to start collaborating with channels</div></div>';
+      return;
+    }
+    grid.innerHTML = workspaces.map(w => `
+      <div onclick="openWorkspace('${w.id}')" style="padding:24px; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:16px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(112,77,244,0.4)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='none'">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, rgba(112,77,244,0.2), rgba(0,210,255,0.2)); display:flex; align-items:center; justify-content:center; font-size:24px;">${w.icon || '🏠'}</div>
+          <div>
+            <div style="font-size:16px; font-weight:700; color:#fff;">${w.name}</div>
+            <div style="font-size:12px; color:var(--text-muted);">by ${w.creator_name}</div>
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px; line-height:1.4;">${w.description || 'No description'}</p>
+        <div style="display:flex; gap:16px; font-size:12px; color:var(--text-muted);">
+          <span># ${w.channel_count || 0} channels</span>
+          <span>👥 ${w.members ? w.members.length : 0} members</span>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) { showToast('error', err.message); }
+}
+
+function openCreateWorkspaceModal() { document.getElementById('create-workspace-modal').classList.remove('hidden'); }
+function closeCreateWorkspaceModal() { document.getElementById('create-workspace-modal').classList.add('hidden'); }
+
+async function handleCreateWorkspace(e) {
+  e.preventDefault();
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({
+        name: document.getElementById('ws-name-input').value,
+        icon: document.getElementById('ws-icon-input').value || '🏠',
+        description: document.getElementById('ws-desc-input').value
+      })
+    });
+    if (res.ok) {
+      showToast('success', 'Workspace created!');
+      closeCreateWorkspaceModal();
+      document.getElementById('create-workspace-form').reset();
+      loadWorkspaces();
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function openWorkspace(wsId) {
+  activeWorkspaceId = wsId;
+  activeChannelId = null;
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/${wsId}`, { headers: getHeaders() });
+    const ws = await safeJson(res);
+    document.getElementById('ws-detail-name').innerText = `${ws.icon || ''} ${ws.name}`;
+    switchMainTab('workspace-detail');
+    loadWsChannels(wsId);
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function loadWsChannels(wsId) {
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/${wsId}/channels`, { headers: getHeaders() });
+    const channels = await safeJson(res);
+    const list = document.getElementById('ws-channels-list');
+    if (channels.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px; font-size:12px;">No channels yet</div>';
+      return;
+    }
+    list.innerHTML = channels.map(ch => `
+      <div onclick="selectChannel('${ch.id}')" style="padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:8px; transition:all 0.2s; ${activeChannelId === ch.id ? 'background:rgba(112,77,244,0.15); border:1px solid rgba(112,77,244,0.3);' : 'border:1px solid transparent;'}" onmouseover="if('${activeChannelId}'!=='${ch.id}')this.style.background='rgba(255,255,255,0.04)'" onmouseout="if('${activeChannelId}'!=='${ch.id}')this.style.background='transparent'">
+        <span style="color:var(--accent-cyan); font-weight:700; font-size:14px;">#</span>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:600; color:#fff;">${ch.name}</div>
+          ${ch.last_message ? `<div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ch.last_message.sender}: ${ch.last_message.text}</div>` : ''}
+        </div>
+        ${ch.message_count ? `<span style="font-size:10px; color:var(--text-muted);">${ch.message_count}</span>` : ''}
+      </div>
+    `).join('');
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function selectChannel(chId) {
+  activeChannelId = chId;
+  document.getElementById('ws-input-area').style.display = 'block';
+  document.getElementById('ws-msg-input').focus();
+  // Reload channels to highlight active
+  loadWsChannels(activeWorkspaceId);
+  loadChannelMessages(chId);
+}
+
+async function loadChannelMessages(chId) {
+  const container = document.getElementById('ws-messages-container');
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/channels/${chId}/messages`, { headers: getHeaders() });
+    const messages = await safeJson(res);
+
+    // Set header
+    document.getElementById('ws-channel-name').innerText = '#' + (messages.length > 0 ? '' : '');
+
+    if (messages.length === 0) {
+      container.innerHTML = '<div style="flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;"><div style="font-size:30px;">#</div><div style="font-size:13px; color:var(--text-muted);">No messages yet. Start the conversation!</div></div>';
+      return;
+    }
+
+    container.innerHTML = messages.map((msg, idx) => {
+      const isMine = msg.sender_id === currentUser.id;
+      const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const editedTag = msg.edited ? ' <span style="font-style:italic; opacity:0.6;">(edited)</span>' : '';
+      const prevMsg = idx > 0 ? messages[idx - 1] : null;
+      const showSender = !prevMsg || prevMsg.sender_id !== msg.sender_id;
+      const senderInitial = (msg.sender_name || 'U').charAt(0).toUpperCase();
+      const actionsHtml = isMine ? `<div style="display:flex; gap:4px; margin-top:4px;">
+        <button onclick="editWsMsg('${msg.id}')" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:10px; cursor:pointer;">✏️</button>
+        <button onclick="deleteWsMsg('${msg.id}')" style="background:none; border:none; color:rgba(255,71,87,0.5); font-size:10px; cursor:pointer;">🗑️</button>
+      </div>` : '';
+
+      return `<div style="margin-bottom:${showSender ? '8px' : '2px'};">
+        ${showSender ? `<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff;">${senderInitial}</div>
+          <span style="font-size:12px; font-weight:600; color:${isMine ? 'rgba(255,255,255,0.5)' : 'var(--accent-cyan)'};">${isMine ? 'You' : msg.sender_name}</span>
+        </div>` : ''}
+        <div style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'};">
+          <div style="max-width:65%; ${isMine ? 'background:linear-gradient(135deg,#704df4,#5a3fc0); color:#fff; border-radius:18px 18px 4px 18px;' : 'background:rgba(255,255,255,0.08); color:#fff; border-radius:18px 18px 18px 4px;'} padding:10px 14px;">
+            <div style="font-size:13px; word-wrap:break-word;">${msg.message}${editedTag}</div>
+            <div style="font-size:10px; ${isMine ? 'color:rgba(255,255,255,0.6)' : 'color:var(--text-muted)'}; text-align:right; margin-top:4px;">${timeStr}</div>
+            ${actionsHtml}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    container.scrollTop = container.scrollHeight;
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function handleSendWsMessage(e) {
+  e.preventDefault();
+  if (!activeChannelId) return;
+  const input = document.getElementById('ws-msg-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/channels/${activeChannelId}/messages`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ message: msg })
+    });
+    if (res.ok) {
+      loadChannelMessages(activeChannelId);
+      loadWsChannels(activeWorkspaceId);
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+function openCreateChannelModal() { document.getElementById('create-channel-modal').classList.remove('hidden'); }
+function closeCreateChannelModal() { document.getElementById('create-channel-modal').classList.add('hidden'); }
+
+async function handleCreateChannel(e) {
+  e.preventDefault();
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/channels`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({
+        name: document.getElementById('ch-name-input').value,
+        description: document.getElementById('ch-desc-input').value
+      })
+    });
+    if (res.ok) {
+      showToast('success', 'Channel created!');
+      closeCreateChannelModal();
+      document.getElementById('create-channel-form').reset();
+      loadWsChannels(activeWorkspaceId);
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function editWsMsg(msgId) {
+  const newMsg = prompt('Edit your message:');
+  if (!newMsg || !newMsg.trim()) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/messages/${msgId}`, {
+      method: 'PUT', headers: getHeaders(),
+      body: JSON.stringify({ message: newMsg.trim() })
+    });
+    if (res.ok) loadChannelMessages(activeChannelId);
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function deleteWsMsg(msgId) {
+  if (!confirm('Delete this message?')) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/messages/${msgId}`, {
+      method: 'DELETE', headers: getHeaders()
+    });
+    if (res.ok) loadChannelMessages(activeChannelId);
+    else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function showWsMembers() {
+  if (!activeWorkspaceId) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
+    const ws = await safeJson(res);
+    const names = ws.member_names.map((n, i) => `${i + 1}. ${n}`).join('\n');
+    alert(`Workspace Members (${ws.member_names.length}):\n\n${names}`);
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function showWsAddMember() {
+  if (!activeWorkspaceId) return;
+  try {
+    const usersRes = await fetch(`${API_URL}/api/users`, { headers: getHeaders() });
+    const users = await safeJson(usersRes);
+    const wsRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}`, { headers: getHeaders() });
+    const ws = await safeJson(wsRes);
+    const notMembers = users.filter(u => !ws.members.includes(u.id));
+    if (notMembers.length === 0) { showToast('error', 'All users are already members'); return; }
+
+    const names = notMembers.map(u => u.full_name).join(', ');
+    const choice = prompt(`Add member (enter exact name):\n\nAvailable: ${names}`);
+    if (!choice) return;
+    const user = notMembers.find(u => u.full_name.toLowerCase() === choice.toLowerCase());
+    if (!user) { showToast('error', 'User not found'); return; }
+
+    const addRes = await fetch(`${API_URL}/api/workspaces/${activeWorkspaceId}/members`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ user_id: user.id })
+    });
+    if (addRes.ok) showToast('success', `${user.full_name} added!`);
+    else { const e = await addRes.json(); showToast('error', e.error); }
   } catch (err) { showToast('error', err.message); }
 }
 
