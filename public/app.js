@@ -4901,21 +4901,58 @@ async function loadWsChannels(wsId) {
     list.innerHTML = channels.map(ch => {
       const isVoice = ch.channel_type === 'voice';
       const icon = isVoice ? '🔊' : '#';
+      const isActiveVc = isVoice && activeVcChannelId === ch.id;
       return `
-      <div onclick="${isVoice ? `joinVoiceChannel('${ch.id}')` : `selectChannel('${ch.id}')`}" style="padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:8px; transition:all 0.2s; ${activeChannelId === ch.id ? 'background:rgba(112,77,244,0.15); border:1px solid rgba(112,77,244,0.3);' : 'border:1px solid transparent;'}" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='${activeChannelId === ch.id ? 'rgba(112,77,244,0.15)' : 'transparent'}'">
+      <div onclick="${isVoice ? `toggleVoiceChannel('${ch.id}')` : `selectChannel('${ch.id}')`}" style="padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:8px; transition:all 0.2s; ${isActiveVc ? 'background:rgba(46,213,115,0.15); border:1px solid rgba(46,213,115,0.3);' : 'border:1px solid transparent;'}" onmouseover="this.style.background='${isActiveVc ? 'rgba(46,213,115,0.15)' : 'rgba(255,255,255,0.04)'}'" onmouseout="this.style.background='${isActiveVc ? 'rgba(46,213,115,0.15)' : 'transparent'}'">
         <span style="color:${isVoice ? '#2ed573' : 'var(--accent-cyan)'}; font-weight:700; font-size:14px;">${icon}</span>
         <div style="flex:1; min-width:0;">
           <div style="font-size:13px; font-weight:600; color:#fff;">${ch.name}</div>
+          ${isVoice ? `<div style="font-size:10px; color:${isActiveVc ? '#2ed573' : 'var(--text-muted)'};">${isActiveVc ? '🟢 Live' : 'Voice Channel'}</div>` : ''}
           ${ch.last_message && !isVoice ? `<div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ch.last_message.sender}: ${ch.last_message.text}</div>` : ''}
-          ${isVoice ? '<div style="font-size:10px; color:#2ed573;">Voice Channel</div>' : ''}
         </div>
         ${ch.message_count && !isVoice ? `<span style="font-size:10px; color:var(--text-muted);">${ch.message_count}</span>` : ''}
         <div style="display:flex; gap:2px;">
           <button onclick="event.stopPropagation(); showChannelRoles('${ch.id}')" style="background:none; border:none; color:var(--text-muted); font-size:10px; cursor:pointer; padding:2px;" title="Channel roles">🔐</button>
         </div>
-      </div>`;
+      </div>
+      ${isVoice ? `<div id="vc-participants-${ch.id}" style="padding:0 12px 8px 32px; display:none;"></div>` : ''}`;
     }).join('');
   } catch (err) { showToast('error', err.message); }
+}
+
+async function toggleVoiceChannel(chId) {
+  // If already in this VC, do nothing (or show participants)
+  if (activeVcChannelId === chId) return;
+  // If in another VC, leave first
+  if (activeVcChannelId) await leaveVoiceChannel();
+  // Show VC panel for this channel
+  showVcPanel(chId);
+}
+
+async function showVcPanel(chId) {
+  // Show participants below channel in sidebar
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
+    const participants = await safeJson(res);
+    const panel = document.getElementById(`vc-participants-${chId}`);
+    if (panel) {
+      panel.style.display = 'block';
+      let html = '';
+      if (participants.length > 0) {
+        html += participants.map(p => `
+          <div style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:11px;">
+            <div style="width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
+            <span style="color:#fff;">${p.user_name}</span>
+            <span style="font-size:10px; color:var(--text-muted);">${p.is_muted ? '🔇' : '🎤'}</span>
+          </div>
+        `).join('');
+      } else {
+        html = '<div style="font-size:11px; color:var(--text-muted); padding:4px 0;">No one here yet</div>';
+      }
+      html += `<button onclick="joinVoiceChannel('${chId}')" style="width:100%; padding:8px; margin-top:8px; background:linear-gradient(135deg, #2ed573, #1a9c4a); border:none; border-radius:8px; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">📞 Join Voice</button>`;
+      panel.innerHTML = html;
+    }
+  } catch (err) { /* silent */ }
 }
 
 async function selectChannel(chId) {
@@ -5184,18 +5221,38 @@ async function joinVoiceChannel(chId) {
       body: JSON.stringify({ channel_id: chId })
     });
 
-    // Show video call overlay
     showVideoCallOverlay(chId);
-
-    // Render local video
     renderVcVideo('vc-local', vcLocalStream, currentUser.full_name, true);
-
-    // Poll for peers and signals
     vcPollInterval = setInterval(() => pollVcUpdates(chId), 2000);
+    // Update sidebar participants
+    showVcParticipantsInSidebar(chId);
     showToast('success', 'Joined video call');
   } catch (err) {
     showToast('error', 'Camera/Mic access denied: ' + err.message);
   }
+}
+
+async function showVcParticipantsInSidebar(chId) {
+  try {
+    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
+    const participants = await safeJson(res);
+    const panel = document.getElementById(`vc-participants-${chId}`);
+    if (panel) {
+      panel.style.display = 'block';
+      let html = '';
+      // Always include self
+      const all = [{ user_id: currentUser.id, user_name: currentUser.full_name, is_muted: vcMuted }, ...participants.filter(p => p.user_id !== currentUser.id)];
+      html += all.map(p => `
+        <div style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:11px;">
+          <div style="width:24px; height:24px; border-radius:50%; background:${p.user_id === currentUser.id ? 'linear-gradient(135deg, #2ed573, #1a9c4a)' : 'linear-gradient(135deg, #704df4, #00d2ff)'}; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
+          <span style="color:#fff;">${p.user_id === currentUser.id ? 'You' : p.user_name}</span>
+          <span style="font-size:10px;">${p.is_muted ? '🔇' : '🎤'}</span>
+        </div>
+      `).join('');
+      html += `<button onclick="leaveVoiceChannel()" style="width:100%; padding:8px; margin-top:8px; background:rgba(255,71,87,0.2); border:1px solid rgba(255,71,87,0.3); border-radius:8px; color:#ff4757; font-size:12px; font-weight:600; cursor:pointer;">📞 Leave</button>`;
+      panel.innerHTML = html;
+    }
+  } catch (err) { /* silent */ }
 }
 
 function showVideoCallOverlay(chId) {
@@ -5464,6 +5521,8 @@ async function leaveVoiceChannel() {
   vcScreenSharing = false;
   const overlay = document.getElementById('vc-overlay');
   if (overlay) overlay.remove();
+  // Hide all sidebar VC panels
+  document.querySelectorAll('[id^="vc-participants-"]').forEach(el => { el.style.display = 'none'; el.innerHTML = ''; });
   showToast('success', 'Left call');
 }
 
@@ -5473,6 +5532,9 @@ async function pollVcUpdates(chId) {
     const participants = await safeJson(res);
 
     rebuildVcGrid(participants);
+
+    // Update sidebar participants
+    showVcParticipantsInSidebar(chId);
 
     // Connect to new peers
     for (const p of participants) {
