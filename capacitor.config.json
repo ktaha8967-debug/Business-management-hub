@@ -4,7 +4,7 @@
   "webDir": "public",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://taha.mayfairmarketing.online",
+    "url": "https://business-management-hub.britsync.co.uk",
     "cleartext": true
   },
   "plugins": {

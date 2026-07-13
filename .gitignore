@@ -10,6 +10,11 @@ frontend/dist/
 # Uploads directory (only upload the folder structure, not user uploads)
 backend/uploads/*
 !backend/uploads/.gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Environment secrets
+.env
 
 # IDEs and OS files
 .vscode/

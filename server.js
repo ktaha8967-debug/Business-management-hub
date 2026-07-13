@@ -277,7 +277,7 @@ You have signed a contract agreement with us. This is our unified platform to ma
 
 Invitation Code: ${code}
 
-Registration Link: https://taha.mayfairmarketing.online (Please select the appropriate registration tab for your role)
+Registration Link: https://business-management-hub.britsync.co.uk (Please select the appropriate registration tab for your role)
 
 We look forward to working closely with you.
 

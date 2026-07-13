@@ -50,7 +50,7 @@ function createWindow() {
   if (isDev) {
     mainWindow.loadURL('http://localhost:5000');
   } else {
-    mainWindow.loadURL('https://taha.mayfairmarketing.online');
+    mainWindow.loadURL('https://business-management-hub.britsync.co.uk');
   }
 
   mainWindow.on('close', function (event) {
