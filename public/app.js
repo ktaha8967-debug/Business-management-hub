@@ -340,6 +340,15 @@ function switchMainTab(tabId) {
     requestAnimationFrame(() => sizeChatLayout());
   }
 
+  // Show/hide floating VC indicator based on whether we're in workspace detail
+  if (activeVcChannelId) {
+    if (tabId === 'workspace-detail') {
+      hideFloatingVcIndicator();
+    } else {
+      showFloatingVcIndicator(activeVcChannelId);
+    }
+  }
+
   // Fetch relevant tab data
   fetchTabData(tabId);
 }
@@ -5839,15 +5848,48 @@ async function joinVoiceChannel(chId) {
     });
 
     showWsView('voice');
-    document.getElementById('ws-vc-name').innerText = '🔊 ' + chId;
+    document.getElementById('ws-vc-name').innerText = '🔊 Voice Channel';
 
     renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
     vcPollInterval = setInterval(() => pollVcUpdates(chId), 2000);
     showVcParticipantsInSidebar(chId);
+    showFloatingVcIndicator(chId);
     showToast('success', 'Joined voice channel');
   } catch (err) {
     showToast('error', 'Camera/Mic access denied: ' + err.message);
   }
+}
+
+// Floating VC indicator — shows when in VC but viewing other pages
+function showFloatingVcIndicator(chId) {
+  let indicator = document.getElementById('vc-floating-indicator');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'vc-floating-indicator';
+    indicator.style.cssText = 'position:fixed; bottom:80px; left:20px; z-index:8000; background:linear-gradient(135deg, rgba(46,213,115,0.9), rgba(0,210,255,0.9)); border-radius:16px; padding:12px 20px; display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:0 4px 20px rgba(46,213,115,0.3); transition:all 0.3s; animation: slideUp 0.3s ease;';
+    indicator.onclick = () => {
+      if (activeWorkspaceId) {
+        switchMainTab('workspace-detail');
+        openWorkspace(activeWorkspaceId);
+        setTimeout(() => showWsView('voice'), 500);
+      }
+    };
+    document.body.appendChild(indicator);
+  }
+  indicator.innerHTML = `
+    <div style="width:10px; height:10px; border-radius:50%; background:#fff; animation:pulse-glow 1.5s infinite;"></div>
+    <div>
+      <div style="font-size:13px; font-weight:700; color:#fff;">🔊 In Voice</div>
+      <div style="font-size:10px; color:rgba(255,255,255,0.8);">Tap to return</div>
+    </div>
+    <button onclick="event.stopPropagation(); leaveVoiceChannel();" style="background:rgba(255,71,87,0.3); border:1px solid rgba(255,71,87,0.5); border-radius:8px; padding:6px 12px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">Leave</button>
+  `;
+  indicator.style.display = 'flex';
+}
+
+function hideFloatingVcIndicator() {
+  const indicator = document.getElementById('vc-floating-indicator');
+  if (indicator) indicator.remove();
 }
 
 function renderVcTile(containerId, stream, name, isLocal) {
@@ -5978,12 +6020,12 @@ async function leaveVoiceChannel() {
       body: JSON.stringify({ channel_id: activeVcChannelId })
     });
   }
-  const oldChId = activeVcChannelId;
   activeVcChannelId = null;
   vcScreenSharing = false;
 
-  // Remove VC tiles
+  // Remove VC tiles and floating indicator
   document.querySelectorAll('#ws-vc-grid > div[id]').forEach(el => el.remove());
+  hideFloatingVcIndicator();
   showWsView('default');
   document.querySelectorAll('[id^="vc-participants-"]').forEach(el => { el.style.display = 'none'; el.innerHTML = ''; });
   loadWsChannels(activeWorkspaceId);
@@ -6014,11 +6056,27 @@ async function pollVcUpdates(chId) {
       }
     });
 
-    // Update grid layout
+    // Update grid layout — Discord-style adaptive grid
     const total = participants.length + 1;
     const grid = document.getElementById('ws-vc-grid');
     if (grid) {
-      grid.style.gridTemplateColumns = total <= 2 ? 'repeat(2, 1fr)' : total <= 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)';
+      if (total === 1) {
+        // 1 person: full screen
+        grid.style.gridTemplateColumns = '1fr';
+        grid.style.alignContent = 'center';
+      } else if (total === 2) {
+        // 2 people: 2 columns
+        grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        grid.style.alignContent = 'center';
+      } else if (total <= 4) {
+        // 3-4 people: 2x2 grid
+        grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        grid.style.alignContent = 'start';
+      } else {
+        // 5+ people: 3 columns
+        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+        grid.style.alignContent = 'start';
+      }
     }
 
     showVcParticipantsInSidebar(chId);
