@@ -340,15 +340,6 @@ function switchMainTab(tabId) {
     requestAnimationFrame(() => sizeChatLayout());
   }
 
-  // Show/hide floating VC indicator based on whether we're in workspace detail
-  if (activeVcChannelId) {
-    if (tabId === 'workspace-detail') {
-      hideFloatingVcIndicator();
-    } else {
-      showFloatingVcIndicator(activeVcChannelId);
-    }
-  }
-
   // Fetch relevant tab data
   fetchTabData(tabId);
 }
@@ -5366,39 +5357,32 @@ async function loadWsChannels(wsId) {
     list.innerHTML = channels.map(ch => {
       const isVoice = ch.channel_type === 'voice';
       const icon = isVoice ? '🔊' : '#';
-      const isActiveVc = isVoice && activeVcChannelId === ch.id;
       return `
-      <div onclick="${isVoice ? `toggleVoiceChannel('${ch.id}')` : `selectChannel('${ch.id}')`}" style="padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:8px; transition:all 0.2s; ${isActiveVc ? 'background:rgba(46,213,115,0.15); border:1px solid rgba(46,213,115,0.3);' : 'border:1px solid transparent;'}" onmouseover="this.style.background='${isActiveVc ? 'rgba(46,213,115,0.15)' : 'rgba(255,255,255,0.04)'}'" onmouseout="this.style.background='${isActiveVc ? 'rgba(46,213,115,0.15)' : 'transparent'}'">
+      <div onclick="${isVoice ? `toggleVoiceChannel('${ch.id}')` : `selectChannel('${ch.id}')`}" style="padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:8px; transition:all 0.2s; border:1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
         <span style="color:${isVoice ? '#2ed573' : 'var(--accent-cyan)'}; font-weight:700; font-size:14px;">${icon}</span>
         <div style="flex:1; min-width:0;">
           <div style="font-size:13px; font-weight:600; color:#fff;">${ch.name}</div>
-          ${isVoice ? `<div style="font-size:10px; color:${isActiveVc ? '#2ed573' : 'var(--text-muted)'};">${isActiveVc ? '🟢 Live' : 'Voice Channel'}</div>` : ''}
+          ${isVoice ? '<div style="font-size:10px; color:var(--text-muted);">Voice Channel (coming soon)</div>' : ''}
           ${ch.last_message && !isVoice ? `<div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ch.last_message.sender}: ${ch.last_message.text}</div>` : ''}
         </div>
         ${ch.message_count && !isVoice ? `<span style="font-size:10px; color:var(--text-muted);">${ch.message_count}</span>` : ''}
         <div style="display:flex; gap:2px;">
           <button onclick="event.stopPropagation(); showChannelRoles('${ch.id}')" style="background:none; border:none; color:var(--text-muted); font-size:10px; cursor:pointer; padding:2px;" title="Channel roles">🔐</button>
         </div>
-      </div>
-      ${isVoice ? `<div id="vc-participants-${ch.id}" style="padding:0 12px 8px 32px; display:none;"></div>` : ''}`;
+      </div>`;
     }).join('');
   } catch (err) { showToast('error', err.message); }
 }
 
-// Discord-style: click voice channel → auto join
+// Discord-style: click voice channel → show info (VC coming soon)
 async function toggleVoiceChannel(chId) {
-  if (activeVcChannelId === chId) return;
-  if (activeVcChannelId) await leaveVoiceChannel();
-  activeChannelId = null;
-  // Auto join immediately
-  joinVoiceChannel(chId);
+  showToast('error', 'Voice channels coming soon!');
 }
 
 // ==================== VIEW SWITCHING ====================
 function showWsView(view) {
   document.getElementById('ws-text-channel-view').style.display = view === 'text' ? 'flex' : 'none';
-  document.getElementById('ws-voice-channel-view').style.display = view === 'voice' ? 'flex' : 'none';
-  document.getElementById('ws-default-view').style.display = view === 'default' ? 'flex' : 'none';
+  document.getElementById('ws-default-view').style.display = view === 'default' || view === 'voice' ? 'flex' : 'none';
 }
 
 async function selectChannel(chId) {
@@ -5679,8 +5663,7 @@ async function handleCreateChannel(e) {
       method: 'POST', headers: getHeaders(),
       body: JSON.stringify({
         name: document.getElementById('ch-name-input').value,
-        description: document.getElementById('ch-desc-input').value,
-        channel_type: document.getElementById('ch-type-input').value
+        description: document.getElementById('ch-desc-input').value
       })
     });
     if (res.ok) {
@@ -5777,470 +5760,6 @@ async function toggleChannelRole(chId, roleId) {
     if (res.ok) { showToast('success', 'Access updated!'); loadChannelRolesPanel(chId); }
     else { const e = await res.json(); showToast('error', e.error); }
   } catch (err) { showToast('error', err.message); }
-}
-
-// ==================== VIDEO CALL (Pure WebRTC, 100% Free) ====================
-let vcLocalStream = null;
-let vcVideoStream = null;
-let vcPeers = {};
-let vcPollInterval = null;
-let activeVcChannelId = null;
-let vcMuted = false;
-let vcCameraOff = false;
-let vcScreenSharing = false;
-const VC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }] };
-
-async function joinVoiceChannel(chId) {
-  try {
-    vcLocalStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-    vcVideoStream = vcLocalStream;
-    activeVcChannelId = chId;
-    vcMuted = false;
-    vcCameraOff = false;
-
-    await fetch(`${API_URL}/api/workspaces/vc/join`, {
-      method: 'POST', headers: getHeaders(),
-      body: JSON.stringify({ channel_id: chId })
-    });
-
-    showWsView('voice');
-    document.getElementById('ws-vc-name').innerText = '🔊 Voice Channel';
-
-    renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
-    vcPollInterval = setInterval(() => pollVcUpdates(chId), 2000);
-    showVcParticipantsInSidebar(chId);
-    showFloatingVcIndicator(chId);
-    showToast('success', 'Joined voice channel');
-  } catch (err) {
-    showToast('error', 'Camera/Mic access denied: ' + err.message);
-  }
-}
-
-// Floating VC indicator — shows when in VC but viewing other pages
-function showFloatingVcIndicator(chId) {
-  let indicator = document.getElementById('vc-floating-indicator');
-  if (!indicator) {
-    indicator = document.createElement('div');
-    indicator.id = 'vc-floating-indicator';
-    indicator.style.cssText = 'position:fixed; bottom:80px; left:20px; z-index:8000; background:linear-gradient(135deg, rgba(46,213,115,0.9), rgba(0,210,255,0.9)); border-radius:16px; padding:12px 20px; display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:0 4px 20px rgba(46,213,115,0.3); transition:all 0.3s; animation: slideUp 0.3s ease;';
-    indicator.onclick = () => {
-      if (activeWorkspaceId) {
-        switchMainTab('workspace-detail');
-        openWorkspace(activeWorkspaceId);
-        setTimeout(() => showWsView('voice'), 500);
-      }
-    };
-    document.body.appendChild(indicator);
-  }
-  indicator.innerHTML = `
-    <div style="width:10px; height:10px; border-radius:50%; background:#fff; animation:pulse-glow 1.5s infinite;"></div>
-    <div>
-      <div style="font-size:13px; font-weight:700; color:#fff;">🔊 In Voice</div>
-      <div style="font-size:10px; color:rgba(255,255,255,0.8);">Tap to return</div>
-    </div>
-    <button onclick="event.stopPropagation(); leaveVoiceChannel();" style="background:rgba(255,71,87,0.3); border:1px solid rgba(255,71,87,0.5); border-radius:8px; padding:6px 12px; color:#fff; font-size:11px; cursor:pointer; font-weight:600;">Leave</button>
-  `;
-  indicator.style.display = 'flex';
-}
-
-function hideFloatingVcIndicator() {
-  const indicator = document.getElementById('vc-floating-indicator');
-  if (indicator) indicator.remove();
-}
-
-function renderVcTile(containerId, stream, name, isLocal) {
-  let container = document.getElementById(containerId);
-  if (!container) {
-    const grid = document.getElementById('ws-vc-grid');
-    if (!grid) return;
-    container = document.createElement('div');
-    container.id = containerId;
-    container.className = 'vc-tile';
-    container.style.cssText = 'position:relative; background:#1a1a2e; border-radius:20px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:3px solid rgba(255,255,255,0.06); transition: border-color 0.3s, box-shadow 0.3s;';
-    if (isLocal) grid.prepend(container);
-    else grid.appendChild(container);
-  }
-
-  const videoTrack = stream.getVideoTracks()[0];
-  const hasVideo = videoTrack && videoTrack.enabled;
-
-  let videoEl = container.querySelector('video');
-  if (!videoEl) {
-    videoEl = document.createElement('video');
-    videoEl.autoplay = true;
-    videoEl.playsInline = true;
-    videoEl.muted = isLocal;
-    videoEl.style.cssText = 'width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; border-radius:17px;';
-    container.innerHTML = '';
-    container.appendChild(videoEl);
-
-    // Name label (bottom left)
-    const label = document.createElement('div');
-    label.className = 'vc-tile-label';
-    label.style.cssText = 'position:absolute; bottom:10px; left:12px; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); padding:4px 10px; border-radius:8px; font-size:12px; font-weight:600; color:#fff; z-index:1; display:flex; align-items:center; gap:6px;';
-    label.innerHTML = `<span>${isLocal ? 'You' : name}</span>`;
-    container.appendChild(label);
-
-    // Mute icon (bottom right)
-    const muteIcon = document.createElement('div');
-    muteIcon.className = 'vc-tile-mute';
-    muteIcon.style.cssText = 'position:absolute; bottom:10px; right:12px; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); padding:4px 8px; border-radius:8px; font-size:14px; z-index:1; display:none;';
-    container.appendChild(muteIcon);
-  }
-
-  if (hasVideo) {
-    videoEl.srcObject = stream;
-    videoEl.style.display = 'block';
-    const ph = container.querySelector('.vc-avatar-placeholder');
-    if (ph) ph.remove();
-  } else {
-    videoEl.style.display = 'none';
-    if (!container.querySelector('.vc-avatar-placeholder')) {
-      const ph = document.createElement('div');
-      ph.className = 'vc-avatar-placeholder';
-      ph.style.cssText = 'position:absolute; width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:700; color:#fff; z-index:1;';
-      ph.innerText = (name || 'U').charAt(0).toUpperCase();
-      container.appendChild(ph);
-    }
-  }
-
-  // Setup audio level detection for speaking indicator (both local and remote)
-  if (stream.getAudioTracks().length > 0) {
-    setupSpeakingDetection(container, stream);
-  }
-}
-
-// Discord-style green speaking outline
-function setupSpeakingDetection(tileEl, stream) {
-  try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 512;
-    analyser.smoothingTimeConstant = 0.8;
-    const source = audioCtx.createMediaStreamSource(stream);
-    source.connect(analyser);
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    let speaking = false;
-    let silenceTimer = null;
-
-    const check = () => {
-      if (!tileEl.isConnected) { try { audioCtx.close(); } catch(e){} return; }
-      analyser.getByteFrequencyData(dataArray);
-      // Calculate RMS for better speech detection
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i] * dataArray[i];
-      const rms = Math.sqrt(sum / dataArray.length);
-      const isSpeaking = rms > 12;
-
-      if (isSpeaking && !speaking) {
-        speaking = true;
-        tileEl.style.borderColor = '#2ed573';
-        tileEl.style.boxShadow = '0 0 24px rgba(46,213,115,0.5), inset 0 0 30px rgba(46,213,115,0.08)';
-        if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-      } else if (!isSpeaking && speaking) {
-        // Wait 600ms before showing as silent (avoids flickering)
-        if (!silenceTimer) {
-          silenceTimer = setTimeout(() => {
-            speaking = false;
-            tileEl.style.borderColor = 'rgba(255,255,255,0.06)';
-            tileEl.style.boxShadow = 'none';
-            silenceTimer = null;
-          }, 600);
-        }
-      }
-      requestAnimationFrame(check);
-    };
-    // Resume audio context (needed for Chrome autoplay policy)
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    check();
-  } catch (e) { console.warn('Speaking detection unavailable:', e.message); }
-}
-
-function removeVcTile(containerId) {
-  const el = document.getElementById(containerId);
-  if (el) el.remove();
-}
-
-function toggleVcMute() {
-  vcMuted = !vcMuted;
-  if (vcLocalStream) vcLocalStream.getAudioTracks().forEach(t => { t.enabled = !vcMuted; });
-  const btn = document.getElementById('ws-vc-mute-btn');
-  if (btn) {
-    btn.innerText = vcMuted ? '🔇' : '🎤';
-    btn.style.background = vcMuted ? 'rgba(255,71,87,0.3)' : 'rgba(255,255,255,0.1)';
-    btn.style.borderColor = vcMuted ? 'rgba(255,71,87,0.5)' : 'rgba(255,255,255,0.15)';
-  }
-  if (!vcCameraOff && vcLocalStream) renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
-  fetch(`${API_URL}/api/workspaces/vc/toggle`, {
-    method: 'POST', headers: getHeaders(),
-    body: JSON.stringify({ channel_id: activeVcChannelId, mute: vcMuted })
-  });
-}
-
-function toggleVcCamera() {
-  vcCameraOff = !vcCameraOff;
-  if (vcLocalStream) vcLocalStream.getVideoTracks().forEach(t => { t.enabled = !vcCameraOff; });
-  const btn = document.getElementById('ws-vc-camera-btn');
-  if (btn) {
-    btn.innerText = vcCameraOff ? '📷' : '📹';
-    btn.style.background = vcCameraOff ? 'rgba(255,71,87,0.3)' : 'rgba(255,255,255,0.1)';
-    btn.style.borderColor = vcCameraOff ? 'rgba(255,71,87,0.5)' : 'rgba(255,255,255,0.15)';
-  }
-  renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
-  fetch(`${API_URL}/api/workspaces/vc/toggle`, {
-    method: 'POST', headers: getHeaders(),
-    body: JSON.stringify({ channel_id: activeVcChannelId, video_off: vcCameraOff })
-  });
-}
-
-async function toggleVcScreenShare() {
-  const btn = document.getElementById('ws-vc-screenshare-btn');
-  if (vcScreenSharing) {
-    // Stop screen share
-    vcScreenSharing = false;
-    if (btn) { btn.innerText = '🖥️'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.borderColor = 'rgba(255,255,255,0.15)'; }
-    // Remove screen share tile
-    removeVcTile('ws-vc-screenshare');
-    // Restore camera to local tile
-    if (vcLocalStream) {
-      const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      const camTrack = camStream.getVideoTracks()[0];
-      Object.values(vcPeers).forEach(p => { const s = p.pc.getSenders().find(s => s.track?.kind === 'video'); if (s) s.replaceTrack(camTrack); });
-      vcLocalStream.removeTrack(vcLocalStream.getVideoTracks()[0]);
-      vcLocalStream.addTrack(camTrack);
-      vcCameraOff = false;
-      renderVcTile('ws-vc-local', vcLocalStream, 'You', true);
-    }
-  } else {
-    try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      const screenTrack = screenStream.getVideoTracks()[0];
-      vcScreenSharing = true;
-      if (btn) { btn.innerText = '🛑'; btn.style.background = 'rgba(112,77,244,0.3)'; btn.style.borderColor = 'rgba(112,77,244,0.5)'; }
-      screenTrack.onended = () => toggleVcScreenShare();
-
-      // Send screen share to peers
-      Object.values(vcPeers).forEach(p => { const s = p.pc.getSenders().find(s => s.track?.kind === 'video'); if (s) s.replaceTrack(screenTrack); });
-
-      // Create separate screen share tile
-      renderVcTile('ws-vc-screenshare', screenStream, 'Screen Share', false);
-
-      // Hide camera in local tile (show avatar)
-      if (vcLocalStream) {
-        vcLocalStream.getVideoTracks().forEach(t => { t.enabled = false; });
-        vcCameraOff = true;
-        const localTile = document.getElementById('ws-vc-local');
-        if (localTile) {
-          const vid = localTile.querySelector('video');
-          if (vid) vid.style.display = 'none';
-          if (!localTile.querySelector('.vc-avatar-placeholder')) {
-            const ph = document.createElement('div');
-            ph.className = 'vc-avatar-placeholder';
-            ph.style.cssText = 'position:absolute; width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:700; color:#fff; z-index:1;';
-            ph.innerText = currentUser.full_name.charAt(0).toUpperCase();
-            localTile.appendChild(ph);
-          }
-          // Update label
-          const label = localTile.querySelector('.vc-tile-label');
-          if (label) label.innerHTML = '<span>You 🖥️</span>';
-        }
-      }
-    } catch (err) { /* cancelled */ }
-  }
-}
-
-async function leaveVoiceChannel() {
-  if (vcLocalStream) {
-    vcLocalStream.getTracks().forEach(t => t.stop());
-    vcLocalStream = null;
-    vcVideoStream = null;
-  }
-  Object.values(vcPeers).forEach(p => { if (p.pc) p.pc.close(); });
-  vcPeers = {};
-  if (vcPollInterval) clearInterval(vcPollInterval);
-  if (activeVcChannelId) {
-    await fetch(`${API_URL}/api/workspaces/vc/leave`, {
-      method: 'POST', headers: getHeaders(),
-      body: JSON.stringify({ channel_id: activeVcChannelId })
-    });
-  }
-  activeVcChannelId = null;
-  vcScreenSharing = false;
-
-  // Remove VC tiles and floating indicator
-  document.querySelectorAll('#ws-vc-grid > div[id]').forEach(el => el.remove());
-  hideFloatingVcIndicator();
-  showWsView('default');
-  document.querySelectorAll('[id^="vc-participants-"]').forEach(el => { el.style.display = 'none'; el.innerHTML = ''; });
-  loadWsChannels(activeWorkspaceId);
-  showToast('success', 'Left call');
-}
-
-async function pollVcUpdates(chId) {
-  try {
-    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
-    const participants = await safeJson(res);
-
-    const countEl = document.getElementById('ws-vc-participants-count');
-    if (countEl) countEl.innerText = `${participants.length + 1} participant${participants.length > 0 ? 's' : ''} in call`;
-
-    // Add new peers
-    for (const p of participants) {
-      if (p.user_id === currentUser.id) continue;
-      if (!vcPeers[p.user_id]) await createVcPeer(p.user_id, chId);
-    }
-
-    // Remove disconnected
-    const pIds = participants.map(p => p.user_id);
-    Object.keys(vcPeers).forEach(uid => {
-      if (!pIds.includes(uid) || uid === currentUser.id) {
-        if (vcPeers[uid]?.pc) vcPeers[uid].pc.close();
-        delete vcPeers[uid];
-        removeVcTile(`vc-peer-${uid}`);
-      }
-    });
-
-    // Update grid layout — Discord-style adaptive grid
-    const total = participants.length + 1;
-    const grid = document.getElementById('ws-vc-grid');
-    if (grid) {
-      if (total === 1) {
-        // 1 person: full screen
-        grid.style.gridTemplateColumns = '1fr';
-        grid.style.alignContent = 'center';
-      } else if (total === 2) {
-        // 2 people: 2 columns
-        grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        grid.style.alignContent = 'center';
-      } else if (total <= 4) {
-        // 3-4 people: 2x2 grid
-        grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        grid.style.alignContent = 'start';
-      } else {
-        // 5+ people: 3 columns
-        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-        grid.style.alignContent = 'start';
-      }
-    }
-
-    showVcParticipantsInSidebar(chId);
-
-    // Poll signals
-    const sigRes = await fetch(`${API_URL}/api/workspaces/vc/signals/${chId}`, { headers: getHeaders() });
-    const signals = await safeJson(sigRes);
-    for (const sig of signals) {
-      if (sig.signal_type === 'offer') await handleVcOffer(sig, chId);
-      else if (sig.signal_type === 'answer') await handleVcAnswer(sig);
-      else if (sig.signal_type === 'candidate') await handleVcCandidate(sig);
-    }
-  } catch (err) { /* silent */ }
-}
-
-async function showVcParticipantsInSidebar(chId) {
-  try {
-    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
-    const participants = await safeJson(res);
-    const panel = document.getElementById(`vc-participants-${chId}`);
-    if (panel) {
-      panel.style.display = 'block';
-      const all = [{ user_id: currentUser.id, user_name: currentUser.full_name, is_muted: vcMuted }, ...participants.filter(p => p.user_id !== currentUser.id)];
-      panel.innerHTML = all.map(p => `
-        <div style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:11px;">
-          <div style="width:22px; height:22px; border-radius:50%; background:${p.user_id === currentUser.id ? 'linear-gradient(135deg, #2ed573, #1a9c4a)' : 'linear-gradient(135deg, #704df4, #00d2ff)'}; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
-          <span style="color:#fff;">${p.user_id === currentUser.id ? 'You' : p.user_name}</span>
-          <span style="font-size:10px;">${p.is_muted ? '🔇' : '🎤'}</span>
-        </div>
-      `).join('');
-    }
-  } catch (err) { /* silent */ }
-}
-
-async function createVcPeer(remoteUserId, chId) {
-  const pc = new RTCPeerConnection(VC_CONFIG);
-  vcPeers[remoteUserId] = { pc, stream: null };
-
-  if (vcLocalStream) {
-    vcLocalStream.getTracks().forEach(track => pc.addTrack(track, vcLocalStream));
-  }
-
-  pc.ontrack = (e) => {
-    if (!vcPeers[remoteUserId].stream) {
-      vcPeers[remoteUserId].stream = e.streams[0];
-      const peerName = participants?.find(p => p.user_id === remoteUserId)?.user_name || 'Peer';
-      renderVcTile(`vc-peer-${remoteUserId}`, e.streams[0], peerName, false);
-    }
-  };
-
-  pc.onicecandidate = (e) => {
-    if (e.candidate) {
-      fetch(`${API_URL}/api/workspaces/vc/signal`, {
-        method: 'POST', headers: getHeaders(),
-        body: JSON.stringify({ channel_id: chId, to_user_id: remoteUserId, signal_type: 'candidate', signal_data: e.candidate })
-      });
-    }
-  };
-
-  pc.onconnectionstatechange = () => {
-    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-      removeVcTile(`vc-peer-${remoteUserId}`);
-      if (vcPeers[remoteUserId]) { vcPeers[remoteUserId].pc.close(); delete vcPeers[remoteUserId]; }
-    }
-  };
-
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  fetch(`${API_URL}/api/workspaces/vc/signal`, {
-    method: 'POST', headers: getHeaders(),
-    body: JSON.stringify({ channel_id: chId, to_user_id: remoteUserId, signal_type: 'offer', signal_data: offer })
-  });
-}
-
-async function handleVcOffer(sig, chId) {
-  let peerData = vcPeers[sig.from_user_id];
-  const pc = peerData ? peerData.pc : new RTCPeerConnection(VC_CONFIG);
-  if (!peerData) {
-    peerData = { pc, stream: null };
-    vcPeers[sig.from_user_id] = peerData;
-    if (vcLocalStream) vcLocalStream.getTracks().forEach(track => pc.addTrack(track, vcLocalStream));
-    pc.ontrack = (e) => {
-      if (!peerData.stream) {
-        peerData.stream = e.streams[0];
-        renderVcTile(`vc-peer-${sig.from_user_id}`, e.streams[0], sig.from_user_name, false);
-      }
-    };
-    pc.onicecandidate = (e) => {
-      if (e.candidate) {
-        fetch(`${API_URL}/api/workspaces/vc/signal`, {
-          method: 'POST', headers: getHeaders(),
-          body: JSON.stringify({ channel_id: chId, to_user_id: sig.from_user_id, signal_type: 'candidate', signal_data: e.candidate })
-        });
-      }
-    };
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        removeVcTile(`vc-peer-${sig.from_user_id}`);
-        if (vcPeers[sig.from_user_id]) { vcPeers[sig.from_user_id].pc.close(); delete vcPeers[sig.from_user_id]; }
-      }
-    };
-  }
-  await pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  fetch(`${API_URL}/api/workspaces/vc/signal`, {
-    method: 'POST', headers: getHeaders(),
-    body: JSON.stringify({ channel_id: chId, to_user_id: sig.from_user_id, signal_type: 'answer', signal_data: answer })
-  });
-}
-
-async function handleVcAnswer(sig) {
-  const peerData = vcPeers[sig.from_user_id];
-  if (peerData) await peerData.pc.setRemoteDescription(new RTCSessionDescription(sig.signal_data));
-}
-
-async function handleVcCandidate(sig) {
-  const peerData = vcPeers[sig.from_user_id];
-  if (peerData) await peerData.pc.addIceCandidate(new RTCIceCandidate(sig.signal_data));
 }
 
 // ==================== USER PROFILE ====================

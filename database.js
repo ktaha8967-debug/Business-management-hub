@@ -67,8 +67,6 @@ const defaultDB = {
   workspace_channels: [],
   workspace_messages: [],
   workspace_roles: [],
-  vc_sessions: [],
-  vc_signals: [],
   typing_indicators: []
 };
 
