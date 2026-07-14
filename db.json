@@ -953,7 +953,7 @@
       "title": "Editor Submission",
       "message": "Video editor David Editor submitted task for Download Any Video",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.146Z"
+      "updated_at": "2026-07-14T16:43:03.137Z"
     },
     {
       "id": "not-1782404918265-00kt4",
@@ -1002,7 +1002,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Review Request",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.154Z"
+      "updated_at": "2026-07-14T16:43:03.146Z"
     },
     {
       "id": "not-1782407256959-66f03",
@@ -1027,7 +1027,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reject Request",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.161Z"
+      "updated_at": "2026-07-14T16:43:03.154Z"
     },
     {
       "id": "not-1782407257309-jqlbp",
@@ -1052,7 +1052,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: Ad Strategy Reschedule Request",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.170Z"
+      "updated_at": "2026-07-14T16:43:03.162Z"
     },
     {
       "id": "not-1782407257378-a4g3u",
@@ -1101,7 +1101,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: weekly ",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.176Z"
+      "updated_at": "2026-07-14T16:43:03.169Z"
     },
     {
       "id": "not-1782408481369-twgbx",
@@ -1134,7 +1134,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: business",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.185Z"
+      "updated_at": "2026-07-14T16:43:03.178Z"
     },
     {
       "id": "not-1782612321075-74dsm",
@@ -1159,7 +1159,7 @@
       "title": "Meeting Request",
       "message": "Business partner \"Download Any Video\" requested a meeting: breifeeing",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.192Z"
+      "updated_at": "2026-07-14T16:43:03.185Z"
     },
     {
       "id": "not-1783777829145-o65ov",
@@ -1200,7 +1200,7 @@
       "title": "Meeting Task Request",
       "message": "Business partner \"Download Any Video\" submitted a task: website redesign",
       "is_read": true,
-      "updated_at": "2026-07-13T09:32:02.201Z"
+      "updated_at": "2026-07-14T16:43:03.193Z"
     },
     {
       "id": "not-1783865468123-ucj8l",
@@ -1448,7 +1448,8 @@
       "user_id": "admin-1",
       "title": "New message from Admin Assistant",
       "message": "New message from Admin Assistant: ghghghghghhffhh",
-      "is_read": false
+      "is_read": true,
+      "updated_at": "2026-07-14T16:43:03.201Z"
     },
     {
       "id": "not-1784046859300-0s2x5",
@@ -2517,6 +2518,27 @@
       "user_id": "admin-2",
       "action": "login",
       "details": "User logged in"
+    },
+    {
+      "id": "act-1784047481564-03kup",
+      "created_at": "2026-07-14T16:44:41.564Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784047649312-xv1cb",
+      "created_at": "2026-07-14T16:47:29.312Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784047668431-rphuz",
+      "created_at": "2026-07-14T16:47:48.431Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
     }
   ],
   "orders": [
@@ -3004,42 +3026,6 @@
         "admin-1",
         "admin-2"
       ]
-    },
-    {
-      "id": "msg_1784046859282_osfsexjg2",
-      "created_at": "2026-07-14T16:34:19.287Z",
-      "sender_id": "admin-1",
-      "recipient_id": "admin-2",
-      "message": "bvbbcvbcvbvcbfghfgfghfh",
-      "timestamp": "2026-07-14T16:34:19.282Z",
-      "read_by": [
-        "admin-2",
-        "admin-1"
-      ],
-      "status": "read",
-      "updated_at": "2026-07-14T16:34:58.619Z",
-      "delivered_to": [
-        "admin-2",
-        "admin-1"
-      ]
-    },
-    {
-      "id": "msg_1784046878818_y6xu0hf7v",
-      "created_at": "2026-07-14T16:34:38.821Z",
-      "sender_id": "admin-1",
-      "recipient_id": "admin-2",
-      "message": "hello",
-      "timestamp": "2026-07-14T16:34:38.818Z",
-      "read_by": [
-        "admin-2",
-        "admin-1"
-      ],
-      "status": "read",
-      "updated_at": "2026-07-14T16:34:58.631Z",
-      "delivered_to": [
-        "admin-2",
-        "admin-1"
-      ]
     }
   ],
   "meeting_tasks": [
@@ -3114,7 +3100,9 @@
       "description": "General discussion",
       "created_by": "admin-1",
       "created_by_name": "Owner Boss",
-      "is_default": true
+      "is_default": true,
+      "channel_type": "text",
+      "updated_at": "2026-07-14T16:46:39.373Z"
     },
     {
       "id": "wor-1783930593033-lp88u",
@@ -3124,7 +3112,9 @@
       "description": "",
       "created_by": "admin-1",
       "created_by_name": "Owner Boss",
-      "is_default": false
+      "is_default": false,
+      "channel_type": "text",
+      "updated_at": "2026-07-14T16:46:39.404Z"
     },
     {
       "id": "wor-1783931560093-ybakz",
@@ -3134,7 +3124,9 @@
       "description": "",
       "created_by": "admin-1",
       "created_by_name": "Owner Boss",
-      "is_default": false
+      "is_default": false,
+      "channel_type": "text",
+      "updated_at": "2026-07-14T16:46:39.425Z"
     },
     {
       "id": "wor-1783932440663-y1bm0",
@@ -3144,7 +3136,9 @@
       "description": "",
       "created_by": "admin-1",
       "created_by_name": "Owner Boss",
-      "is_default": false
+      "is_default": false,
+      "channel_type": "text",
+      "updated_at": "2026-07-14T16:46:39.446Z"
     },
     {
       "id": "wor-1783933623186-ai015",
@@ -3154,7 +3148,9 @@
       "description": "",
       "created_by": "admin-1",
       "created_by_name": "Owner Boss",
-      "is_default": false
+      "is_default": false,
+      "channel_type": "text",
+      "updated_at": "2026-07-14T16:46:39.476Z"
     },
     {
       "id": "wor-1783935368069-le1l2",
@@ -3164,7 +3160,9 @@
       "description": "",
       "created_by": "admin-1",
       "created_by_name": "Owner Boss",
-      "is_default": false
+      "is_default": false,
+      "channel_type": "text",
+      "updated_at": "2026-07-14T16:46:39.493Z"
     }
   ],
   "workspace_messages": [

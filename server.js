@@ -61,8 +61,30 @@ if (seedCount > 0) {
   console.log(`[SEED] ${seedCount} user(s) created/updated. Default login: boss@ascentra.com / ${defaultPassword}`);
 }
 
-if (seedCount > 0) {
-  console.log(`[SEED] ${seedCount} user(s) created/updated. Login: boss@ascentra.com / admin123`);
+// --- MIGRATE: Fix old channels missing channel_type ---
+let channelFixCount = 0;
+db.find('workspace_channels', () => true).forEach(ch => {
+  if (!ch.channel_type) {
+    db.update('workspace_channels', ch.id, { channel_type: 'text' });
+    channelFixCount++;
+  }
+});
+if (channelFixCount > 0) {
+  console.log(`[MIGRATE] Fixed ${channelFixCount} channels missing channel_type`);
+}
+
+// --- MIGRATE: Fix old messages missing read_by ---
+let msgFixCount = 0;
+db.find('chat_messages', m => !m.read_by).forEach(msg => {
+  db.update('chat_messages', msg.id, { read_by: [msg.sender_id], delivered_to: [msg.sender_id], status: 'sent' });
+  msgFixCount++;
+});
+db.find('chat_group_messages', m => !m.read_by).forEach(msg => {
+  db.update('chat_group_messages', msg.id, { read_by: [msg.sender_id] });
+  msgFixCount++;
+});
+if (msgFixCount > 0) {
+  console.log(`[MIGRATE] Fixed ${msgFixCount} messages missing read_by`);
 }
 
 const app = express();
