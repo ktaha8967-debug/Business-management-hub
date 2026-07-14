@@ -3669,6 +3669,16 @@ async function loadChatHistory(partnerId) {
     if (atBottom || messagesContainer.innerHTML.includes('beginning of your chat')) {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+
+    // Mark received messages as read
+    messages.forEach(msg => {
+      if (msg.sender_id !== currentUser.id && !(msg.read_by || []).includes(currentUser.id)) {
+        markMessageRead(msg.id);
+      }
+    });
+
+    // Refresh unread counts
+    loadUnreadCounts();
   } catch (err) {
     console.warn('Error loading chat history:', err);
   }
@@ -4879,6 +4889,9 @@ async function loadGroupChatHistory(groupId) {
     }).join('');
 
     if (atBottom) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Mark group messages as read
+    markGroupRead(groupId);
   } catch (err) {
     console.warn('Error loading group chat history:', err);
   }
@@ -5175,8 +5188,14 @@ async function checkTypingIndicator(channelId, type) {
 // ==================== MESSAGE TICKS ====================
 function getMessageTicks(msg, isMine) {
   if (!isMine) return '';
-  if (msg.status === 'read') return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
-  if (msg.delivered_to && msg.delivered_to.length > 0) return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
+  const readBy = msg.read_by || [];
+  const deliveredTo = msg.delivered_to || [];
+  // Remove self from counts
+  const readCount = readBy.filter(id => id !== currentUser.id).length;
+  const deliveredCount = deliveredTo.filter(id => id !== currentUser.id).length;
+
+  if (readCount > 0) return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
+  if (deliveredCount > 0) return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
   if (msg.status === 'delivered') return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
   if (msg.status === 'sent' || msg.timestamp) return '<span style="color:rgba(255,255,255,0.4); margin-left:4px;">✓</span>';
   return '<span style="color:rgba(255,255,255,0.3); margin-left:4px;">⏳</span>';

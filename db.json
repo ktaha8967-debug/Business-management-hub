@@ -1425,6 +1425,46 @@
       "title": "New message from Taha Khan",
       "message": "New message from Taha Khan: hello",
       "is_read": false
+    },
+    {
+      "id": "not-1784046093979-4xlsq",
+      "created_at": "2026-07-14T16:21:33.979Z",
+      "user_id": "admin-2",
+      "title": "New message from Taha Khan",
+      "message": "Taha Khan sent a file: logo.jpg",
+      "is_read": false
+    },
+    {
+      "id": "not-1784046614406-5vh9m",
+      "created_at": "2026-07-14T16:30:14.406Z",
+      "user_id": "admin-2",
+      "title": "New message from Taha Khan",
+      "message": "New message from Taha Khan: hello",
+      "is_read": false
+    },
+    {
+      "id": "not-1784046858790-w8f46",
+      "created_at": "2026-07-14T16:34:18.790Z",
+      "user_id": "admin-1",
+      "title": "New message from Admin Assistant",
+      "message": "New message from Admin Assistant: ghghghghghhffhh",
+      "is_read": false
+    },
+    {
+      "id": "not-1784046859300-0s2x5",
+      "created_at": "2026-07-14T16:34:19.300Z",
+      "user_id": "admin-2",
+      "title": "New message from Taha Khan",
+      "message": "New message from Taha Khan: bvbbcvbcvbvcbfghfgfghfh",
+      "is_read": false
+    },
+    {
+      "id": "not-1784046878835-l1zmw",
+      "created_at": "2026-07-14T16:34:38.835Z",
+      "user_id": "admin-2",
+      "title": "New message from Taha Khan",
+      "message": "New message from Taha Khan: hello",
+      "is_read": false
     }
   ],
   "activity_logs": [
@@ -2435,6 +2475,48 @@
       "user_id": "admin-1",
       "action": "login",
       "details": "User logged in"
+    },
+    {
+      "id": "act-1784046141465-k29wv",
+      "created_at": "2026-07-14T16:22:21.465Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784046195683-8gp2h",
+      "created_at": "2026-07-14T16:23:15.683Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784046588621-frplz",
+      "created_at": "2026-07-14T16:29:48.621Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784046631033-5eh3o",
+      "created_at": "2026-07-14T16:30:31.033Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784046730959-m7zf3",
+      "created_at": "2026-07-14T16:32:10.959Z",
+      "user_id": "admin-1",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784046819768-6iva1",
+      "created_at": "2026-07-14T16:33:39.768Z",
+      "user_id": "admin-2",
+      "action": "login",
+      "details": "User logged in"
     }
   ],
   "orders": [
@@ -2499,7 +2581,7 @@
     {
       "id": "pus-1782609248752-ulyea",
       "created_at": "2026-06-28T01:14:08.752Z",
-      "user_id": "admin-1",
+      "user_id": "admin-2",
       "subscription": {
         "endpoint": "https://fcm.googleapis.com/fcm/send/fleeXjl2qcA:APA91bENXHlim3hQB2_th-9s-SP9NXktylkyZ6b4nFgbRdh8dxls298L-s8TQ2RQ8rD7OG3LwTvZF-kbTDcdUgJr-PleEhWk7BsYh6mJbkUh5YRS7DFeNWG1p--EhTqbABZSwKf0ILs8",
         "expirationTime": null,
@@ -2508,7 +2590,7 @@
           "auth": "yUpONUh_g1qWuGocAC59YA"
         }
       },
-      "updated_at": "2026-07-13T18:14:12.402Z"
+      "updated_at": "2026-07-14T16:33:44.834Z"
     },
     {
       "id": "pus-1783777657426-wt085",
@@ -2532,7 +2614,14 @@
       "sender_id": "use-1783777699087-1y3oa",
       "recipient_id": "use-apex-owner",
       "message": "hello",
-      "timestamp": "2026-07-11T13:49:06.230Z"
+      "timestamp": "2026-07-11T13:49:06.230Z",
+      "read_by": [
+        "use-1783777699087-1y3oa"
+      ],
+      "delivered_to": [
+        "use-1783777699087-1y3oa"
+      ],
+      "updated_at": "2026-07-14T16:34:57.971Z"
     },
     {
       "id": "msg_1783777757375_gs2pjwve4",
@@ -2540,7 +2629,14 @@
       "sender_id": "use-1783777699087-1y3oa",
       "recipient_id": "use-1782404624056-5svlf",
       "message": "hello",
-      "timestamp": "2026-07-11T13:49:17.375Z"
+      "timestamp": "2026-07-11T13:49:17.375Z",
+      "read_by": [
+        "use-1783777699087-1y3oa"
+      ],
+      "delivered_to": [
+        "use-1783777699087-1y3oa"
+      ],
+      "updated_at": "2026-07-14T16:34:58.002Z"
     },
     {
       "id": "msg_1783784071352_rpqx1qr51",
@@ -2548,7 +2644,14 @@
       "sender_id": "use-1783777699087-1y3oa",
       "recipient_id": "editor-1",
       "message": "hello",
-      "timestamp": "2026-07-11T15:34:31.352Z"
+      "timestamp": "2026-07-11T15:34:31.352Z",
+      "read_by": [
+        "use-1783777699087-1y3oa"
+      ],
+      "delivered_to": [
+        "use-1783777699087-1y3oa"
+      ],
+      "updated_at": "2026-07-14T16:34:58.043Z"
     },
     {
       "id": "msg_1783877705544_woqo4y3j1",
@@ -2556,7 +2659,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:05.544Z"
+      "timestamp": "2026-07-12T17:35:05.544Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.055Z"
     },
     {
       "id": "msg_1783877705878_iaxcfr5ig",
@@ -2564,7 +2674,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:05.878Z"
+      "timestamp": "2026-07-12T17:35:05.878Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.066Z"
     },
     {
       "id": "msg_1783877706045_jhki3ft2b",
@@ -2572,7 +2689,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:06.045Z"
+      "timestamp": "2026-07-12T17:35:06.045Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.080Z"
     },
     {
       "id": "msg_1783877706285_95c1xw9xn",
@@ -2580,7 +2704,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:06.285Z"
+      "timestamp": "2026-07-12T17:35:06.285Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.093Z"
     },
     {
       "id": "msg_1783877706548_ml2js3iua",
@@ -2588,7 +2719,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:06.549Z"
+      "timestamp": "2026-07-12T17:35:06.549Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.103Z"
     },
     {
       "id": "msg_1783877706756_01xxlc47p",
@@ -2596,7 +2734,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:06.756Z"
+      "timestamp": "2026-07-12T17:35:06.756Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.117Z"
     },
     {
       "id": "msg_1783877706967_w342osdxs",
@@ -2604,7 +2749,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:06.967Z"
+      "timestamp": "2026-07-12T17:35:06.967Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.129Z"
     },
     {
       "id": "msg_1783877707196_yif326beq",
@@ -2612,7 +2764,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:07.196Z"
+      "timestamp": "2026-07-12T17:35:07.196Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.151Z"
     },
     {
       "id": "msg_1783877707427_nc36npwj8",
@@ -2620,7 +2779,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:07.427Z"
+      "timestamp": "2026-07-12T17:35:07.427Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.161Z"
     },
     {
       "id": "msg_1783877707650_0v0i5imyg",
@@ -2628,7 +2794,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:07.650Z"
+      "timestamp": "2026-07-12T17:35:07.650Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.171Z"
     },
     {
       "id": "msg_1783877707847_uqbhhrnde",
@@ -2636,7 +2809,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:07.847Z"
+      "timestamp": "2026-07-12T17:35:07.847Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.186Z"
     },
     {
       "id": "msg_1783877708147_nmqc8vi2m",
@@ -2644,7 +2824,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:08.147Z"
+      "timestamp": "2026-07-12T17:35:08.147Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.200Z"
     },
     {
       "id": "msg_1783877708345_4c9g89cwc",
@@ -2652,7 +2839,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:08.345Z"
+      "timestamp": "2026-07-12T17:35:08.345Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.211Z"
     },
     {
       "id": "msg_1783877708595_jkjauxvj4",
@@ -2660,7 +2854,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:08.595Z"
+      "timestamp": "2026-07-12T17:35:08.595Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.243Z"
     },
     {
       "id": "msg_1783877708814_ir1oazfpf",
@@ -2668,7 +2869,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:08.814Z"
+      "timestamp": "2026-07-12T17:35:08.814Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.253Z"
     },
     {
       "id": "msg_1783877709016_nqwkwqq00",
@@ -2676,7 +2884,14 @@
       "sender_id": "admin-1",
       "recipient_id": "sm-1",
       "message": ".",
-      "timestamp": "2026-07-12T17:35:09.016Z"
+      "timestamp": "2026-07-12T17:35:09.016Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.268Z"
     },
     {
       "id": "msg_1783880770896_lgpaf65oo",
@@ -2684,7 +2899,17 @@
       "sender_id": "admin-1",
       "recipient_id": "admin-2",
       "message": "test from API",
-      "timestamp": "2026-07-12T18:26:10.896Z"
+      "timestamp": "2026-07-12T18:26:10.896Z",
+      "read_by": [
+        "admin-2",
+        "admin-1"
+      ],
+      "status": "read",
+      "updated_at": "2026-07-14T16:34:58.280Z",
+      "delivered_to": [
+        "admin-2",
+        "admin-1"
+      ]
     },
     {
       "id": "msg_1783966493543_u7xdc18ud",
@@ -2692,7 +2917,17 @@
       "sender_id": "admin-1",
       "recipient_id": "admin-2",
       "message": "hello",
-      "timestamp": "2026-07-13T18:14:53.543Z"
+      "timestamp": "2026-07-13T18:14:53.543Z",
+      "read_by": [
+        "admin-2",
+        "admin-1"
+      ],
+      "status": "read",
+      "updated_at": "2026-07-14T16:34:58.319Z",
+      "delivered_to": [
+        "admin-2",
+        "admin-1"
+      ]
     },
     {
       "id": "msg_1783966502383_alee6jve8",
@@ -2700,7 +2935,111 @@
       "sender_id": "admin-1",
       "recipient_id": "use-1782405929747-tcugv",
       "message": "hello",
-      "timestamp": "2026-07-13T18:15:02.383Z"
+      "timestamp": "2026-07-13T18:15:02.383Z",
+      "read_by": [
+        "admin-1"
+      ],
+      "delivered_to": [
+        "admin-1"
+      ],
+      "updated_at": "2026-07-14T16:34:58.387Z"
+    },
+    {
+      "id": "msg_1784046093967_m2cbnjuhf",
+      "created_at": "2026-07-14T16:21:33.970Z",
+      "sender_id": "admin-1",
+      "recipient_id": "admin-2",
+      "message": "📎 logo.jpg",
+      "timestamp": "2026-07-14T16:21:33.967Z",
+      "attachment": {
+        "url": "/uploads/1784046093926-logo.jpg",
+        "name": "logo.jpg",
+        "size": 19765,
+        "type": "image",
+        "mime": "image/jpeg"
+      },
+      "read_by": [
+        "admin-2",
+        "admin-1"
+      ],
+      "status": "read",
+      "updated_at": "2026-07-14T16:34:58.545Z",
+      "delivered_to": [
+        "admin-2",
+        "admin-1"
+      ]
+    },
+    {
+      "id": "msg_1784046614392_ifyat78t0",
+      "created_at": "2026-07-14T16:30:14.398Z",
+      "sender_id": "admin-1",
+      "recipient_id": "admin-2",
+      "message": "hello",
+      "timestamp": "2026-07-14T16:30:14.392Z",
+      "read_by": [
+        "admin-2",
+        "admin-1"
+      ],
+      "status": "read",
+      "updated_at": "2026-07-14T16:34:58.580Z",
+      "delivered_to": [
+        "admin-2",
+        "admin-1"
+      ]
+    },
+    {
+      "id": "msg_1784046858779_zt0jxxx18",
+      "created_at": "2026-07-14T16:34:18.782Z",
+      "sender_id": "admin-2",
+      "recipient_id": "admin-1",
+      "message": "ghghghghghhffhh",
+      "timestamp": "2026-07-14T16:34:18.779Z",
+      "read_by": [
+        "admin-1",
+        "admin-2"
+      ],
+      "status": "read",
+      "updated_at": "2026-07-14T16:34:58.600Z",
+      "delivered_to": [
+        "admin-1",
+        "admin-2"
+      ]
+    },
+    {
+      "id": "msg_1784046859282_osfsexjg2",
+      "created_at": "2026-07-14T16:34:19.287Z",
+      "sender_id": "admin-1",
+      "recipient_id": "admin-2",
+      "message": "bvbbcvbcvbvcbfghfgfghfh",
+      "timestamp": "2026-07-14T16:34:19.282Z",
+      "read_by": [
+        "admin-2",
+        "admin-1"
+      ],
+      "status": "read",
+      "updated_at": "2026-07-14T16:34:58.619Z",
+      "delivered_to": [
+        "admin-2",
+        "admin-1"
+      ]
+    },
+    {
+      "id": "msg_1784046878818_y6xu0hf7v",
+      "created_at": "2026-07-14T16:34:38.821Z",
+      "sender_id": "admin-1",
+      "recipient_id": "admin-2",
+      "message": "hello",
+      "timestamp": "2026-07-14T16:34:38.818Z",
+      "read_by": [
+        "admin-2",
+        "admin-1"
+      ],
+      "status": "read",
+      "updated_at": "2026-07-14T16:34:58.631Z",
+      "delivered_to": [
+        "admin-2",
+        "admin-1"
+      ]
     }
   ],
   "meeting_tasks": [
@@ -2741,38 +3080,8 @@
       "updated_at": "2026-07-12T14:13:38.603Z"
     }
   ],
-  "chat_groups": [
-    {
-      "id": "cha-1783865744473-n0133",
-      "created_at": "2026-07-12T14:15:44.473Z",
-      "name": "raga",
-      "creator_id": "use-1782404624056-5svlf",
-      "creator_name": "Taha Khan",
-      "members": [
-        "use-1782404624056-5svlf",
-        "admin-1"
-      ],
-      "member_names": [
-        "Taha Khan",
-        "Owner Boss"
-      ],
-      "updated_at": "2026-07-13T18:15:47.696Z"
-    }
-  ],
-  "chat_group_messages": [
-    {
-      "id": "cha-1783880392170-9t8v4",
-      "created_at": "2026-07-12T18:19:52.170Z",
-      "group_id": "cha-1783865744473-n0133",
-      "sender_id": "admin-1",
-      "sender_name": "Owner Boss",
-      "message": "hello",
-      "timestamp": "2026-07-12T18:19:52.167Z",
-      "edited": true,
-      "edited_at": "2026-07-12T18:53:42.567Z",
-      "updated_at": "2026-07-12T18:53:42.569Z"
-    }
-  ],
+  "chat_groups": [],
+  "chat_group_messages": [],
   "workspaces": [
     {
       "id": "wor-1783930577829-zucs2",
@@ -2892,6 +3201,88 @@
       "color": "#704df4",
       "icon": "🔵",
       "created_by": "admin-1"
+    }
+  ],
+  "typing_indicators": [
+    {
+      "id": "typ-1784046612813-ir9k0",
+      "created_at": "2026-07-14T16:30:12.813Z",
+      "user_id": "admin-1",
+      "user_name": "Taha Khan",
+      "is_typing": true,
+      "timestamp": 1784046612803,
+      "recipient_id": "admin-2",
+      "type": "dm"
+    },
+    {
+      "id": "typ-1784046616515-42uya",
+      "created_at": "2026-07-14T16:30:16.515Z",
+      "user_id": "admin-1",
+      "user_name": "Taha Khan",
+      "is_typing": false,
+      "timestamp": 1784046616512,
+      "recipient_id": "admin-2",
+      "type": "dm"
+    },
+    {
+      "id": "typ-1784046841803-9ebx4",
+      "created_at": "2026-07-14T16:34:01.803Z",
+      "user_id": "admin-1",
+      "user_name": "Taha Khan",
+      "is_typing": true,
+      "timestamp": 1784046841799,
+      "recipient_id": "admin-2",
+      "type": "dm"
+    },
+    {
+      "id": "typ-1784046848301-zfj9s",
+      "created_at": "2026-07-14T16:34:08.301Z",
+      "user_id": "admin-1",
+      "user_name": "Taha Khan",
+      "is_typing": false,
+      "timestamp": 1784046848297,
+      "recipient_id": "admin-2",
+      "type": "dm"
+    },
+    {
+      "id": "typ-1784046848666-ffncz",
+      "created_at": "2026-07-14T16:34:08.666Z",
+      "user_id": "admin-2",
+      "user_name": "Admin Assistant",
+      "is_typing": true,
+      "timestamp": 1784046848653,
+      "recipient_id": "admin-1",
+      "type": "dm"
+    },
+    {
+      "id": "typ-1784046854498-bbisn",
+      "created_at": "2026-07-14T16:34:14.498Z",
+      "user_id": "admin-2",
+      "user_name": "Admin Assistant",
+      "is_typing": false,
+      "timestamp": 1784046854493,
+      "recipient_id": "admin-1",
+      "type": "dm"
+    },
+    {
+      "id": "typ-1784046876088-eig6e",
+      "created_at": "2026-07-14T16:34:36.088Z",
+      "user_id": "admin-1",
+      "user_name": "Taha Khan",
+      "is_typing": true,
+      "timestamp": 1784046876080,
+      "recipient_id": "admin-2",
+      "type": "dm"
+    },
+    {
+      "id": "typ-1784046881326-zpzm3",
+      "created_at": "2026-07-14T16:34:41.326Z",
+      "user_id": "admin-1",
+      "user_name": "Taha Khan",
+      "is_typing": false,
+      "timestamp": 1784046881322,
+      "recipient_id": "admin-2",
+      "type": "dm"
     }
   ]
 }

@@ -1198,6 +1198,7 @@ app.post('/api/chat/groups/:id/send', authenticateToken, (req, res) => {
       sender_name: req.user.full_name,
       message: message || '',
       attachment: attachment || null,
+      read_by: [req.user.id],
       timestamp: new Date().toISOString()
     };
 
@@ -1395,7 +1396,9 @@ app.post('/api/chat/messages/:msgId/read', authenticateToken, (req, res) => {
     const readBy = msg.read_by || [];
     if (!readBy.includes(req.user.id)) {
       readBy.push(req.user.id);
-      db.update('chat_messages', msg.id, { read_by: readBy, status: 'read' });
+      const deliveredTo = msg.delivered_to || [];
+      if (!deliveredTo.includes(req.user.id)) deliveredTo.push(req.user.id);
+      db.update('chat_messages', msg.id, { read_by: readBy, delivered_to: deliveredTo, status: 'read' });
     }
     res.json({ ok: true });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -1898,6 +1901,9 @@ app.post('/api/chat/send', authenticateToken, (req, res) => {
       sender_id: req.user.id,
       recipient_id: recipient_id,
       message: message || '',
+      read_by: [],
+      delivered_to: [],
+      status: 'sent',
       timestamp: new Date().toISOString()
     };
 
