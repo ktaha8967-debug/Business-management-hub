@@ -2539,6 +2539,34 @@
       "user_id": "admin-1",
       "action": "login",
       "details": "User logged in"
+    },
+    {
+      "id": "act-1784048472208-3owrn",
+      "created_at": "2026-07-14T17:01:12.208Z",
+      "user_id": "admin-2",
+      "action": "create_workspace",
+      "details": "Created workspace \"Marketing team \""
+    },
+    {
+      "id": "act-1784051051429-hbd39",
+      "created_at": "2026-07-14T17:44:11.429Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784051062855-bu338",
+      "created_at": "2026-07-14T17:44:22.855Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
+    },
+    {
+      "id": "act-1784051063486-rfewb",
+      "created_at": "2026-07-14T17:44:23.486Z",
+      "user_id": "use-1782404624056-5svlf",
+      "action": "login",
+      "details": "User logged in"
     }
   ],
   "orders": [
@@ -2603,7 +2631,7 @@
     {
       "id": "pus-1782609248752-ulyea",
       "created_at": "2026-06-28T01:14:08.752Z",
-      "user_id": "admin-2",
+      "user_id": "use-1782404624056-5svlf",
       "subscription": {
         "endpoint": "https://fcm.googleapis.com/fcm/send/fleeXjl2qcA:APA91bENXHlim3hQB2_th-9s-SP9NXktylkyZ6b4nFgbRdh8dxls298L-s8TQ2RQ8rD7OG3LwTvZF-kbTDcdUgJr-PleEhWk7BsYh6mJbkUh5YRS7DFeNWG1p--EhTqbABZSwKf0ILs8",
         "expirationTime": null,
@@ -2612,7 +2640,7 @@
           "auth": "yUpONUh_g1qWuGocAC59YA"
         }
       },
-      "updated_at": "2026-07-14T16:33:44.834Z"
+      "updated_at": "2026-07-14T17:44:24.041Z"
     },
     {
       "id": "pus-1783777657426-wt085",
@@ -3089,6 +3117,26 @@
       "member_roles": {
         "use-1782404624056-5svlf": "wor-1783951912394-4skqx"
       }
+    },
+    {
+      "id": "wor-1784048472178-jc88a",
+      "created_at": "2026-07-14T17:01:12.178Z",
+      "name": "Marketing team ",
+      "icon": "🏠",
+      "description": "",
+      "creator_id": "admin-2",
+      "creator_name": "Admin Assistant",
+      "members": [
+        "admin-2",
+        "admin-1",
+        "use-1782404624056-5svlf"
+      ],
+      "member_names": [
+        "Admin Assistant",
+        "Taha Khan",
+        "Taha Khan"
+      ],
+      "updated_at": "2026-07-14T17:42:45.831Z"
     }
   ],
   "workspace_channels": [
@@ -3163,6 +3211,28 @@
       "is_default": false,
       "channel_type": "text",
       "updated_at": "2026-07-14T16:46:39.493Z"
+    },
+    {
+      "id": "wor-1784048472193-howw1",
+      "created_at": "2026-07-14T17:01:12.193Z",
+      "workspace_id": "wor-1784048472178-jc88a",
+      "name": "general",
+      "description": "General discussion",
+      "created_by": "admin-2",
+      "created_by_name": "Admin Assistant",
+      "is_default": true
+    },
+    {
+      "id": "wor-1784048479198-7pyur",
+      "created_at": "2026-07-14T17:01:19.198Z",
+      "workspace_id": "wor-1784048472178-jc88a",
+      "name": "disccussion",
+      "description": "",
+      "channel_type": "voice",
+      "created_by": "admin-2",
+      "created_by_name": "Admin Assistant",
+      "is_default": false,
+      "allowed_roles": []
     }
   ],
   "workspace_messages": [
@@ -3282,5 +3352,7 @@
       "recipient_id": "admin-2",
       "type": "dm"
     }
-  ]
+  ],
+  "vc_sessions": [],
+  "vc_signals": []
 }

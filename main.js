@@ -45,13 +45,8 @@ function createWindow() {
   // Remove default menu for a premium, clean standalone app experience
   Menu.setApplicationMenu(null);
 
-  // Load local server in development mode, otherwise load the live website
-  const isDev = !app.isPackaged;
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:5000');
-  } else {
-    mainWindow.loadURL('https://business-management-hub.britsync.co.uk');
-  }
+  // Load the live website directly so that changes to the web version reflect instantly
+  mainWindow.loadURL('https://business-management-hub.britsync.co.uk');
 
   mainWindow.on('close', function (event) {
     if (!isQuitting) {
