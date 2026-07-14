@@ -3520,22 +3520,23 @@ async function requestAppPermissions() {
 async function loadChatContacts() {
   const listContainer = document.getElementById('chat-contacts-list');
   if (!listContainer) return;
-  
+
   listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; margin-top: 20px; font-size: 13px;">Loading contacts...</div>';
-  
+
   try {
     const res = await fetch(`${API_URL}/api/chat/users`, { headers: getHeaders() });
-    
+
     if (!res.ok) {
       throw new Error(`Server returned status ${res.status}`);
     }
-    
+
     const contentType = res.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('Server returned non-JSON response (likely an HTML page).');
+      throw new Error('Server returned non-JSON response. Please restart the server.');
     }
-    
-    allChatUsers = await safeJson(res);
+
+    const data = await safeJson(res);
+    allChatUsers = Array.isArray(data) ? data : [];
     await loadUnreadCounts();
     renderChatContacts(allChatUsers);
   } catch (err) {
@@ -3557,8 +3558,9 @@ function renderChatContacts(users) {
   listContainer.innerHTML = users.map(user => {
     const isActive = (activeChatPartnerId === user.id || activeChatGroupId === user.id);
     const isGroup = user.type === 'group';
-    const initial = isGroup ? '👥' : (user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U');
-    const roleText = isGroup ? `${user.members ? user.members.length : 0} members` : user.role;
+    const name = user.full_name || user.name || 'Unknown';
+    const initial = isGroup ? '👥' : name.charAt(0).toUpperCase();
+    const roleText = isGroup ? `${user.members ? user.members.length : 0} members` : (user.role || 'User');
     const clickHandler = isGroup ? `selectChatGroup('${user.id}')` : `selectChatContact('${user.id}')`;
     const statusColor = isGroup ? '#704df4' : '#2ed573';
     const count = isGroup ? (unread.groups[user.id] || 0) : (unread.dm[user.id] || 0);
@@ -3570,7 +3572,7 @@ function renderChatContacts(users) {
           <div style="position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; background: ${statusColor}; border: 2px solid rgba(8,10,18,0.9);"></div>
         </div>
         <div style="flex: 1; min-width: 0;">
-          <div style="font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.full_name}</div>
+          <div style="font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</div>
           <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${roleText}</div>
         </div>
         ${getUnreadBadge(count)}
