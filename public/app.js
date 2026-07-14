@@ -5904,8 +5904,8 @@ function renderVcTile(containerId, stream, name, isLocal) {
     }
   }
 
-  // Setup audio level detection for speaking indicator
-  if (!isLocal && stream.getAudioTracks().length > 0) {
+  // Setup audio level detection for speaking indicator (both local and remote)
+  if (stream.getAudioTracks().length > 0) {
     setupSpeakingDetection(container, stream);
   }
 }
@@ -5915,31 +5915,46 @@ function setupSpeakingDetection(tileEl, stream) {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.8;
     const source = audioCtx.createMediaStreamSource(stream);
     source.connect(analyser);
-    analyser.fftSize = 256;
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     let speaking = false;
+    let silenceTimer = null;
+
     const check = () => {
-      if (!tileEl.isConnected) { audioCtx.close(); return; }
+      if (!tileEl.isConnected) { try { audioCtx.close(); } catch(e){} return; }
       analyser.getByteFrequencyData(dataArray);
-      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-      const isSpeaking = avg > 20;
+      // Calculate RMS for better speech detection
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i] * dataArray[i];
+      const rms = Math.sqrt(sum / dataArray.length);
+      const isSpeaking = rms > 12;
 
       if (isSpeaking && !speaking) {
         speaking = true;
         tileEl.style.borderColor = '#2ed573';
-        tileEl.style.boxShadow = '0 0 20px rgba(46,213,115,0.4), inset 0 0 20px rgba(46,213,115,0.1)';
+        tileEl.style.boxShadow = '0 0 24px rgba(46,213,115,0.5), inset 0 0 30px rgba(46,213,115,0.08)';
+        if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
       } else if (!isSpeaking && speaking) {
-        speaking = false;
-        tileEl.style.borderColor = 'rgba(255,255,255,0.06)';
-        tileEl.style.boxShadow = 'none';
+        // Wait 600ms before showing as silent (avoids flickering)
+        if (!silenceTimer) {
+          silenceTimer = setTimeout(() => {
+            speaking = false;
+            tileEl.style.borderColor = 'rgba(255,255,255,0.06)';
+            tileEl.style.boxShadow = 'none';
+            silenceTimer = null;
+          }, 600);
+        }
       }
       requestAnimationFrame(check);
     };
+    // Resume audio context (needed for Chrome autoplay policy)
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     check();
-  } catch (e) { /* Web Audio not available */ }
+  } catch (e) { console.warn('Speaking detection unavailable:', e.message); }
 }
 
 function removeVcTile(containerId) {
@@ -5982,8 +5997,12 @@ function toggleVcCamera() {
 async function toggleVcScreenShare() {
   const btn = document.getElementById('ws-vc-screenshare-btn');
   if (vcScreenSharing) {
+    // Stop screen share
     vcScreenSharing = false;
     if (btn) { btn.innerText = '🖥️'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.borderColor = 'rgba(255,255,255,0.15)'; }
+    // Remove screen share tile
+    removeVcTile('ws-vc-screenshare');
+    // Restore camera to local tile
     if (vcLocalStream) {
       const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
       const camTrack = camStream.getVideoTracks()[0];
@@ -6000,9 +6019,33 @@ async function toggleVcScreenShare() {
       vcScreenSharing = true;
       if (btn) { btn.innerText = '🛑'; btn.style.background = 'rgba(112,77,244,0.3)'; btn.style.borderColor = 'rgba(112,77,244,0.5)'; }
       screenTrack.onended = () => toggleVcScreenShare();
+
+      // Send screen share to peers
       Object.values(vcPeers).forEach(p => { const s = p.pc.getSenders().find(s => s.track?.kind === 'video'); if (s) s.replaceTrack(screenTrack); });
-      if (vcLocalStream) { vcLocalStream.removeTrack(vcLocalStream.getVideoTracks()[0]); vcLocalStream.addTrack(screenTrack); }
-      renderVcTile('ws-vc-local', vcLocalStream, 'You (Sharing)', true);
+
+      // Create separate screen share tile
+      renderVcTile('ws-vc-screenshare', screenStream, 'Screen Share', false);
+
+      // Hide camera in local tile (show avatar)
+      if (vcLocalStream) {
+        vcLocalStream.getVideoTracks().forEach(t => { t.enabled = false; });
+        vcCameraOff = true;
+        const localTile = document.getElementById('ws-vc-local');
+        if (localTile) {
+          const vid = localTile.querySelector('video');
+          if (vid) vid.style.display = 'none';
+          if (!localTile.querySelector('.vc-avatar-placeholder')) {
+            const ph = document.createElement('div');
+            ph.className = 'vc-avatar-placeholder';
+            ph.style.cssText = 'position:absolute; width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:700; color:#fff; z-index:1;';
+            ph.innerText = currentUser.full_name.charAt(0).toUpperCase();
+            localTile.appendChild(ph);
+          }
+          // Update label
+          const label = localTile.querySelector('.vc-tile-label');
+          if (label) label.innerHTML = '<span>You 🖥️</span>';
+        }
+      }
     } catch (err) { /* cancelled */ }
   }
 }
