@@ -1183,8 +1183,8 @@ app.get('/api/chat/groups', authenticateToken, (req, res) => {
 // Send Group Message
 app.post('/api/chat/groups/:id/send', authenticateToken, (req, res) => {
   try {
-    const { message } = req.body;
-    if (!message) return res.status(400).json({ error: 'Message is required' });
+    const { message, attachment } = req.body;
+    if (!message && !attachment) return res.status(400).json({ error: 'Message or attachment required' });
 
     const group = db.findOne('chat_groups', g => g.id === req.params.id);
     if (!group) return res.status(404).json({ error: 'Group not found' });
@@ -1196,7 +1196,8 @@ app.post('/api/chat/groups/:id/send', authenticateToken, (req, res) => {
       group_id: req.params.id,
       sender_id: req.user.id,
       sender_name: req.user.full_name,
-      message,
+      message: message || '',
+      attachment: attachment || null,
       timestamp: new Date().toISOString()
     };
 
@@ -1333,7 +1334,6 @@ app.delete('/api/chat/groups/:id', authenticateToken, authorizeRoles('Super Admi
     const group = db.findOne('chat_groups', g => g.id === req.params.id);
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
-    // Delete group messages
     db.find('chat_group_messages', m => m.group_id === req.params.id).forEach(m => {
       db.delete('chat_group_messages', m.id);
     });
@@ -1343,6 +1343,119 @@ app.delete('/api/chat/groups/:id', authenticateToken, authorizeRoles('Super Admi
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// Typing indicator
+app.post('/api/chat/typing', authenticateToken, (req, res) => {
+  try {
+    const { recipient_id, group_id, is_typing } = req.body;
+    const typingData = {
+      user_id: req.user.id,
+      user_name: req.user.full_name,
+      is_typing: is_typing !== false,
+      timestamp: Date.now()
+    };
+    if (recipient_id) {
+      db.insert('typing_indicators', { ...typingData, recipient_id, type: 'dm' });
+    } else if (group_id) {
+      db.insert('typing_indicators', { ...typingData, group_id, type: 'group' });
+    }
+    res.json({ ok: true });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Get typing indicators
+app.get('/api/chat/typing/:channelId', authenticateToken, (req, res) => {
+  try {
+    const type = req.query.type || 'dm';
+    const channelId = req.params.channelId;
+    const cutoff = Date.now() - 5000; // 5 seconds timeout
+
+    let indicators;
+    if (type === 'group') {
+      indicators = db.find('typing_indicators', t =>
+        t.group_id === channelId && t.user_id !== req.user.id && t.is_typing && t.timestamp > cutoff
+      );
+    } else {
+      indicators = db.find('typing_indicators', t =>
+        t.recipient_id === req.user.id && t.user_id === channelId && t.is_typing && t.timestamp > cutoff
+      );
+    }
+    res.json(indicators.map(t => ({ user_name: t.user_name, user_id: t.user_id })));
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Mark message as read
+app.post('/api/chat/messages/:msgId/read', authenticateToken, (req, res) => {
+  try {
+    const msg = db.findOne('chat_messages', m => m.id === req.params.msgId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    if (msg.sender_id === req.user.id) return res.json({ ok: true });
+
+    const readBy = msg.read_by || [];
+    if (!readBy.includes(req.user.id)) {
+      readBy.push(req.user.id);
+      db.update('chat_messages', msg.id, { read_by: readBy, status: 'read' });
+    }
+    res.json({ ok: true });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Mark group messages as read
+app.post('/api/chat/groups/:groupId/read', authenticateToken, (req, res) => {
+  try {
+    const msgs = db.find('chat_group_messages', m =>
+      m.group_id === req.params.groupId && m.sender_id !== req.user.id
+    );
+    msgs.forEach(msg => {
+      const readBy = msg.read_by || [];
+      if (!readBy.includes(req.user.id)) {
+        readBy.push(req.user.id);
+        db.update('chat_group_messages', msg.id, { read_by: readBy });
+      }
+    });
+    res.json({ ok: true });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Mark message as delivered
+app.post('/api/chat/messages/:msgId/delivered', authenticateToken, (req, res) => {
+  try {
+    const msg = db.findOne('chat_messages', m => m.id === req.params.msgId);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+    const deliveredTo = msg.delivered_to || [];
+    if (!deliveredTo.includes(req.user.id)) {
+      deliveredTo.push(req.user.id);
+      db.update('chat_messages', msg.id, { delivered_to: deliveredTo, status: 'delivered' });
+    }
+    res.json({ ok: true });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Get unread counts
+app.get('/api/chat/unread', authenticateToken, (req, res) => {
+  try {
+    const myId = req.user.id;
+    // Individual DM unread
+    const dmUnread = {};
+    db.find('chat_messages', m =>
+      m.recipient_id === myId && m.sender_id !== myId && !(m.read_by || []).includes(myId)
+    ).forEach(m => {
+      dmUnread[m.sender_id] = (dmUnread[m.sender_id] || 0) + 1;
+    });
+
+    // Group unread
+    const grpUnread = {};
+    const myGroups = db.find('chat_groups', g => g.members.includes(myId));
+    myGroups.forEach(g => {
+      const unread = db.find('chat_group_messages', m =>
+        m.group_id === g.id && m.sender_id !== myId && !(m.read_by || []).includes(myId)
+      );
+      if (unread.length > 0) grpUnread[g.id] = unread.length;
+    });
+
+    res.json({ dm: dmUnread, groups: grpUnread });
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 // Edit Group Message

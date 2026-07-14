@@ -68,7 +68,8 @@ const defaultDB = {
   workspace_messages: [],
   workspace_roles: [],
   vc_sessions: [],
-  vc_signals: []
+  vc_signals: [],
+  typing_indicators: []
 };
 
 function readDB() {

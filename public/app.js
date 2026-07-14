@@ -3536,6 +3536,7 @@ async function loadChatContacts() {
     }
     
     allChatUsers = await safeJson(res);
+    await loadUnreadCounts();
     renderChatContacts(allChatUsers);
   } catch (err) {
     listContainer.innerHTML = `<div style="color: #ff4757; text-align: center; margin-top: 20px; font-size: 13px;">Failed to load contacts: ${err.message}</div>`;
@@ -3545,12 +3546,14 @@ async function loadChatContacts() {
 function renderChatContacts(users) {
   const listContainer = document.getElementById('chat-contacts-list');
   if (!listContainer) return;
-  
+
+  const unread = window.unreadCounts || { dm: {}, groups: {} };
+
   if (users.length === 0) {
     listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; margin-top: 40px; font-size: 13px;">No contacts found</div>';
     return;
   }
-  
+
   listContainer.innerHTML = users.map(user => {
     const isActive = (activeChatPartnerId === user.id || activeChatGroupId === user.id);
     const isGroup = user.type === 'group';
@@ -3558,7 +3561,8 @@ function renderChatContacts(users) {
     const roleText = isGroup ? `${user.members ? user.members.length : 0} members` : user.role;
     const clickHandler = isGroup ? `selectChatGroup('${user.id}')` : `selectChatContact('${user.id}')`;
     const statusColor = isGroup ? '#704df4' : '#2ed573';
-    
+    const count = isGroup ? (unread.groups[user.id] || 0) : (unread.dm[user.id] || 0);
+
     return `
       <div onclick="${clickHandler}" data-id="${user.id}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; cursor: pointer; transition: all 0.15s; ${isActive ? 'background: rgba(112, 77, 244, 0.15); border: 1px solid rgba(112, 77, 244, 0.3);' : 'border: 1px solid transparent;'}" onmouseover="if(!this.style.background.includes('112')) this.style.background='rgba(255,255,255,0.04)'" onmouseout="if(!(${isActive})) this.style.background=''">
         <div style="position: relative; flex-shrink: 0;">
@@ -3569,6 +3573,7 @@ function renderChatContacts(users) {
           <div style="font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.full_name}</div>
           <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${roleText}</div>
         </div>
+        ${getUnreadBadge(count)}
       </div>`;
   }).join('');
 }
@@ -3612,6 +3617,8 @@ function selectChatContact(partnerId) {
   chatPollInterval = setInterval(() => {
     if (activeChatPartnerId === partnerId) {
       loadChatHistory(partnerId);
+      checkTypingIndicator(partnerId, 'dm');
+      loadUnreadCounts();
     }
   }, 3000);
 }
@@ -3647,11 +3654,11 @@ async function loadChatHistory(partnerId) {
           <button onclick="deleteChatMsg('${msg.id}')" style="background:none; border:none; color:rgba(255,71,87,0.5); font-size:10px; cursor:pointer; padding:0;">🗑️</button>
         </div>` : '';
       return `
-        <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;">
+        <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'}; margin-bottom: 4px; cursor:pointer;" onclick="showMessageDetails('${msg.id}')">
           <div style="max-width: 70%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
             ${attachmentHtml}
             <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${formatMessageText(msg.message)}${editedTag}</div>
-            <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
+            <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}${isMine ? getMessageTicks(msg, true) : ''}</div>
             ${actionsHtml}
           </div>
         </div>`;
@@ -4776,7 +4783,12 @@ async function selectChatGroup(groupId) {
     if (!group) return;
 
     document.getElementById('chat-active-partner-name').innerText = group.name;
-    document.getElementById('chat-active-partner-role').innerHTML = `<span style="cursor:pointer; text-decoration:underline;" onclick="showGroupMembers('${groupId}')">${group.members.length} members — tap to view</span>`;
+    const isCreator = group.creator_id === currentUser.id;
+    const isAdmin = ['Super Admin', 'Admin Team'].includes(currentUser.role);
+    document.getElementById('chat-active-partner-role').innerHTML = `
+      <span style="cursor:pointer; text-decoration:underline;" onclick="showGroupMembers('${groupId}')">${group.members.length} members — tap to view</span>
+      ${isCreator || isAdmin ? `<button onclick="deleteGroup('${groupId}')" style="margin-left:12px; background:rgba(255,71,87,0.15); border:1px solid rgba(255,71,87,0.3); border-radius:6px; padding:2px 8px; color:#ff4757; font-size:10px; cursor:pointer;">🗑️ Delete Group</button>` : ''}
+    `;
     document.getElementById('chat-status-dot').style.background = '#704df4';
     document.getElementById('chat-status-text').innerText = 'group';
     
@@ -4796,7 +4808,11 @@ async function selectChatGroup(groupId) {
 
     if (chatPollInterval) clearInterval(chatPollInterval);
     chatPollInterval = setInterval(() => {
-      if (activeChatGroupId === groupId) loadGroupChatHistory(groupId);
+      if (activeChatGroupId === groupId) {
+        loadGroupChatHistory(groupId);
+        checkTypingIndicator(groupId, 'group');
+        markGroupRead(groupId);
+      }
     }, 3000);
   } catch (err) {
     showToast('error', err.message);
@@ -4847,12 +4863,13 @@ async function loadGroupChatHistory(groupId) {
         </div>` : '';
 
       return `
-        <div style="margin-bottom: ${showSender ? '8px' : '2px'};">
+        <div style="margin-bottom: ${showSender ? '8px' : '2px'}; cursor:pointer;" onclick="showMessageDetails('${msg.id}','${msg.group_id}')">
           ${senderHeader}
           <div style="display: flex; justify-content: ${isMine ? 'flex-end' : 'flex-start'};">
             <div style="max-width: 65%; ${isMine ? 'background: linear-gradient(135deg, #704df4, #5a3fc0); color: #fff; border-radius: 18px 18px 4px 18px;' : 'background: rgba(255,255,255,0.08); color: #fff; border-radius: 18px 18px 18px 4px;'} padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+              ${msg.attachment ? renderChatAttachment(msg.attachment, isMine) : ''}
               <div style="font-size: 13px; line-height: 1.4; word-wrap: break-word;">${formatMessageText(msg.message)}${editedTag}</div>
-              <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}</div>
+              <div style="font-size: 10px; ${isMine ? 'color: rgba(255,255,255,0.6);' : 'color: var(--text-muted);'} text-align: right; margin-top: 4px;">${timeStr}${isMine ? getMessageTicks(msg, true) : ''}</div>
               ${actionsHtml}
             </div>
           </div>
@@ -4871,23 +4888,63 @@ async function handleSendGroupChatMessage(e) {
 
   const inputEl = document.getElementById('chat-message-input');
   const messageText = inputEl.value.trim();
-  if (!messageText) return;
+  const fileInput = document.getElementById('chat-file-input');
+  const hasFile = fileInput && fileInput.files.length > 0;
+
+  if (!messageText && !hasFile) return;
   inputEl.value = '';
 
-  try {
-    const res = await fetch(`${API_URL}/api/chat/groups/${activeChatGroupId}/send`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ message: messageText })
-    });
-    if (res.ok) {
-      loadGroupChatHistory(activeChatGroupId);
-    } else {
-      const err = await res.json();
-      showToast('error', err.error || 'Failed to send message');
+  // Reset textarea height
+  inputEl.style.height = 'auto';
+
+  // If there's a file, upload it first
+  if (hasFile) {
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+      const uploadRes = await fetch(`${API_URL}/api/chat/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${currentToken}` },
+        body: formData
+      });
+
+      if (!uploadRes.ok) throw new Error('File upload failed');
+      const fileData = await uploadRes.json();
+
+      const finalMessage = messageText || `📎 ${fileData.name}`;
+      const res = await fetch(`${API_URL}/api/chat/groups/${activeChatGroupId}/send`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ message: finalMessage, attachment: fileData })
+      });
+
+      if (res.ok) {
+        clearChatFile();
+        loadGroupChatHistory(activeChatGroupId);
+      } else {
+        const err = await res.json();
+        showToast('error', err.error || 'Failed to send');
+      }
+    } catch (err) {
+      showToast('error', 'Error: ' + err.message);
     }
-  } catch (err) {
-    showToast('error', 'Error sending message: ' + err.message);
+  } else {
+    try {
+      const res = await fetch(`${API_URL}/api/chat/groups/${activeChatGroupId}/send`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ message: messageText })
+      });
+      if (res.ok) {
+        loadGroupChatHistory(activeChatGroupId);
+      } else {
+        const err = await res.json();
+        showToast('error', err.error || 'Failed to send message');
+      }
+    } catch (err) {
+      showToast('error', 'Error sending message: ' + err.message);
+    }
   }
 }
 
@@ -5038,6 +5095,165 @@ async function removeGroupMember(groupId, userId) {
       showToast('success', 'Member removed!');
       showGroupMembers(groupId);
     } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+async function deleteGroup(groupId) {
+  if (!confirm('Are you sure you want to delete this group? All messages will be lost.')) return;
+  try {
+    const res = await fetch(`${API_URL}/api/chat/groups/${groupId}`, {
+      method: 'DELETE', headers: getHeaders()
+    });
+    if (res.ok) {
+      showToast('success', 'Group deleted');
+      activeChatGroupId = null;
+      document.getElementById('chat-active-partner-name').innerText = 'Select a contact';
+      document.getElementById('chat-partner-avatar').innerText = '?';
+      document.getElementById('chat-messages-container').innerHTML = '<div style="flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;"><div style="width:80px; height:80px; border-radius:50%; background:rgba(112,77,244,0.1); display:flex; align-items:center; justify-content:center; font-size:36px;">💬</div><div style="font-size:15px; font-weight:600; color:#fff;">Start a Conversation</div></div>';
+      closeWsRightPanel();
+      loadChatContacts();
+    } else { const e = await res.json(); showToast('error', e.error); }
+  } catch (err) { showToast('error', err.message); }
+}
+
+// ==================== UNREAD INDICATORS ====================
+async function loadUnreadCounts() {
+  try {
+    const res = await fetch(`${API_URL}/api/chat/unread`, { headers: getHeaders() });
+    const data = await safeJson(res);
+    window.unreadCounts = data;
+    // Update sidebar badges
+    renderChatContacts(allChatUsers);
+  } catch (err) { /* silent */ }
+}
+
+function getUnreadBadge(count) {
+  if (!count || count === 0) return '';
+  return `<span style="min-width:18px; height:18px; border-radius:50%; background:#2ed573; color:#fff; font-size:10px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; padding:0 4px;">${count > 99 ? '99+' : count}</span>`;
+}
+
+// ==================== TYPING INDICATOR ====================
+let typingTimeout = null;
+let isTyping = false;
+
+function sendTypingIndicator(recipientId, groupId) {
+  if (typingTimeout) clearTimeout(typingTimeout);
+  if (!isTyping) {
+    isTyping = true;
+    fetch(`${API_URL}/api/chat/typing`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ recipient_id: recipientId, group_id: groupId, is_typing: true })
+    });
+  }
+  typingTimeout = setTimeout(() => {
+    isTyping = false;
+    fetch(`${API_URL}/api/chat/typing`, {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ recipient_id: recipientId, group_id: groupId, is_typing: false })
+    });
+  }, 3000);
+}
+
+async function checkTypingIndicator(channelId, type) {
+  try {
+    const res = await fetch(`${API_URL}/api/chat/typing/${channelId}?type=${type}`, { headers: getHeaders() });
+    const typers = await safeJson(res);
+    const el = document.getElementById('ws-typing-indicator') || document.getElementById('chat-typing-indicator');
+    if (!el) return;
+    if (typers.length > 0) {
+      const names = typers.map(t => t.user_name).join(', ');
+      el.innerHTML = `<span style="font-size:11px; color:var(--text-muted); font-style:italic;">${names} ${typers.length === 1 ? 'is' : 'are'} typing...</span>`;
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  } catch (err) { /* silent */ }
+}
+
+// ==================== MESSAGE TICKS ====================
+function getMessageTicks(msg, isMine) {
+  if (!isMine) return '';
+  if (msg.status === 'read') return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
+  if (msg.delivered_to && msg.delivered_to.length > 0) return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
+  if (msg.status === 'delivered') return '<span style="color:#53bdeb; margin-left:4px;">✓✓</span>';
+  if (msg.status === 'sent' || msg.timestamp) return '<span style="color:rgba(255,255,255,0.4); margin-left:4px;">✓</span>';
+  return '<span style="color:rgba(255,255,255,0.3); margin-left:4px;">⏳</span>';
+}
+
+// ==================== MARK AS READ ====================
+async function markMessageRead(msgId) {
+  try {
+    await fetch(`${API_URL}/api/chat/messages/${msgId}/read`, {
+      method: 'POST', headers: getHeaders()
+    });
+  } catch (err) { /* silent */ }
+}
+
+async function markGroupRead(groupId) {
+  try {
+    await fetch(`${API_URL}/api/chat/groups/${groupId}/read`, {
+      method: 'POST', headers: getHeaders()
+    });
+  } catch (err) { /* silent */ }
+}
+
+// ==================== MESSAGE CLICK DETAILS ====================
+async function showMessageDetails(msgId, groupId) {
+  try {
+    let msg;
+    if (groupId) {
+      const res = await fetch(`${API_URL}/api/chat/groups/${groupId}/history`, { headers: getHeaders() });
+      const msgs = await safeJson(res);
+      msg = msgs.find(m => m.id === msgId);
+    }
+    if (!msg) return;
+
+    const readBy = msg.read_by || [];
+    const deliveredTo = msg.delivered_to || [];
+    const readByName = readBy.map(id => {
+      const u = allChatUsers.find(c => c.id === id);
+      return u ? u.full_name : id;
+    });
+    const deliveredNames = deliveredTo.map(id => {
+      const u = allChatUsers.find(c => c.id === id);
+      return u ? u.full_name : id;
+    });
+
+    let panel = document.getElementById('ws-right-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'ws-right-panel';
+      panel.style.cssText = 'position:fixed; top:0; right:0; bottom:0; width:320px; background:var(--bg-secondary); border-left:1px solid var(--border-color); z-index:5000; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); box-shadow:-4px 0 20px rgba(0,0,0,0.3);';
+      document.body.appendChild(panel);
+    }
+    panel.style.transform = 'translateX(0)';
+    panel.innerHTML = `
+      <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;">📋 Message Info</h4>
+        <button onclick="closeWsRightPanel()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:16px;">
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Message</div>
+          <div style="font-size:13px; color:#fff; padding:10px; background:rgba(255,255,255,0.04); border-radius:8px;">${msg.message}</div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Sent by</div>
+          <div style="font-size:13px; color:#fff;">${msg.sender_name} at ${new Date(msg.timestamp).toLocaleString()}</div>
+        </div>
+        ${deliveredNames.length > 0 ? `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">✓✓ Delivered to (${deliveredNames.length})</div>
+          ${deliveredNames.map(n => `<div style="font-size:12px; color:#53bdeb; padding:4px 0;">${n}</div>`).join('')}
+        </div>` : ''}
+        ${readByName.length > 0 ? `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">✓✓ Read by (${readByName.length})</div>
+          ${readByName.map(n => `<div style="font-size:12px; color:#2ed573; padding:4px 0;">${n}</div>`).join('')}
+        </div>` : ''}
+        ${!deliveredNames.length && !readByName.length ? '<div style="font-size:12px; color:var(--text-muted);">Not delivered yet</div>' : ''}
+      </div>
+    `;
   } catch (err) { showToast('error', err.message); }
 }
 
@@ -6021,9 +6237,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Auto-grow textareas + Enter key handlers
+  // Auto-grow textareas + Enter key + typing indicator
   document.querySelectorAll('textarea[data-auto-grow]').forEach(ta => {
-    ta.addEventListener('input', autoGrowHandler);
+    ta.addEventListener('input', (e) => {
+      autoGrowHandler(e);
+      // Send typing indicator
+      if (activeChatPartnerId) sendTypingIndicator(activeChatPartnerId, null);
+      else if (activeChatGroupId) sendTypingIndicator(null, activeChatGroupId);
+      else if (activeChannelId) sendTypingIndicator(null, activeChannelId);
+    });
     ta.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
