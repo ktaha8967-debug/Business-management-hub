@@ -5385,57 +5385,13 @@ async function loadWsChannels(wsId) {
   } catch (err) { showToast('error', err.message); }
 }
 
-// Discord-style: click voice channel → show participants + join button
+// Discord-style: click voice channel → auto join
 async function toggleVoiceChannel(chId) {
   if (activeVcChannelId === chId) return;
   if (activeVcChannelId) await leaveVoiceChannel();
   activeChannelId = null;
-  showWsView('voice');
-
-  // Set header
-  const channelName = document.getElementById('ws-vc-name');
-  if (channelName) channelName.innerText = '🔊 Voice Channel';
-
-  // Show join panel first (not connected yet)
-  const grid = document.getElementById('ws-vc-grid');
-  if (grid) {
-    grid.innerHTML = `
-      <div style="grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:60px 20px; text-align:center;">
-        <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, rgba(46,213,115,0.2), rgba(0,210,255,0.2)); display:flex; align-items:center; justify-content:center; font-size:48px;">🔊</div>
-        <div>
-          <div style="font-size:20px; font-weight:700; color:#fff; margin-bottom:6px;">Voice Channel</div>
-          <div style="font-size:13px; color:var(--text-muted);">No one is currently in this voice channel</div>
-        </div>
-        <button onclick="joinVoiceChannel('${chId}')" style="padding:14px 32px; background:linear-gradient(135deg, #2ed573, #1a9c4a); border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(46,213,115,0.3); transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">📞 Join Voice</button>
-      </div>
-    `;
-  }
-
-  // Load current participants
-  try {
-    const res = await fetch(`${API_URL}/api/workspaces/vc/${chId}`, { headers: getHeaders() });
-    const participants = await safeJson(res);
-    if (participants.length > 0 && grid) {
-      grid.innerHTML = `
-        <div style="grid-column:1/-1; padding:20px;">
-          <div style="font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:12px;">${participants.length} in voice</div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:20px;">
-            ${participants.map(p => `
-              <div style="background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.08);">
-                <div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; color:#fff;">${(p.user_name||'U').charAt(0)}</div>
-                <div style="position:absolute; bottom:8px; left:10px; background:rgba(0,0,0,0.6); padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; color:#fff;">${p.user_name} ${p.is_muted ? '🔇' : '🎤'}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="text-align:center;">
-            <button onclick="joinVoiceChannel('${chId}')" style="padding:14px 32px; background:linear-gradient(135deg, #2ed573, #1a9c4a); border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(46,213,115,0.3); transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">📞 Join Voice</button>
-          </div>
-        </div>
-      `;
-    }
-  } catch (err) { /* silent */ }
-
-  loadWsChannels(activeWorkspaceId);
+  // Auto join immediately
+  joinVoiceChannel(chId);
 }
 
 // ==================== VIEW SWITCHING ====================
@@ -5895,12 +5851,12 @@ function hideFloatingVcIndicator() {
 function renderVcTile(containerId, stream, name, isLocal) {
   let container = document.getElementById(containerId);
   if (!container) {
-    // Create tile in the VC grid
     const grid = document.getElementById('ws-vc-grid');
     if (!grid) return;
     container = document.createElement('div');
     container.id = containerId;
-    container.style.cssText = 'position:relative; background:#111; border-radius:16px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.08);';
+    container.className = 'vc-tile';
+    container.style.cssText = 'position:relative; background:#1a1a2e; border-radius:20px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border:3px solid rgba(255,255,255,0.06); transition: border-color 0.3s, box-shadow 0.3s;';
     if (isLocal) grid.prepend(container);
     else grid.appendChild(container);
   }
@@ -5914,13 +5870,22 @@ function renderVcTile(containerId, stream, name, isLocal) {
     videoEl.autoplay = true;
     videoEl.playsInline = true;
     videoEl.muted = isLocal;
-    videoEl.style.cssText = 'width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;';
+    videoEl.style.cssText = 'width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; border-radius:17px;';
     container.innerHTML = '';
     container.appendChild(videoEl);
+
+    // Name label (bottom left)
     const label = document.createElement('div');
-    label.style.cssText = 'position:absolute; bottom:8px; left:10px; background:rgba(0,0,0,0.6); padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; color:#fff; z-index:1;';
-    label.innerText = isLocal ? 'You' : name;
+    label.className = 'vc-tile-label';
+    label.style.cssText = 'position:absolute; bottom:10px; left:12px; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); padding:4px 10px; border-radius:8px; font-size:12px; font-weight:600; color:#fff; z-index:1; display:flex; align-items:center; gap:6px;';
+    label.innerHTML = `<span>${isLocal ? 'You' : name}</span>`;
     container.appendChild(label);
+
+    // Mute icon (bottom right)
+    const muteIcon = document.createElement('div');
+    muteIcon.className = 'vc-tile-mute';
+    muteIcon.style.cssText = 'position:absolute; bottom:10px; right:12px; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); padding:4px 8px; border-radius:8px; font-size:14px; z-index:1; display:none;';
+    container.appendChild(muteIcon);
   }
 
   if (hasVideo) {
@@ -5933,11 +5898,48 @@ function renderVcTile(containerId, stream, name, isLocal) {
     if (!container.querySelector('.vc-avatar-placeholder')) {
       const ph = document.createElement('div');
       ph.className = 'vc-avatar-placeholder';
-      ph.style.cssText = 'position:absolute; width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; color:#fff; z-index:1;';
+      ph.style.cssText = 'position:absolute; width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #704df4, #00d2ff); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:700; color:#fff; z-index:1;';
       ph.innerText = (name || 'U').charAt(0).toUpperCase();
       container.appendChild(ph);
     }
   }
+
+  // Setup audio level detection for speaking indicator
+  if (!isLocal && stream.getAudioTracks().length > 0) {
+    setupSpeakingDetection(container, stream);
+  }
+}
+
+// Discord-style green speaking outline
+function setupSpeakingDetection(tileEl, stream) {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioCtx.createAnalyser();
+    const source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+    analyser.fftSize = 256;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    let speaking = false;
+    const check = () => {
+      if (!tileEl.isConnected) { audioCtx.close(); return; }
+      analyser.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      const isSpeaking = avg > 20;
+
+      if (isSpeaking && !speaking) {
+        speaking = true;
+        tileEl.style.borderColor = '#2ed573';
+        tileEl.style.boxShadow = '0 0 20px rgba(46,213,115,0.4), inset 0 0 20px rgba(46,213,115,0.1)';
+      } else if (!isSpeaking && speaking) {
+        speaking = false;
+        tileEl.style.borderColor = 'rgba(255,255,255,0.06)';
+        tileEl.style.boxShadow = 'none';
+      }
+      requestAnimationFrame(check);
+    };
+    check();
+  } catch (e) { /* Web Audio not available */ }
 }
 
 function removeVcTile(containerId) {
